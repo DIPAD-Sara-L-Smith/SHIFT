@@ -30,7 +30,12 @@ ui <- fluidPage(
         
         uiOutput("DataType"),
         
-        uiOutput("DepVar")
+        uiOutput("DepVar"),
+
+        conditionalPanel(
+          condition = "input.DataType == 'Time series'", 
+          uiOutput("YearVar")
+        )
       ),
       
       # Show a plot of the generated distribution
@@ -53,19 +58,27 @@ server <- function(input, output) {
   # Read in dataset
   FileData <- reactive({
     infile <- input$DataFilePath
+    
     if (is.null(infile)) {
       # User has not uploaded a file yet
       return(NULL)
     }
     
     # Return data
-    read.csv(infile$datapath, stringsAsFactors = FALSE)
+    FileData <- as.data.frame(read.csv(infile$datapath, stringsAsFactors = FALSE))
+    
+    # # If data has row names (i.e. is a time series object), add time 
+    # if (tibble::has_rownames(FileData)) {
+    #   FileData <- tibble::rownames_to_column(RawData, var = "Time")
+    # }
+    
+    return(FileData)
   })
   
   # Get list of variable names in dataset
   DataVarNames <- reactive({
     df <- FileData()
-    if(is.null(df)) {
+    if (is.null(df)) {
       return(NULL)
     } else {
       return(names(df)) 
@@ -87,6 +100,19 @@ server <- function(input, output) {
     names(items) <- items
     selectInput("DepVar", 
                 "Now choose your dependent variable:",
+                items,
+                selected = items[2])
+    
+  })
+  
+  output$YearVar <- renderUI({
+    df <- FileData()
+    if (is.null(df)) return(NULL)
+    
+    items <- names(df)
+    names(items) <- items
+    selectInput("YearVar", 
+                "Which variable hows the time period:",
                 items)
     
   })
@@ -116,29 +142,40 @@ server <- function(input, output) {
   
   # Generate plot of dependent variable
   output$DepVarPlot <- renderPlot({
-    if(is.null(input$DataFilePath)) {
-      return("No data file has been selected.")
+    if (is.null(input$DepVar)) {
+      return("No dependent variable has been selected.")
     } else {
-      # Get data
-      PlottingData <- FileData()
-      
-      if (input$DataType == "Time series") {
-        # Plot dependent variable against time
-        ggplot2::ggplot(PlottingData, 
-                        ggplot2::aes(y = input$DepVar, 
-                            x = Year))
-        + ggplot2::geom_point()        
+      if(is.null(input$DataFilePath)) {
+        return("No data file has been selected.")
       } else {
-        # Plot frequency histogram
-        x <- as.data.frame(PlottingData[, input$DepVar])
-        # bins <- seq(min(x), max(x), length.out = 10 + 1)
-      
-        # Plot dependent variable
-        ggplot2::ggplot(PlottingData, 
-          ggplot2::aes(x = x)) + #input$DepVar)) +
-          ggplot2::geom_histogram(color="black", fill="turquoise", binwidth=((max(x)-min(x))/10)) +
-          ggplot2::labs(title=paste0("Frequency of ", input$DepVar), y="Count", x=input$DepVar) +
-          ggplot2::theme_classic()
+        # Get data
+        PlottingData <- as.data.frame(FileData())
+        
+        if (input$DataType == "Time series") {
+          if (is.null(input$YearVar)) {
+            return("No time period has been selected.")
+          } else {
+            PlotX <- as.data.frame(PlottingData[, input$YearVar])
+            PlotY <- as.data.frame(PlottingData[, input$DepVar])
+            
+            ggplot2::ggplot(PlottingData, 
+                            ggplot2::aes(y = PlotY, 
+                                         x = PlotX)) +
+              ggplot2::geom_point() +
+              ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), y=input$DepVar, x=input$YearVar) +
+              ggplot2::theme_classic()
+          }
+        } else {
+          # Plot frequency histogram
+          PlotY <- as.data.frame(PlottingData[, input$DepVar])
+        
+          # Plot dependent variable
+          ggplot2::ggplot(PlottingData, 
+            ggplot2::aes(x = PlotY)) +
+            ggplot2::geom_histogram(color="black", fill="turquoise", binwidth=((max(PlotY)-min(PlotY))/10), stat="bin") +
+            ggplot2::labs(title=paste0("Frequency of ", input$DepVar), y="Count", x=input$DepVar) +
+            ggplot2::theme_classic()
+        }
       }
     }
   })
@@ -147,4 +184,5 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+#shiny::runApp(display.mode="showcase")
 
