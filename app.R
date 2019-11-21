@@ -28,6 +28,8 @@ ui <- fluidPage(
                   buttonLabel = "Find file", 
                   placeholder = "Data file path"),
         
+        uiOutput("DataType"),
+        
         uiOutput("DepVar")
       ),
       
@@ -37,8 +39,10 @@ ui <- fluidPage(
         verbatimTextOutput("DataInfo"),
         
         h5("And here is a summary of the data: "), 
-        verbatimTextOutput("DataHead")
-         # plotOutput("distPlot")
+        verbatimTextOutput("DataHead"),
+        
+        h5("What does your dependent variable look like?"), 
+        plotOutput("DepVarPlot")
       )
    )
 )
@@ -66,6 +70,13 @@ server <- function(input, output) {
     } else {
       return(names(df)) 
     }
+  })
+  
+  output$DataType <- renderUI({
+    radioButtons("DataType", 
+                 label = "What type of data is this?", 
+                 choices = c("Frequency",
+                             "Time series"))
   })
   
   output$DepVar <- renderUI({
@@ -109,20 +120,29 @@ server <- function(input, output) {
       return("No data file has been selected.")
     } else {
       # Get data
+      PlottingData <- FileData()
       
+      if (input$DataType == "Time series") {
+        # Plot dependent variable against time
+        ggplot2::ggplot(PlottingData, 
+                        ggplot2::aes(y = input$DepVar, 
+                            x = Year))
+        + ggplot2::geom_point()        
+      } else {
+        # Plot frequency histogram
+        x <- as.data.frame(PlottingData[, input$DepVar])
+        # bins <- seq(min(x), max(x), length.out = 10 + 1)
       
-      # Plot dependent variable
-      ggplot2::ggplot()
+        # Plot dependent variable
+        ggplot2::ggplot(PlottingData, 
+          ggplot2::aes(x = x)) + #input$DepVar)) +
+          ggplot2::geom_histogram(color="black", fill="turquoise", binwidth=((max(x)-min(x))/10)) +
+          ggplot2::labs(title=paste0("Frequency of ", input$DepVar), y="Count", x=input$DepVar) +
+          ggplot2::theme_classic()
+      }
     }
   })
-   # output$distPlot <- renderPlot({
-   #    # generate bins based on input$bins from ui.R
-   #    x    <- faithful[, 2] 
-   #    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-   #    
-   #    # draw the histogram with the specified number of bins
-   #    hist(x, breaks = bins, col = 'darkgray', border = 'white')
-   # })
+
 }
 
 # Run the application 
