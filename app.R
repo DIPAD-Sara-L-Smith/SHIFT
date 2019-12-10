@@ -266,8 +266,19 @@ server <- function(input, output) {
     holtwinters <- forecastHoltWinters()
     
     # put together plots
-    
-    
+    plotData <- as.data.frame(
+        ts.union(tsDepVar, tsFileData, naive$fitted, decomposition$fitted, holtwinters$fitted)
+    )
+    p <- plotly::plot_ly(data = as.data.frame(plotData),
+                         x = ~tsFileData.Time,
+                         type = 'scatter',
+                         mode = 'lines')
+    for (trace in colnames(plotData)){
+      if (!(trace %in% c("tsFileData.Time", "trace 0"))){
+        p <- p %>% plotly::add_trace(y = as.formula(paste0("~`", trace, "`")),
+                                     name = trace)
+      }                                                                  
+    }
   })
 }
 
