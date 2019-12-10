@@ -68,7 +68,7 @@ server <- function(input, output) {
     FileData <- as.data.frame(read.csv(infile$datapath, stringsAsFactors = FALSE))
     
     # # If data has row names (i.e. is a time series object), add time 
-    # if (tibble::has_rownames(FileData)) {
+    # if (tibble::has_rownames(FileData)) { 
     #   FileData <- tibble::rownames_to_column(RawData, var = "Time")
     # }
     
@@ -159,21 +159,25 @@ server <- function(input, output) {
             PlotY <- as.data.frame(PlottingData[, input$DepVar])
             
             ggplot2::ggplot(PlottingData, 
-                            ggplot2::aes(y = PlotY, 
-                                         x = PlotX)) +
+                            ggplot2::aes_string(y = input$YearVar, 
+                                         input$DepVar)) +
               ggplot2::geom_point() +
-              ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), y=input$DepVar, x=input$YearVar) +
+              ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), 
+                            y=input$DepVar, 
+                            x=input$YearVar) +
               ggplot2::theme_classic()
           }
         } else {
           # Plot frequency histogram
-          PlotY <- as.data.frame(PlottingData[, input$DepVar])
-        
-          # Plot dependent variable
           ggplot2::ggplot(PlottingData, 
-            ggplot2::aes(x = PlotY)) +
-            ggplot2::geom_histogram(color="black", fill="turquoise", binwidth=((max(PlotY)-min(PlotY))/10), stat="bin") +
-            ggplot2::labs(title=paste0("Frequency of ", input$DepVar), y="Count", x=input$DepVar) +
+            ggplot2::aes_string(x = input$DepVar)) +
+            ggplot2::geom_histogram(color="black", 
+                                    fill="turquoise", 
+                                    binwidth=((max(PlotY)-min(PlotY))/10),
+                                    stat="bin") +
+            ggplot2::labs(title=paste0("Frequency of ", input$DepVar), 
+                          y="Count", 
+                          x=input$DepVar) +
             ggplot2::theme_classic()
         }
       }
@@ -185,4 +189,3 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 #shiny::runApp(display.mode="showcase")
-
