@@ -8,6 +8,9 @@
 #
 
 library(shiny)
+library(tidyverse)
+
+source("forecasting.R")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -34,7 +37,13 @@ ui <- fluidPage(
 
         conditionalPanel(
           condition = "input.DataType == 'Time series'", 
-          uiOutput("YearVar")
+          uiOutput("YearVar"),
+          
+          # uiOutput("TimeInterval"),
+          uiOutput("DataStart"),
+          # uiOutput("DataStartInterval"),
+          uiOutput("DataEnd")#,
+          # uiOutput("DataEndInterval")
         )
       ),
       
@@ -47,7 +56,10 @@ ui <- fluidPage(
         verbatimTextOutput("DataHead"),
         
         h5("What does your dependent variable look like?"), 
-        plotOutput("DepVarPlot")
+        plotOutput("DepVarPlot"),
+        
+        h5("Here are plots of all variables:"), 
+        plotOutput("tsPlots")
       )
    )
 )
@@ -65,14 +77,19 @@ server <- function(input, output) {
     }
     
     # Return data
-    FileData <- as.data.frame(read.csv(infile$datapath, stringsAsFactors = FALSE))
-    
-    # # If data has row names (i.e. is a time series object), add time 
-    # if (tibble::has_rownames(FileData)) { 
-    #   FileData <- tibble::rownames_to_column(RawData, var = "Time")
-    # }
+    FileData <- as.data.frame(read.csv(infile$datapath, 
+                                       stringsAsFactors = FALSE))
     
     return(FileData)
+  })
+  
+  # Dataset as ts object
+  tsFileData <- reactive({
+    df <- FileData()
+    tsFileData <- ts(df)#,
+                     # start = c(input$DataStart, 1),
+                     # end = c(input$DataEnd, 1))
+    return(tsFileData)
   })
   
   # Get list of variable names in dataset
@@ -117,6 +134,38 @@ server <- function(input, output) {
     
   })
   
+  output$DataStart <- renderUI({
+    df <- FileData()
+    if (is.null(df)) return(NULL)
+    
+    items <- unique(df[, input$YearVar])
+    names(items) <- items
+    selectInput("DataStart",
+                "Select start of time series:",
+                items)
+  })
+  
+  output$DataEnd <- renderUI({
+    df <- FileData()
+    if (is.null(df)) return(NULL)
+    
+    items <- unique(df[, input$YearVar])
+    names(items) <- items
+    selectInput("DataEnd",
+                "Select end of time series:",
+                choices = items,
+                selected = items[length(items)])
+  })
+  
+  # output$TimeInterval <- renderUI({
+  #   items <- c("Annual",
+  #              "Quarterly")
+  #   names(items) <- items
+  #   selectInput("TimeInterval",
+  #               "Select time interval:",
+  #               items)
+  # })
+  
   # Generate textual info about data for display in app
   output$DataInfo <- renderPrint({
     # shiny::tags$h3("Variable names:")
@@ -138,7 +187,6 @@ server <- function(input, output) {
       head(FileData())
     }
   })
-  
   
   # Generate plot of dependent variable
   output$DepVarPlot <- renderPlot({
@@ -183,9 +231,14 @@ server <- function(input, output) {
       }
     }
   })
-
+  
+  # Generate plots of all variables
+  output$tsPlots <- renderPlot({
+    plot(tsFileData())
+  })
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
 #shiny::runApp(display.mode="showcase")
+
