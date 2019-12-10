@@ -67,6 +67,8 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  ## Read in data ----
+  
   # Read in dataset
   FileData <- reactive({
     infile <- input$DataFilePath
@@ -92,6 +94,18 @@ server <- function(input, output) {
     return(tsFileData)
   })
   
+  # Dependent var dataset
+  tsDepVar <- reactive({
+    df <- FileData()
+    
+    if (is.null(input$DepVar) | is.null(df)) {
+      return(NULL)
+    } else{
+      tsDepVar <- df[, input$DepVar]
+      return(tsDepVar)
+    }
+  })
+  
   # Get list of variable names in dataset
   DataVarNames <- reactive({
     df <- FileData()
@@ -101,6 +115,9 @@ server <- function(input, output) {
       return(names(df)) 
     }
   })
+  
+  
+  ## Setup dynamic inputs ----
   
   output$DataType <- renderUI({
     radioButtons("DataType", 
@@ -188,6 +205,9 @@ server <- function(input, output) {
     }
   })
   
+  
+  ## Plots ----
+  
   # Generate plot of dependent variable
   output$DepVarPlot <- renderPlot({
     if (is.null(input$DepVar)) {
@@ -235,6 +255,19 @@ server <- function(input, output) {
   # Generate plots of all variables
   output$tsPlots <- renderPlot({
     plot(tsFileData())
+  })
+  
+  # Generate plot showing all forecasts
+  output$forecasts <- renderPlotly({
+    # get forecasts
+    hist <- tsDepVar()
+    naive <- forecastNaive()
+    decomposition <- forecastDecomposition()
+    holtwinters <- forecastHoltWinters()
+    
+    # put together plots
+    
+    
   })
 }
 
