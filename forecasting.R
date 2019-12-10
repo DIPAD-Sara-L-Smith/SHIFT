@@ -17,6 +17,11 @@ server <- function(input, output) {
     return(forecast(fit, 12))
   })
   
+  output$plotNaive <- renderPlot({
+    fit <- fitNaive()
+    return(plot(fit))
+  })
+  
   
   ## Time series decomposition ----
   output$fitDecomposition <- reactive({
@@ -28,7 +33,12 @@ server <- function(input, output) {
   
   output$forecastDecomposition <- reactive({
     fit <- fitDecomposition()
-    return(forecast(fit, 12))
+    return(forecast(fit)[1:12])
+  })
+  
+  output$plotDecomposition <- renderPlot({
+    fit <- fitDecomposition()
+    return(plot(fit))
   })
   
   
@@ -41,7 +51,12 @@ server <- function(input, output) {
   
   output$forecastHoltWinters <- reactive({
     fit <- fitHoltWinters()
-    return(forecast(fit, 12))
+    return(forecast(fit)[1:12])
+  })
+  
+  output$plotHoltWinters <- renderPlot({
+    fit <- fitHoltWinters()
+    return(plot(fit))
   })
   
 }
