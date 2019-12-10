@@ -38,7 +38,7 @@ server <- function(input, output) {
   
   output$plotDecomposition <- renderPlot({
     fit <- fitDecomposition()
-    return(plot(fit))
+    return(plot(forecast(fit)))
   })
   
   
@@ -56,7 +56,7 @@ server <- function(input, output) {
   
   output$plotHoltWinters <- renderPlot({
     fit <- fitHoltWinters()
-    return(plot(fit))
+    return(plot(forecast(fit)))
   })
   
 }
