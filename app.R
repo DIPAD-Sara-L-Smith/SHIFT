@@ -224,12 +224,12 @@ server <- function(input, output) {
           if (is.null(input$YearVar)) {
             return("No time period has been selected.")
           } else {
-            PlotX <- as.data.frame(PlottingData[, input$YearVar])
-            PlotY <- as.data.frame(PlottingData[, input$DepVar])
+            # PlotX <- as.data.frame(PlottingData[, input$YearVar])
+            # PlotY <- as.data.frame(PlottingData[, input$DepVar])
             
             ggplot2::ggplot(PlottingData, 
-                            ggplot2::aes_string(y = input$YearVar, 
-                                         input$DepVar)) +
+                            ggplot2::aes_string(y = input$DepVar, 
+                                         input$YearVar)) +
               ggplot2::geom_point() +
               ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), 
                             y=input$DepVar, 
