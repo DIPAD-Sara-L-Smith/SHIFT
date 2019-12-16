@@ -9,6 +9,7 @@
 
 library(shiny)
 library(tidyverse)
+library(plotly)
 
 source("forecasting.R")
 
@@ -265,16 +266,36 @@ server <- function(input, output) {
     decomposition <- forecastDecomposition()
     holtwinters <- forecastHoltWinters()
     
-    # put together plots
-    plotData <- as.data.frame(
-        ts.union(tsDepVar, tsFileData, naive$fitted, decomposition$fitted, holtwinters$fitted)
+    # put together plot
+    plotData <- ts.union(
+      hist, 
+      naive$mean, 
+      decomposition$mean, 
+      holtwinters$mean
     )
-    p <- plotly::plot_ly(data = as.data.frame(plotData),
-                         x = ~tsFileData.Time,
+    
+    # convert to data frame for plotting
+    plotData <- data.frame(Y=as.matrix(plotData), Date=time(plotData))
+    names(plotData) <- c("Historical data",
+                         "Naive forecast",
+                         "Time Series Decomposition forecast", 
+                         "Holt-Winters forecast",
+                         "Date")
+    
+    p <- plotly::plot_ly(data = plotData,
+                         x = plotData$Date,
+                         y = plotData$`Historical data`,
+                         name = "Historical data",
                          type = 'scatter',
-                         mode = 'lines')
+                         mode = 'lines') %>%
+      plotly::layout(title = "Comparison of forecasts",
+             xaxis = list(title = "Time"),
+             yaxis = list(title = " ", 
+                          range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
+             legend = list(x = 100, y = 0.5))
+    
     for (trace in colnames(plotData)){
-      if (!(trace %in% c("tsFileData.Time", "trace 0"))){
+      if (!(trace %in% c("Date", "trace 0", "Historical data"))){
         p <- p %>% plotly::add_trace(y = as.formula(paste0("~`", trace, "`")),
                                      name = trace)
       }                                                                  
@@ -285,4 +306,3 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 #shiny::runApp(display.mode="showcase")
-
