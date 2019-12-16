@@ -6,15 +6,13 @@ server <- function(input, output) {
   
   ## Naive ----
   output$fitNaive <- reactive({
-    ts <- tsDepVar()
-    fit <- forecast::snaive(tsDepVar, 
-                            h = 12)
+    fit <- forecast::naive(tsDepVar())
     return(fit)
   })
   
   output$forecastNaive <- reactive({
     fit <- fitNaive()
-    return(forecast(fit, 12))
+    return(forecast(fit))
   })
   
   output$plotNaive <- renderPlot({
@@ -25,15 +23,14 @@ server <- function(input, output) {
   
   ## Time series decomposition ----
   output$fitDecomposition <- reactive({
-    ts <- tsDepVar()
-    fit <- stats::stl(tsDepVar, 
+    fit <- stats::stl(tsDepVar(), 
                       s.window = "period")
     return(fit)
   })
   
   output$forecastDecomposition <- reactive({
     fit <- fitDecomposition()
-    return(forecast(fit)[1:12])
+    return(forecast(fit))
   })
   
   output$plotDecomposition <- renderPlot({
@@ -44,14 +41,13 @@ server <- function(input, output) {
   
   ## Holt-Winters ----
   output$fitHoltWinters <- reactive({
-    ts <- tsDepVar()
-    fit <- stats::HoltWinters(tsDepVar)
+    fit <- stats::HoltWinters(tsDepVar())
     return(fit)
   })
   
   output$forecastHoltWinters <- reactive({
     fit <- fitHoltWinters()
-    return(forecast(fit)[1:12])
+    return(forecast(fit))
   })
   
   output$plotHoltWinters <- renderPlot({
