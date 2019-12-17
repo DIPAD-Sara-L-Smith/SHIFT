@@ -7,62 +7,163 @@
 #    http://shiny.rstudio.com/
 #
 
+# Load packages
 library(shiny)
+library(shinydashboard)
 library(tidyverse)
 library(plotly)
 
+# Source additional scripts
 source("forecasting.R")
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
+# Define user interface
+ui <- dashboardPage(
    
    # Application title
-   titlePanel("Exploratory Statistical Tool (EXSTAT)"),
+   dashboardHeader(title = "Forecasting Tool"),
    
    # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-        shiny::tags$p("Explore and perform regression on a dataset of your choice."),
+   dashboardSidebar(
+     sidebarMenu(
+       menuItem("Explore data", 
+                tabName = "explore", 
+                icon = icon("table")),
+       menuItem("Compare forecasts", 
+                tabName = "forecasts", 
+                icon = icon("line-chart")),
+       menuItem("Review regression models", 
+                tabName = "review-regression", 
+                icon = icon("list-ol"))
+    )
+  ), 
+     
+  dashboardBody(
+    tabItems(
+    
+      # Explore data tab -----
+      tabItem(tabName = "explore",
+        fluidRow(
+          box(width = 12,
+            h4("Explore a dataset of your choice.")
+          )
+        ),
         
-        fileInput("DataFilePath",
-                  "First, select your dataset:",
-                  multiple = FALSE,
-                  accept = NULL,
-                  width = "400px",
-                  buttonLabel = "Find file", 
-                  placeholder = "Data file path"),
-        
-        uiOutput("DataType"),
-        
-        uiOutput("DepVar"),
-
-        conditionalPanel(
-          condition = "input.DataType == 'Time series'", 
-          uiOutput("YearVar"),
+        fluidRow(
+          box(width = 6,
+              solidHeader = TRUE,
+              status = "primary",
+              title = "Choose your dataset", 
+              fileInput("DataFilePath",
+                        " ",
+                        multiple = FALSE,
+                        accept = NULL,
+                        width = "400px",
+                        buttonLabel = "Find file",
+                        placeholder = "Data file path")
+          ),
           
-          # uiOutput("TimeInterval"),
-          uiOutput("DataStart"),
-          # uiOutput("DataStartInterval"),
-          uiOutput("DataEnd")#,
-          # uiOutput("DataEndInterval")
+          box(width = 6,
+              solidHeader = TRUE,
+              status = "primary",
+              title = "Choose data type & variables", 
+              
+              uiOutput("DataType"),
+              
+              uiOutput("DepVar"), 
+              
+              conditionalPanel(
+                condition = "input.DataType == 'Time series'",
+                uiOutput("YearVar")#,
+      
+                # # uiOutput("TimeInterval"),
+                # uiOutput("DataStart"),
+                # # uiOutput("DataStartInterval"),
+                # uiOutput("DataEnd")#,
+                # # uiOutput("DataEndInterval")
+              )
+          )
+        ),
+
+        fluidRow(
+          # box(width = 12, 
+          #   solidHeader = TRUE,
+          #   status = "primary", 
+          #   title = "What variables are in your data?",
+          #   verbatimTextOutput("DataInfo")
+          # ),
+  
+          box(width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            title = "Here's a snapshot of your data",
+            verbatimTextOutput("DataHead")
+          ),
+  
+          box(width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            title = "What does your dependent variable look like?",
+            plotOutput("DepVarPlot", height = 700)
+          ),
+  
+          box(width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            title = "Plots of all variables",
+            plotOutput("tsPlots", height = 1000)
+          )
         )
+        
+      ), #tabItem end
+      
+      # Compare forecasts -----
+      tabItem(tabName = "forecasts",
+        # tab_forecasts_ui("tab_forecasts_server")
+        
+        fluidRow(
+          box(width = 12,
+              h4("Compare forecasts"),
+              plotlyOutput("plotForecasts", height = 500)
+          )
+        ),
+        
+        fluidRow(
+          box(width = 12,
+              title = "Naive",
+              solidHeader = TRUE,
+              # verbatimTextOutput("fitNaive"), 
+              plotOutput("plotNaive", height = 500)
+          )
+        ),
+        
+        fluidRow(
+          box(width = 12,
+              title = "Holt-Winters",
+              solidHeader = TRUE,
+              # verbatimTextOutput("fitHoltWinters"), 
+              plotOutput("plotHoltWinters", height = 500)
+          )
+        ),
+        
+        fluidRow(
+          box(width = 12,
+              title = "Time Series Decomposition",
+              solidHeader = TRUE,
+              # verbatimTextOutput("fitDecomposition"), 
+              plotOutput("plotDecomposition", height = 500)
+          )
+        )
+        
       ),
       
-      # Show a plot of the generated distribution
-      mainPanel(
-        h5("Here is a list of variables in your data: "), 
-        verbatimTextOutput("DataInfo"),
-        
-        h5("And here is a summary of the data: "), 
-        verbatimTextOutput("DataHead"),
-        
-        h5("What does your dependent variable look like?"), 
-        plotOutput("DepVarPlot"),
-        
-        h5("Here are plots of all variables:"), 
-        plotOutput("tsPlots")
+      # Review regression models -----
+      tabItem(tabName = "review-regression",
+        fluidRow(
+          p("To be added...")
+        )
       )
-   )
+    )
+  )
 )
 
 # Define server logic required to draw a histogram
@@ -89,7 +190,7 @@ server <- function(input, output) {
   # Dataset as ts object
   tsFileData <- reactive({
     df <- FileData()
-    tsFileData <- ts(df)#,
+    tsFileData <- ts(df, frequency = 4)#,
                      # start = c(input$DataStart, 1),
                      # end = c(input$DataEnd, 1))
     return(tsFileData)
@@ -102,7 +203,7 @@ server <- function(input, output) {
     if (is.null(input$DepVar) | is.null(df)) {
       return(NULL)
     } else{
-      tsDepVar <- df[, input$DepVar]
+      tsDepVar <- ts(df[, input$DepVar], frequency = 4)
       return(tsDepVar)
     }
   })
@@ -224,9 +325,6 @@ server <- function(input, output) {
           if (is.null(input$YearVar)) {
             return("No time period has been selected.")
           } else {
-            # PlotX <- as.data.frame(PlottingData[, input$YearVar])
-            # PlotY <- as.data.frame(PlottingData[, input$DepVar])
-            
             ggplot2::ggplot(PlottingData, 
                             ggplot2::aes_string(y = input$DepVar, 
                                          input$YearVar)) +
@@ -258,8 +356,69 @@ server <- function(input, output) {
     plot(tsFileData())
   })
   
+  # Load tab modules
+  # callModule(tab_forecasts_server, "tab_forecasts_server", tsDepVar, tsFileData)
+  
+  ## Naive ----
+  fitNaive <- reactive({
+    fit <- forecast::naive(tsDepVar())
+    return(fit)
+  })
+  
+  forecastNaive <- reactive({
+    fit <- fitNaive()
+    return(forecast(fit))
+  })
+  
+  output$plotNaive <- renderPlot({
+    fit <- forecast::naive(stats::ts(tsDepVar()))
+    return(plot(fit))
+  })
+  
+  
+  ## Time series decomposition ----
+  fitDecomposition <- reactive({
+    fit <- stats::stl(tsDepVar(), 
+                      s.window = "period")
+    return(fit)
+  })
+  
+  forecastDecomposition <- reactive({
+    fit <- fitDecomposition()
+    return(forecast(fit))
+  })
+  
+  output$plotDecomposition <- renderPlot({
+    ds_ts <- ts(tsDepVar(), frequency = 4)
+    fit <- stats::stl(ds_ts, 
+                      s.window = "period")
+    return(plot(forecast(fit)))
+  })
+  
+  
+  ## Holt-Winters ----
+  fitHoltWinters <- reactive({
+    fit <- stats::HoltWinters(tsDepVar())
+    return(fit)
+  })
+  
+  forecastHoltWinters <- reactive({
+    fit <- fitHoltWinters()
+    return(forecast(fit))
+  })
+  
+  output$plotHoltWinters <- renderPlot({
+    fit <- stats::HoltWinters(tsDepVar())
+    return(plot(forecast(fit, h = 12)))
+  })
+  
+  output$ts_test <- reactive({
+    ts_obj <- typeof(tsDepVar())
+    return(ts_obj)
+  })
+  
   # Generate plot showing all forecasts
-  output$forecasts <- renderPlotly({
+  output$plotForecasts <- renderPlotly({
     # get forecasts
     hist <- tsDepVar()
     naive <- forecastNaive()
@@ -289,10 +448,10 @@ server <- function(input, output) {
                          type = 'scatter',
                          mode = 'lines') %>%
       plotly::layout(title = "Comparison of forecasts",
-             xaxis = list(title = "Time"),
-             yaxis = list(title = " ", 
-                          range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
-             legend = list(x = 100, y = 0.5))
+                     xaxis = list(title = "Time"),
+                     yaxis = list(title = " "), 
+                                 # range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
+                     legend = list(x = 100, y = 0.5))
     
     for (trace in colnames(plotData)){
       if (!(trace %in% c("Date", "trace 0", "Historical data"))){
@@ -300,6 +459,8 @@ server <- function(input, output) {
                                      name = trace)
       }                                                                  
     }
+    
+    return(p)
   })
 }
 
