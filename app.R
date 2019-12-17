@@ -123,6 +123,9 @@ ui <- dashboardPage(
         fluidRow(
           box(width = 12,
               h4("Compare forecasts"),
+              solidHeader = TRUE,
+              collapsible = TRUE,
+              status = "primary",
               plotlyOutput("plotForecasts", height = 500)
           )
         ),
@@ -131,6 +134,8 @@ ui <- dashboardPage(
           box(width = 12,
               title = "Naive",
               solidHeader = TRUE,
+              collapsible = TRUE,
+              status = "primary", 
               # verbatimTextOutput("fitNaive"), 
               plotOutput("plotNaive", height = 500)
           )
@@ -140,6 +145,8 @@ ui <- dashboardPage(
           box(width = 12,
               title = "Holt-Winters",
               solidHeader = TRUE,
+              collapsible = TRUE,
+              status = "primary", 
               # verbatimTextOutput("fitHoltWinters"), 
               plotOutput("plotHoltWinters", height = 500)
           )
@@ -149,8 +156,21 @@ ui <- dashboardPage(
           box(width = 12,
               title = "Time Series Decomposition",
               solidHeader = TRUE,
+              collapsible = TRUE,
+              status = "primary", 
               # verbatimTextOutput("fitDecomposition"), 
               plotOutput("plotDecomposition", height = 500)
+          )
+        ),
+        
+        fluidRow(
+          box(width = 12,
+              title = "Linear regression",
+              solidHeader = TRUE,
+              verbatimTextOutput("fitLinearRegression"),
+              status = "primary", 
+              collapsible = TRUE#, 
+              # plotOutput("plotLinearRegression", height = 500)
           )
         )
         
@@ -404,7 +424,7 @@ server <- function(input, output) {
   
   forecastHoltWinters <- reactive({
     fit <- fitHoltWinters()
-    return(forecast(fit))
+    return(forecast(fit))#, ts = TRUE))
   })
   
   output$plotHoltWinters <- renderPlot({
@@ -412,10 +432,31 @@ server <- function(input, output) {
     return(plot(forecast(fit, h = 12)))
   })
   
-  output$ts_test <- reactive({
-    ts_obj <- typeof(tsDepVar())
-    return(ts_obj)
+
+  ## Linear regression ----
+  output$fitLinearRegression <- renderPrint({
+    # get data and remove time variable
+    fitData <- tsFileData()
+    
+    # find variables to include (including seasonal dummy variables)
+    varsToInclude <- colnames(fitData)[which(!(colnames(fitData) %in% c("Time", "y")))]
+    varsToInclude <- c(varsToInclude, "season")
+    strFormula <- stats::reformulate(varsToInclude, response = input$DepVar)
+    
+    fit <- tslm(formula = strFormula, data = fitData)
+    return(summary(fit))
   })
+  
+  # forecastLinearRegression <- reactive({
+  #   fit <- fitLinearRegression()
+  #   return(forecast(fit))
+  # })
+  # 
+  # output$plotLinearRegression <- renderPlot({
+  #   fit <- fitLinearRegression()
+  #   return(plot(forecast(fit, h = 12)))
+  # })
+  # 
   
   # Generate plot showing all forecasts
   output$plotForecasts <- renderPlotly({
@@ -424,13 +465,15 @@ server <- function(input, output) {
     naive <- forecastNaive()
     decomposition <- forecastDecomposition()
     holtwinters <- forecastHoltWinters()
+    # regression <- forecastLinearRegression()
     
     # put together plot
     plotData <- ts.union(
       hist, 
       naive$mean, 
       decomposition$mean, 
-      holtwinters$mean
+      holtwinters$mean#,
+      # regression$mean
     )
     
     # convert to data frame for plotting
