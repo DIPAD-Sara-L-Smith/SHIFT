@@ -159,7 +159,9 @@ ui <- dashboardPage(
               collapsible = TRUE,
               status = "primary", 
               # verbatimTextOutput("fitDecomposition"), 
-              plotOutput("plotDecomposition", height = 500)
+              plotOutput("plotDecomposition", height = 500),
+              p("The chart below shows the components of the time series decomposition"),
+              plotOutput("plotDecompositionComponents", height = 500)
           )
         ),
         
@@ -245,7 +247,8 @@ server <- function(input, output) {
     radioButtons("DataType", 
                  label = "What type of data is this?", 
                  choices = c("Frequency",
-                             "Time series"))
+                             "Time series"),
+                 selected = "Time series")
   })
   
   output$DepVar <- renderUI({
@@ -340,6 +343,7 @@ server <- function(input, output) {
       } else {
         # Get data
         PlottingData <- as.data.frame(FileData())
+        PlotY <- PlottingData[, input$DepVar]
         
         if (input$DataType == "Time series") {
           if (is.null(input$YearVar)) {
@@ -398,21 +402,27 @@ server <- function(input, output) {
   
   ## Time series decomposition ----
   fitDecomposition <- reactive({
-    fit <- stats::stl(tsDepVar(), 
-                      s.window = "period")
+    # fit <- stats::stl(tsDepVar(), 
+    #                   s.window = "period")
+    fit <- stats::decompose(tsDepVar(), type = "additive")
     return(fit)
   })
   
   forecastDecomposition <- reactive({
-    fit <- fitDecomposition()
+    fit <- stats::stl(tsDepVar(), s.window = "period")
     return(forecast(fit))
   })
   
   output$plotDecomposition <- renderPlot({
     ds_ts <- ts(tsDepVar(), frequency = 4)
-    fit <- stats::stl(ds_ts, 
-                      s.window = "period")
+    fit <- stats::stl(ds_ts, s.window = "period")
+    #fit <- stats::decompose(ds_ts, type = "additive")
     return(plot(forecast(fit)))
+  })
+  
+  output$plotDecompositionComponents <- renderPlot({
+    fit <- fitDecomposition()
+    return(plot(fit))
   })
   
   
