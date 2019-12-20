@@ -12,6 +12,7 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(plotly)
+library(dygraphs)
 
 # Source additional scripts
 source("forecasting.R")
@@ -65,33 +66,23 @@ ui <- dashboardPage(
           box(width = 6,
               solidHeader = TRUE,
               status = "primary",
-              title = "Choose data type & variables", 
+              title = "Setup data", 
               
-              uiOutput("DataType"),
+              #uiOutput("DataType"),
               
               uiOutput("DepVar"), 
               
-              conditionalPanel(
-                condition = "input.DataType == 'Time series'",
-                uiOutput("YearVar")#,
-      
-                # # uiOutput("TimeInterval"),
-                # uiOutput("DataStart"),
-                # # uiOutput("DataStartInterval"),
-                # uiOutput("DataEnd")#,
-                # # uiOutput("DataEndInterval")
-              )
+              #conditionalPanel(
+                #condition = "input.DataType == 'Time series'",
+                uiOutput("YearVar"),
+                uiOutput("PeriodVar"),
+                uiOutput("YearStart"),
+                uiOutput("PeriodStart")
+              #)
           )
         ),
 
         fluidRow(
-          # box(width = 12, 
-          #   solidHeader = TRUE,
-          #   status = "primary", 
-          #   title = "What variables are in your data?",
-          #   verbatimTextOutput("DataInfo")
-          # ),
-  
           box(width = 12,
             solidHeader = TRUE,
             status = "primary",
@@ -103,7 +94,7 @@ ui <- dashboardPage(
             solidHeader = TRUE,
             status = "primary",
             title = "What does your dependent variable look like?",
-            plotOutput("DepVarPlot", height = 700)
+            dygraphOutput("DepVarPlot", height = 500)
           ),
   
           box(width = 12,
@@ -126,7 +117,7 @@ ui <- dashboardPage(
               solidHeader = TRUE,
               collapsible = TRUE,
               status = "primary",
-              plotlyOutput("plotForecasts", height = 500)
+              dygraphOutput("plotForecasts", height = 500)
           )
         ),
         
@@ -212,20 +203,37 @@ server <- function(input, output) {
   # Dataset as ts object
   tsFileData <- reactive({
     df <- FileData()
-    tsFileData <- ts(df, frequency = 4)#,
-                     # start = c(input$DataStart, 1),
-                     # end = c(input$DataEnd, 1))
+    
+    # find start point
+    if (is.null(input$YearStart) | !(is.integer(df[, input$YearVar]))) {
+      warning("No integer year variable selected - time series may not display 
+              correctly. Number of periods set by default to 1.")
+      tsFileData <- ts(df, frequency = 1)
+    } else {
+      if (is.null(input$PeriodStart) | !(is.integer(df[, input$PeriodVar]))) {
+        warning("No integer period variable selected - time series may not 
+                display correctly. Number of periods set by default to 1.")
+        tsFileData <- ts(df, frequency = 1,
+                         start = c(input$YearStart, 1))
+      } else {
+        strStart <- c(input$YearStart, input$PeriodStart)
+        intFrequency <- max(df[, input$PeriodVar])
+        tsFileData <- ts(df, frequency = intFrequency,
+                         start = strStart)
+      }
+    }
+    
     return(tsFileData)
   })
   
   # Dependent var dataset
   tsDepVar <- reactive({
-    df <- FileData()
+    df <- tsFileData()
     
     if (is.null(input$DepVar) | is.null(df)) {
       return(NULL)
     } else{
-      tsDepVar <- ts(df[, input$DepVar], frequency = 4)
+      tsDepVar <- df[, input$DepVar]
       return(tsDepVar)
     }
   })
@@ -260,7 +268,7 @@ server <- function(input, output) {
     selectInput("DepVar", 
                 "Now choose your dependent variable:",
                 items,
-                selected = items[2])
+                selected = items[3])
     
   })
   
@@ -271,19 +279,44 @@ server <- function(input, output) {
     items <- names(df)
     names(items) <- items
     selectInput("YearVar", 
-                "Which variable hows the time period:",
-                items)
+                "Which variable contains the time period (e.g. year)?",
+                items,
+                selected = items[1])
     
   })
   
-  output$DataStart <- renderUI({
+  output$PeriodVar <- renderUI({
+    df <- FileData()
+    if (is.null(df)) return(NULL)
+    
+    items <- names(df)
+    names(items) <- items
+    selectInput("PeriodVar", 
+                "Which variable contains the period (e.g. quarter)?",
+                items,
+                selected = items[2])
+    
+  })
+  
+  output$YearStart <- renderUI({
     df <- FileData()
     if (is.null(df)) return(NULL)
     
     items <- unique(df[, input$YearVar])
     names(items) <- items
     selectInput("DataStart",
-                "Select start of time series:",
+                "What's the first year in the data?",
+                items)
+  })
+  
+  output$PeriodStart <- renderUI({
+    df <- FileData()
+    if (is.null(df)) return(NULL)
+    
+    items <- unique(df[, input$PeriodVar])
+    names(items) <- items
+    selectInput("DataStart",
+                "What's the first period in the data?",
                 items)
   })
   
@@ -299,19 +332,9 @@ server <- function(input, output) {
                 selected = items[length(items)])
   })
   
-  # output$TimeInterval <- renderUI({
-  #   items <- c("Annual",
-  #              "Quarterly")
-  #   names(items) <- items
-  #   selectInput("TimeInterval",
-  #               "Select time interval:",
-  #               items)
-  # })
   
   # Generate textual info about data for display in app
   output$DataInfo <- renderPrint({
-    # shiny::tags$h3("Variable names:")
-    # shiny::tags$br()
     if(is.null(input$DataFilePath)) {
       textVarNames <- "No data file has been selected."
       textVarNames
@@ -334,7 +357,7 @@ server <- function(input, output) {
   ## Plots ----
   
   # Generate plot of dependent variable
-  output$DepVarPlot <- renderPlot({
+  output$DepVarPlot <- renderDygraph({
     if (is.null(input$DepVar)) {
       return("No dependent variable has been selected.")
     } else {
@@ -349,14 +372,15 @@ server <- function(input, output) {
           if (is.null(input$YearVar)) {
             return("No time period has been selected.")
           } else {
-            ggplot2::ggplot(PlottingData, 
-                            ggplot2::aes_string(y = input$DepVar, 
-                                         input$YearVar)) +
-              ggplot2::geom_point() +
-              ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), 
-                            y=input$DepVar, 
-                            x=input$YearVar) +
-              ggplot2::theme_classic()
+            dygraph(tsDepVar())
+            # ggplot2::ggplot(PlottingData, 
+            #                 ggplot2::aes_string(y = input$DepVar, 
+            #                              input$YearVar)) +
+            #   ggplot2::geom_point() +
+            #   ggplot2::labs(title=paste0(input$DepVar, " by ", input$YearVar), 
+            #                 y=input$DepVar, 
+            #                 x=input$YearVar) +
+            #   ggplot2::theme_classic()
           }
         } else {
           # Plot frequency histogram
@@ -469,7 +493,7 @@ server <- function(input, output) {
   # 
   
   # Generate plot showing all forecasts
-  output$plotForecasts <- renderPlotly({
+  output$plotForecasts <- renderDygraph({
     # get forecasts
     hist <- tsDepVar()
     naive <- forecastNaive()
@@ -494,24 +518,28 @@ server <- function(input, output) {
                          "Holt-Winters forecast",
                          "Date")
     
-    p <- plotly::plot_ly(data = plotData,
-                         x = plotData$Date,
-                         y = plotData$`Historical data`,
-                         name = "Historical data",
-                         type = 'scatter',
-                         mode = 'lines') %>%
-      plotly::layout(title = "Comparison of forecasts",
-                     xaxis = list(title = "Time"),
-                     yaxis = list(title = " "), 
-                                 # range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
-                     legend = list(x = 100, y = 0.5))
+    p <- dygraph(plotData,
+                 main = "Comparison of forecasts"
+                 )
     
-    for (trace in colnames(plotData)){
-      if (!(trace %in% c("Date", "trace 0", "Historical data"))){
-        p <- p %>% plotly::add_trace(y = as.formula(paste0("~`", trace, "`")),
-                                     name = trace)
-      }                                                                  
-    }
+    # p <- plotly::plot_ly(data = plotData,
+    #                      x = plotData$Date,
+    #                      y = plotData$`Historical data`,
+    #                      name = "Historical data",
+    #                      type = 'scatter',
+    #                      mode = 'lines') %>%
+    #   plotly::layout(title = "Comparison of forecasts",
+    #                  xaxis = list(title = "Time"),
+    #                  yaxis = list(title = " "), 
+    #                              # range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
+    #                  legend = list(x = 100, y = 0.5))
+    # 
+    # for (trace in colnames(plotData)){
+    #   if (!(trace %in% c("Date", "trace 0", "Historical data"))){
+    #     p <- p %>% plotly::add_trace(y = as.formula(paste0("~`", trace, "`")),
+    #                                  name = trace)
+    #   }                                                                  
+    # }
     
     return(p)
   })
@@ -520,3 +548,4 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 #shiny::runApp(display.mode="showcase")
+
