@@ -15,7 +15,7 @@ library(plotly)
 library(dygraphs)
 
 # Source additional scripts
-source("forecasting.R")
+#source("forecasting.R")
 
 # Define user interface
 ui <- dashboardPage(
