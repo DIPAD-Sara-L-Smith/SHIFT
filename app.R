@@ -100,11 +100,20 @@ ui <- dashboardPage(
           box(width = 12,
               solidHeader = TRUE,
               status = "primary",
-              title = "Choose your dataset", 
+              title = "Choose your dataset",
+              p("Select a data file (.csv or .xslx) or an R script that 
+                outputs one of these files."),
               fileInput("DataFilePath",
                         " ",
                         multiple = FALSE,
-                        accept = NULL,
+                        accept = c(
+                          "text/csv",
+                          "text/comma-separated-values,text/plain",
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                          ".csv",
+                          ".xlsx",
+                          ".R"
+                        ),
                         width = "400px",
                         buttonLabel = "Find file",
                         placeholder = "Data file path")
@@ -237,17 +246,34 @@ server <- function(input, output, session) {
   
   # Read in dataset
   FileData <- reactive({
-    infile <- input$DataFilePath
+    infile <- input$DataFilePath$name
     
     if (is.null(infile)) {
       # User has not uploaded a file yet
       return(NULL)
+    } else if (tolower(tools::file_ext(infile)) == "csv") {
+      # Return data
+      FileData <- readr::read_csv(infile$datapath)
+      return(FileData)
+    } else if (tolower(tools::file_ext(infile)) == "r") {
+      # Run R script that returns data
+      source(infile, local = TRUE)
+      
+      if (exists("FileData")) {
+        if (is.data.frame(FileData)) {
+          return(FileData)
+        } else {
+          warning("The selected R script didn't produce a data frame called 
+                  FileData. Please adjust your R script.")
+          return(NULL) 
+        }
+      } else {
+        warning("You selected an R script, but no variable named FileData was 
+                produced as a result - please adjust your script to do so.")
+        return(NULL)
+      }
     }
     
-    # Return data
-    FileData <- readr::read_csv(infile$datapath)
-    
-    return(FileData)
   })
   
   # Setup reactive values for data
@@ -393,11 +419,13 @@ server <- function(input, output, session) {
   })
   
   output$PeriodVar <- renderUI({
-    df <- FileData()
-    if (is.null(df)) {
+    shiny::req(input$DataFilePath)
+    
+    if (is.null(input$DataFilePath)) {
       items <- NULL
       itemToSelect <- NULL
     } else {
+      df <- FileData()
       items <- names(df)
       names(items) <- items
       itemToSelect <- items[2]
@@ -412,12 +440,15 @@ server <- function(input, output, session) {
   })
   
   output$YearStart <- renderUI({
+    shiny::req(input$DataFilePath)
+    
     if (is.null(input$DataFilePath)) {
       items <- NULL
     } else {
       if (is.null(input$YearVar)) {
         items <- NULL
       } else {
+        shiny::req(input$YearVar)
         df <- FileData()
         items <- unique(df[, input$YearVar])
         names(items) <- items
@@ -431,12 +462,14 @@ server <- function(input, output, session) {
   })
   
   output$PeriodStart <- renderUI({
+    shiny::req(input$DataFilePath)
     if (is.null(input$DataFilePath)) {
       items <- NULL
     } else {
       if (is.null(input$PeriodVar)) {
         items <- NULL
       } else {
+        shiny::req(input$PeriodVar)
         df <- FileData()
         items <- unique(df[, input$PeriodVar])
         names(items) <- items
