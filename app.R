@@ -20,9 +20,10 @@ library(xts)
 # Source additional scripts
 #source("forecasting.R")
 
-# Define user interface
+# User interface -----
 ui <- dashboardPage(
    
+  ## Title & sidebar -----
    # Application title
    dashboardHeader(title = "Forecasting Tool"),
    
@@ -42,9 +43,52 @@ ui <- dashboardPage(
   ), 
      
   dashboardBody(
+    # Also add some custom CSS to make the title background area the same
+    # color as the rest of the header.
+    tags$head(tags$style(HTML('
+                              /* logo */
+                              .skin-blue .main-header .logo {
+                              background-color: #006c56;
+                              }
+                              
+                              /* logo when hovered */
+                              .skin-blue .main-header .logo:hover {
+                              background-color: #006c56;
+                              }
+                              
+                              /* navbar (rest of the header) */
+                              .skin-blue .main-header .navbar {
+                              background-color: #006c56;
+                              }       
+                              
+                              /* other links in the sidebarmenu when hovered */
+                              .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #006c56;
+                              }
+
+                              /* toggle button when hovered  */                    
+                              .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #006c56;
+                              }
+
+                              /* primary status box */
+                              .box.box-solid.box-primary>.box-header {
+                                color:#fff;
+                                background:#006c56
+                              }
+                              
+                              .box.box-solid.box-primary {
+                                border-bottom-color:#006c56;
+                                border-left-color:#006c56;
+                                border-right-color:#006c56;
+                                border-top-color:#006c56;
+                              }
+
+                              '))), 
+    
     tabItems(
     
-      # Explore data tab -----
+      ## Explore data tab -----
       tabItem(tabName = "explore",
         fluidRow(
           box(width = 12,
@@ -186,10 +230,10 @@ ui <- dashboardPage(
   )
 )
 
-# Define server logic required to draw a histogram
+# Server -----
 server <- function(input, output, session) {
   
-  ## Read in data ----
+  ## Read in data -----
   
   # Read in dataset
   FileData <- reactive({
