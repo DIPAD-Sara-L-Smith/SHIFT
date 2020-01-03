@@ -14,8 +14,10 @@ library(tidyverse)
 library(readr)
 library(forecast)
 # library(plotly)
+library(shinyWidgets)
 library(dygraphs)
 library(xts)
+library(zoo)
 
 # Source additional scripts
 #source("forecasting.R")
@@ -43,6 +45,7 @@ ui <- dashboardPage(
   ), 
      
   dashboardBody(
+    # Custom CSS formatting -----
     # Also add some custom CSS to make the title background area the same
     # color as the rest of the header.
     tags$head(tags$style(HTML('
@@ -92,7 +95,7 @@ ui <- dashboardPage(
       tabItem(tabName = "explore",
         fluidRow(
           box(width = 12,
-            h4("Explore a dataset of your choice.")
+            h4("Use this tab to explore a dataset of your choice.")
           )
         ),
         
@@ -116,23 +119,17 @@ ui <- dashboardPage(
                         ),
                         width = "400px",
                         buttonLabel = "Find file",
-                        placeholder = "Data file path")
-          )
-        ), 
-        
-        fluidRow(
-          box(width = 12,
-              solidHeader = TRUE,
-              status = "primary",
-              title = "Setup data", 
+                        placeholder = "Data file path"),
               
               #uiOutput("DataType"),
               
               uiOutput("DepVar"), 
               uiOutput("YearVar"),
               uiOutput("PeriodVar"),
-              uiOutput("YearStart"),
-              uiOutput("PeriodStart"),
+              uiOutput("RangeHistorical"),
+              uiOutput("RangeProjections"),
+              # uiOutput("YearStart"),
+              # uiOutput("PeriodStart"),
               
               actionButton("button", "Refresh data")
               #)
@@ -253,7 +250,7 @@ server <- function(input, output, session) {
       return(NULL)
     } else if (tolower(tools::file_ext(infile)) == "csv") {
       # Return data
-      FileData <- readr::read_csv(infile$datapath)
+      FileData <- readr::read_csv(infile)
       return(FileData)
     } else if (tolower(tools::file_ext(infile)) == "r") {
       # Run R script that returns data
@@ -293,16 +290,14 @@ server <- function(input, output, session) {
       intFrequency <- max(df[, input$PeriodVar])
     }
 
-    if (is.null(input$YearStart)) {
+    if (is.null(input$rngHistoricalData)) {
       intStartYear <- 1
-    } else {
-      intStartYear <- as.integer(input$YearStart)
-    }
-    
-    if (is.null(input$PeriodStart)) {
       intStartPeriod <- 1
     } else {
-      intStartPeriod <- as.integer(input$PeriodStart)
+      StartDate <- lubridate::yq(input$rngHistoricalData[1])
+      intStartYear <- as.integer(lubridate::year(StartDate))
+      intStartPeriod <- as.integer(lubridate::quarter(StartDate, 
+                                                      with_year = FALSE))
     }
     
     # Setup variables for just dependent variable and all data
@@ -400,6 +395,89 @@ server <- function(input, output, session) {
                 items,
                 selected = items[3])
     
+  })
+  
+  getTimeValue <- function(intYear, intPeriod) {
+    if (missing(intPeriod)) {
+      intPeriod <- 0
+    }
+    
+    TimeValue <- intYear + (intPeriod / 4)
+    return(TimeValue)
+  }
+  
+  output$RangeHistorical <- renderUI({
+    req(input$DataFilePath, input$YearVar, input$PeriodVar)
+    df <- FileData()
+    
+    # create the sequence of Date objects
+    dateList <- seq(lubridate::yq(paste0(df[1, input$YearVar], 
+                                         ": Q", 
+                                         df[1, input$PeriodVar])),
+                    to = lubridate::yq("2030: Q1"), 
+                    by = "quarter")
+        
+    # format vector
+    dateListFormatted <- zoo::as.yearqtr(dateList)
+    
+    # find default end for historical data (based on when dependent variable 
+    # ends) !!! TO DO !!!
+    if (is.null(input$DepVar)) {
+      defaultEnd <- dateListFormatted[length(dateListFormatted)]
+    } else {
+      defaultEnd <- zoo::as.yearqtr("2019-01-01")
+    }
+    
+    # put together widget
+    sliderTextInput(
+      inputId = "rngHistoricalData", 
+      label = "Select the start and end points for the historical data", 
+      grid = TRUE, 
+      force_edges = TRUE,
+      choices = dateListFormatted,
+      selected = c(dateListFormatted[1], 
+                   defaultEnd)
+    )
+  })
+  
+  output$RangeProjections <- renderUI({
+    req(input$DataFilePath, input$YearVar, input$PeriodVar)
+    df <- FileData()
+    
+    # create the sequence of Date objects
+    dateList <- seq(lubridate::yq(paste0(df[1, input$YearVar], 
+                                         ": Q", 
+                                         df[1, input$PeriodVar])),
+                    to = lubridate::yq("2030: Q1"), 
+                    by = "quarter")
+    
+    # format vector
+    dateListFormatted <- zoo::as.yearqtr(dateList)
+    
+    # find default end for historical data (based on when dependent variable 
+    # ends) !!! TO DO !!!
+    if (is.null(input$DepVar)) {
+      defaultStart <- dateListFormatted[length(dateListFormatted)]
+    } else {
+      if (is.null(input$rngHistoricalData)) {
+        strEndOfHistData <- lubridate::yq("2019: Q1")
+      } else {
+        strEndOfHistData <- input$rngHistoricalData[2]
+        defaultStart <- zoo::as.yearqtr(strEndOfHistData)
+      }
+    }
+    
+    # put together widget
+    sliderTextInput(
+      inputId = "rngProjectionData", 
+      label = "Select the end point for the projections.", 
+      grid = TRUE, 
+      force_edges = TRUE,
+      choices = dateListFormatted,
+      selected = c(defaultStart, 
+                   zoo::as.yearqtr(lubridate::yq(defaultStart) + years(5))),
+      from_fixed = TRUE
+    )
   })
   
   output$YearVar <- renderUI({
