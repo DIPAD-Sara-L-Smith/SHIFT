@@ -301,15 +301,54 @@ server <- function(input, output, session) {
     }
     
     # Setup variables for just dependent variable and all data
+    # All data
     v$dataAll <- getTimeSeries(df,
                                intFreq = intFrequency,
                                intStartYear = intStartYear,
                                intStartPeriod = intStartPeriod)
     
-    v$dataDepVar <- getTimeSeries(df[, input$DepVar],
-                                  intFreq = intFrequency,
-                                  intStartYear = intStartYear,
-                                  intStartPeriod = intStartPeriod)
+    
+    # Historical data only
+    # read in the bounds for historical data (from user input)
+    req(input$rngHistoricalData)
+    dateStart <- lubridate::yq(input$rngHistoricalData[1])
+    dateEnd <- lubridate::yq(input$rngHistoricalData[2])
+    
+    # subset data
+    v$dataHist <- stats::window(
+      v$dataAll, 
+      start = c(lubridate::year(dateStart), 
+                lubridate::quarter(dateStart, with_year = FALSE)),
+      end = c(lubridate::year(dateEnd), 
+              lubridate::quarter(dateEnd, with_year = FALSE))
+    )
+    v$dataHist <- na.trim(v$dataHist)
+    
+    # Dependent variable only
+    v$dataDepVar <- v$dataHist[, input$DepVar]
+    
+    
+    # Projection data only
+    # read in bounds
+    req(input$rngProjectionData)
+    dateStart <- lubridate::yq(input$rngProjectionData[1])
+    dateEnd <- lubridate::yq(input$rngProjectionData[2])
+    
+    # subset data
+    v$dataProj <- stats::window(
+      v$dataAll,
+      start = c(lubridate::year(dateStart),
+                lubridate::quarter(dateStart, with_year = FALSE)),
+      end = c(lubridate::year(dateEnd),
+              lubridate::quarter(dateEnd, with_year = FALSE))
+    )
+    if (nrow(v$dataProj) > 1) {
+      v$dataProj <- na.trim(v$dataProj)
+    }
+    
+    # Number of periods to forecast
+    v$NPeriodsToForecast <- nrow(v$dataProj)
+        
   })
 
   
@@ -414,18 +453,27 @@ server <- function(input, output, session) {
     dateList <- seq(lubridate::yq(paste0(df[1, input$YearVar], 
                                          ": Q", 
                                          df[1, input$PeriodVar])),
-                    to = lubridate::yq("2030: Q1"), 
+                    to = lubridate::yq(paste0(df[nrow(df), input$YearVar], 
+                                              ": Q", 
+                                              df[nrow(df), input$PeriodVar])), 
                     by = "quarter")
         
     # format vector
     dateListFormatted <- zoo::as.yearqtr(dateList)
     
-    # find default end for historical data (based on when dependent variable 
-    # ends) !!! TO DO !!!
-    if (is.null(input$DepVar)) {
+    # find default end for historical data 
+    # (based on when dependent variable ends)
+    if (is.null(input$dataFilePath)) {
       defaultEnd <- dateListFormatted[length(dateListFormatted)]
     } else {
-      defaultEnd <- zoo::as.yearqtr("2019-01-01")
+      # find the last data point for the selected dependent variable
+      dataDepVar <- df %>%
+        select(input$YearVar, input$PeriodVar, input$DepVar) %>%
+      dataDepvar <- na.trim(dataDepVar)
+      dataDepVar <- dataDepVar[nrow(dataDepVar), ]
+      
+      defaultEnd <- c(dataDepVar[, input$YearVar],
+                      dataDepVar[, input$Periodvar])
     }
     
     # put together widget
@@ -441,31 +489,44 @@ server <- function(input, output, session) {
   })
   
   output$RangeProjections <- renderUI({
-    req(input$DataFilePath, input$YearVar, input$PeriodVar)
+    req(input$DataFilePath, input$YearVar, input$PeriodVar,
+        input$rngHistoricalData)
     df <- FileData()
+    # browser()
     
     # create the sequence of Date objects
     dateList <- seq(lubridate::yq(paste0(df[1, input$YearVar], 
                                          ": Q", 
                                          df[1, input$PeriodVar])),
-                    to = lubridate::yq("2030: Q1"), 
+                    to = lubridate::yq(paste0(df[nrow(df), input$YearVar], 
+                                              ": Q", 
+                                              df[nrow(df), input$PeriodVar])), 
                     by = "quarter")
     
     # format vector
     dateListFormatted <- zoo::as.yearqtr(dateList)
     
-    # find default end for historical data (based on when dependent variable 
-    # ends) !!! TO DO !!!
+    # find default end for historical data 
+    # (based on when dependent variable ends)
     if (is.null(input$DepVar)) {
       defaultStart <- dateListFormatted[length(dateListFormatted)]
     } else {
       if (is.null(input$rngHistoricalData)) {
-        strEndOfHistData <- lubridate::yq("2019: Q1")
+        # strEndOfHistData <- lubridate::yq("2019: Q1")
+        # defaultStart <- zoo::as.yearqtr(strEndOfHistData)
       } else {
         strEndOfHistData <- input$rngHistoricalData[2]
         defaultStart <- zoo::as.yearqtr(strEndOfHistData)
       }
     }
+    
+    # ensure defaultEnd doesn't exceed slider limits
+    defaultEnd <- lubridate::yq(defaultStart) + years(5)
+    if ((defaultEnd -  
+         lubridate::yq(dateListFormatted[length(dateListFormatted)])) > 0) {
+      defaultEnd <- lubridate::yq(dateListFormatted[length(dateListFormatted)])
+    }
+    defaultEnd <- zoo::as.yearqtr(defaultEnd)
     
     # put together widget
     sliderTextInput(
@@ -475,7 +536,7 @@ server <- function(input, output, session) {
       force_edges = TRUE,
       choices = dateListFormatted,
       selected = c(defaultStart, 
-                   zoo::as.yearqtr(lubridate::yq(defaultStart) + years(5))),
+                   defaultEnd),
       from_fixed = TRUE
     )
   })
@@ -618,19 +679,6 @@ server <- function(input, output, session) {
               dyRangeSelector(height = 40)
             return(p)
           }
-        # } else {
-          # Plot frequency histogram
-          # ggplot2::ggplot(PlottingData, 
-          #   ggplot2::aes_string(x = input$DepVar)) +
-          #   ggplot2::geom_histogram(color="black", 
-          #                           fill="turquoise", 
-          #                           binwidth=((max(PlotY)-min(PlotY))/10),
-          #                           stat="bin") +
-          #   ggplot2::labs(title=paste0("Frequency of ", input$DepVar), 
-          #                 y="Count", 
-          #                 x=input$DepVar) +
-          #   ggplot2::theme_classic()
-        # }
       }
     }
   })
@@ -662,24 +710,24 @@ server <- function(input, output, session) {
   
   forecastNaive <- reactive({
     fit <- fitNaive()
-    return(forecast::forecast(fit))
+    return(forecast::forecast(fit, h = v$NPeriodsToForecast))
   })
   
   output$plotNaive <- renderPlot({
-    fit <- forecast::naive(v$dataDepVar)
+    fit <- forecast::naive(v$dataDepVar, h = v$NPeriodsToForecast)
     return(plot(fit))
   })
   
   
   ## Time series decomposition ----
   forecastDecomposition <- reactive({
-    fit <- stats::stl(v$dataDepVar[, 1], s.window = "period")
-    return(forecast::forecast(fit))
+    fit <- stats::stl(v$dataDepVar, s.window = "period")
+    return(forecast::forecast(fit, h = v$NPeriodsToForecast))
   })
   
   output$plotDecomposition <- renderPlot({
-    fit <- stats::stl(v$dataDepVar[, 1], s.window = "period")
-    return(plot(forecast::forecast(fit)))
+    fit <- stats::stl(v$dataDepVar, s.window = "period")
+    return(plot(forecast::forecast(fit, h = v$NPeriodsToForecast)))
   })
   
   output$plotDecompositionComponents <- renderPlot({
@@ -702,37 +750,53 @@ server <- function(input, output, session) {
   
   output$plotHoltWinters <- renderPlot({
     fit <- stats::HoltWinters(v$dataDepVar)
-    return(plot(forecast::forecast(fit, h = 12)))
+    return(plot(forecast::forecast(fit, h = v$NPeriodsToForecast)))
   })
   
 
   ## Linear regression ----
   output$fitLinearRegression <- renderPrint({
+    req(input$DepVar, input$YearVar, input$PeriodVar)
+    #browser()
     # get data and remove time variable
-    fitData <- v$dataAll
+    fitData <- v$dataHist
     
     # find variables to include (including seasonal dummy variables)
-    varsToInclude <- colnames(fitData)[which(!(colnames(fitData) %in% c("Time", "y")))]
+    varsToInclude <- colnames(fitData)[which(!(colnames(fitData) %in% c(input$DepVar,
+                                                                        input$YearVar,
+                                                                        input$PeriodVar)))]
     varsToInclude <- c(varsToInclude, "season")
+
+    # setup formula for linear model
     strFormula <- stats::reformulate(varsToInclude, response = input$DepVar)
     
+    # build lm model
     fit <- forecast::tslm(formula = strFormula, data = fitData)
     return(summary(fit))
   })
   
-  # forecastLinearRegression <- reactive({
-  #   fit <- fitLinearRegression()
-  #   return(forecast(fit))
-  # })
-  # 
-  # output$plotLinearRegression <- renderPlot({
-  #   fit <- fitLinearRegression()
-  #   return(plot(forecast(fit, h = 12)))
-  # })
-  # 
+  forecastLinearRegression <- reactive({
+    fit <- fitLinearRegression()
+    
+    fcast <- forecast(
+      object = fit,
+      newdata = as.data.frame(v$dataProj),
+      level = c(80, 95),
+      fan = TRUE
+    )
+    
+    return(fcast)
+  })
+
+  output$plotLinearRegression <- renderPlot({
+    return(plot(forecastLinearRegression()))
+  })
+
   
   # Generate plot showing all forecasts
   output$plotForecasts <- renderDygraph({
+    # browser() 
+    
     # get forecasts
     hist <- v$dataDepVar
     naive <- forecastNaive()
