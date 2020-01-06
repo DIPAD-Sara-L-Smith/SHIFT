@@ -172,7 +172,11 @@ ui <- dashboardPage(
               solidHeader = TRUE,
               collapsible = TRUE,
               status = "primary",
-              dygraphOutput("plotForecasts", height = 500)
+              dygraphOutput("plotForecasts", height = 500),
+              p(""),
+              p("Use the button below to download these forecasts in a csv 
+                file."),
+              downloadButton("downloadData", "Download forecast data")
           )
         ),
         
@@ -622,19 +626,6 @@ server <- function(input, output, session) {
                 items)
   })
   
-  # output$DataEnd <- renderUI({
-  #   df <- FileData()
-  #   if (is.null(df)) return(NULL)
-  #   
-  #   items <- unique(df[, input$YearVar])
-  #   names(items) <- items
-  #   selectInput("DataEnd",
-  #               "Select end of time series:",
-  #               choices = items,
-  #               selected = items[length(items)])
-  # })
-  # 
-  
   # Generate textual info about data for display in app
   output$DataInfo <- renderPrint({
     if(is.null(input$DataFilePath)) {
@@ -654,6 +645,53 @@ server <- function(input, output, session) {
       head(FileData())
     }
   })
+  
+  
+  ## Download forecast data ----
+  # Reactive value for selected dataset ----
+  datasetInput <- reactive({
+    req(input$DataFilePath, v$dataDepVar)
+    
+    # get forecasts
+    hist <- v$dataDepVar
+    naive <- forecastNaive()
+    decomposition <- forecastDecomposition()
+    holtwinters <- forecastHoltWinters()
+    regression <- forecastLinearRegression()
+    
+    # put together plot
+    plotData <- ts.union(
+      hist, 
+      naive$mean, 
+      decomposition$mean, 
+      holtwinters$mean,
+      regression$mean
+    )
+    
+    # rename variables for readability
+    colnames(plotData) <- c("Historical data",
+                            "Naive forecast",
+                            "Time Series Decomposition forecast", 
+                            "Holt-Winters forecast",
+                            "Linear regression forecast")
+    
+    return(plotData)
+  })
+  
+  # Table of selected dataset ----
+  output$table <- renderTable({
+    datasetInput()
+  })
+  
+  # Downloadable csv of selected dataset ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$DepVar, "_and_forecasts.csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = FALSE)
+    }
+  )
   
   
   ## Plots ----
@@ -804,31 +842,10 @@ server <- function(input, output, session) {
   
   # Generate plot showing all forecasts
   output$plotForecasts <- renderDygraph({
-    #browser() 
+    # get data
+    plotData <- datasetInput()
     
-    # get forecasts
-    hist <- v$dataDepVar
-    naive <- forecastNaive()
-    decomposition <- forecastDecomposition()
-    holtwinters <- forecastHoltWinters()
-    regression <- forecastLinearRegression()
-    
-    # put together plot
-    plotData <- ts.union(
-      hist, 
-      naive$mean, 
-      decomposition$mean, 
-      holtwinters$mean,
-      regression$mean
-    )
-    
-    # rename variables for readability
-    colnames(plotData) <- c("Historical data",
-                         "Naive forecast",
-                         "Time Series Decomposition forecast", 
-                         "Holt-Winters forecast",
-                         "Linear regression forecast")
-    
+    # build plot
     p <- dygraph(plotData,
                  main = "Comparison of forecasts"
                  ) %>%
