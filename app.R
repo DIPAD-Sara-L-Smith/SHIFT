@@ -220,6 +220,7 @@ ui <- dashboardPage(
           box(width = 12,
               title = "Linear regression",
               solidHeader = TRUE,
+              uiOutput("IndepVars"), 
               verbatimTextOutput("summaryLinearRegression"),
               status = "primary", 
               collapsible = TRUE, 
@@ -441,15 +442,7 @@ server <- function(input, output, session) {
     
   })
   
-  getTimeValue <- function(intYear, intPeriod) {
-    if (missing(intPeriod)) {
-      intPeriod <- 0
-    }
-    
-    TimeValue <- intYear + (intPeriod / 4)
-    return(TimeValue)
-  }
-  
+  # slider input - Historical data -----
   output$RangeHistorical <- renderUI({
     req(input$DataFilePath, input$YearVar, input$PeriodVar)
     df <- FileData()
@@ -493,6 +486,7 @@ server <- function(input, output, session) {
     )
   })
   
+  # slider input - Projection data -----
   output$RangeProjections <- renderUI({
     req(input$DataFilePath, input$YearVar, input$PeriodVar,
         input$rngHistoricalData)
@@ -583,48 +577,29 @@ server <- function(input, output, session) {
     
   })
   
-  output$YearStart <- renderUI({
-    shiny::req(input$DataFilePath)
+  # checkbox group - Linear regression indep. variables -----
+  # checkbox of independent variable names for use in setup of linear reg. model
+  output$IndepVars <- renderUI({
+    shiny::req(input$DataFilePath, input$DepVar)
     
-    if (is.null(input$DataFilePath)) {
-      items <- NULL
-    } else {
-      if (is.null(input$YearVar)) {
-        items <- NULL
-      } else {
-        shiny::req(input$YearVar)
-        df <- FileData()
-        items <- unique(df[, input$YearVar])
-        names(items) <- items
-      }
-    }
+    # find indpendent variable names
+    varNms <- names(FileData())
+    varNms <- varNms[!(varNms %in% c(input$DepVar,
+                                     input$YearVar,
+                                     input$PeriodVar))]
+    varNms <- append(varNms, "season")
     
-    # setup input
-    selectInput("YearStart",
-                "What's the first year in the data?",
-                items)
+    # setup checkboxGroup
+    checkboxGroupInput(
+      inputId = "chooseIndepVars",
+      label = "Select the variables to use in the regression model",
+      choiceNames = varNms,
+      choiceValues = varNms,
+      selected = varNms,
+      inline = FALSE
+    )
   })
-  
-  output$PeriodStart <- renderUI({
-    shiny::req(input$DataFilePath)
-    if (is.null(input$DataFilePath)) {
-      items <- NULL
-    } else {
-      if (is.null(input$PeriodVar)) {
-        items <- NULL
-      } else {
-        shiny::req(input$PeriodVar)
-        df <- FileData()
-        items <- unique(df[, input$PeriodVar])
-        names(items) <- items
-      }
-    }
-    
-    # setup input
-    selectInput("PeriodStart",
-                "What's the first period in the data?",
-                items)
-  })
+
   
   # Generate textual info about data for display in app
   output$DataInfo <- renderPrint({
@@ -648,8 +623,8 @@ server <- function(input, output, session) {
   
   
   ## Download forecast data ----
-  # Reactive value for selected dataset ----
-  datasetInput <- reactive({
+  # Reactive variables for selected dataset ----
+  datasetWithForecasts <- reactive({
     req(input$DataFilePath, v$dataDepVar)
     
     # get forecasts
@@ -680,7 +655,7 @@ server <- function(input, output, session) {
   
   # Table of selected dataset ----
   output$table <- renderTable({
-    datasetInput()
+    datasetWithForecasts()
   })
   
   # Downloadable csv of selected dataset ----
@@ -689,7 +664,7 @@ server <- function(input, output, session) {
       paste(input$DepVar, "_and_forecasts.csv", sep = "")
     },
     content = function(file) {
-      write.csv(datasetInput(), file, row.names = FALSE)
+      write.csv(datasetWithForecasts(), file, row.names = FALSE)
     }
   )
   
@@ -738,8 +713,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Load tab modules
-  # callModule(tab_forecasts_server, "tab_forecasts_server", tsDepVar, tsFileData)
   
   ## Naive ----
   fitNaive <- reactive({
@@ -795,16 +768,13 @@ server <- function(input, output, session) {
 
   ## Linear regression ----
   fitLinearRegression <- reactive({
-    req(input$DepVar, input$YearVar, input$PeriodVar)
+    req(input$DepVar, input$YearVar, input$PeriodVar, input$chooseIndepVars)
     #browser()
     # get data and remove time variable
     fitData <- v$dataHist
     
     # find variables to include (including seasonal dummy variables)
-    varsToInclude <- colnames(fitData)[which(!(colnames(fitData) %in% c(input$DepVar,
-                                                                        input$YearVar,
-                                                                        input$PeriodVar)))]
-    varsToInclude <- c(varsToInclude, "season")
+    varsToInclude <- input$chooseIndepVars
     
     # setup formula for linear model
     strFormula <- stats::reformulate(varsToInclude, response = input$DepVar)
@@ -843,7 +813,7 @@ server <- function(input, output, session) {
   # Generate plot showing all forecasts
   output$plotForecasts <- renderDygraph({
     # get data
-    plotData <- datasetInput()
+    plotData <- datasetWithForecasts()
     
     # build plot
     p <- dygraph(plotData,
@@ -857,6 +827,10 @@ server <- function(input, output, session) {
       dySeries(colnames(plotData)[5], drawPoints = TRUE, color = "blue")
     return(p)
   })
+  
+  
+  # Load tab modules
+  # callModule(tab_forecasts_server, "tab_forecasts_server", tsDepVar, tsFileData)
 }
 
 # Run the application 
