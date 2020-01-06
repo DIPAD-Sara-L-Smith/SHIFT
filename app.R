@@ -833,7 +833,11 @@ server <- function(input, output, session) {
                  main = "Comparison of forecasts"
                  ) %>%
       dyRangeSelector(height = 40) %>%
-      dySeries("Historical data", drawPoints = TRUE, color = "black")
+      dySeries(colnames(plotData)[1], drawPoints = TRUE, color = "black") %>%
+      dySeries(colnames(plotData)[2], drawPoints = TRUE, color = "grey") %>%
+      dySeries(colnames(plotData)[3], drawPoints = TRUE, color = "green") %>%
+      dySeries(colnames(plotData)[4], drawPoints = TRUE, color = "purple") %>%
+      dySeries(colnames(plotData)[5], drawPoints = TRUE, color = "blue")
     return(p)
   })
 }
