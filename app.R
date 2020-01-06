@@ -169,7 +169,6 @@ ui <- dashboardPage(
         
         fluidRow(
           box(width = 12,
-              h4("Compare forecasts"),
               solidHeader = TRUE,
               collapsible = TRUE,
               status = "primary",
@@ -704,7 +703,7 @@ server <- function(input, output, session) {
   
   ## Naive ----
   fitNaive <- reactive({
-    fit <- forecast::naive(v$dataDepVar)
+    fit <- forecast::naive(v$dataDepVar, h = v$NPeriodsToForecast)
     return(fit)
   })
   
@@ -795,7 +794,7 @@ server <- function(input, output, session) {
   
   # Generate plot showing all forecasts
   output$plotForecasts <- renderDygraph({
-    # browser() 
+    #browser() 
     
     # get forecasts
     hist <- v$dataDepVar
@@ -813,37 +812,15 @@ server <- function(input, output, session) {
       # regression$mean
     )
     
-    # convert to data frame for plotting
-    plotData <- data.frame(Y=as.matrix(plotData), Date=time(plotData))
-    names(plotData) <- c("Historical data",
+    # rename variables for readability
+    colnames(plotData) <- c("Historical data",
                          "Naive forecast",
                          "Time Series Decomposition forecast", 
-                         "Holt-Winters forecast",
-                         "Date")
+                         "Holt-Winters forecast")
     
     p <- dygraph(plotData,
                  main = "Comparison of forecasts"
                  )
-    
-    # p <- plotly::plot_ly(data = plotData,
-    #                      x = plotData$Date,
-    #                      y = plotData$`Historical data`,
-    #                      name = "Historical data",
-    #                      type = 'scatter',
-    #                      mode = 'lines') %>%
-    #   plotly::layout(title = "Comparison of forecasts",
-    #                  xaxis = list(title = "Time"),
-    #                  yaxis = list(title = " "), 
-    #                              # range = c(0, ceiling(max(plotData[1:4], na.rm = TRUE)))),
-    #                  legend = list(x = 100, y = 0.5))
-    # 
-    # for (trace in colnames(plotData)){
-    #   if (!(trace %in% c("Date", "trace 0", "Historical data"))){
-    #     p <- p %>% plotly::add_trace(y = as.formula(paste0("~`", trace, "`")),
-    #                                  name = trace)
-    #   }                                                                  
-    # }
-    
     return(p)
   })
 }
