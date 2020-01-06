@@ -216,10 +216,10 @@ ui <- dashboardPage(
           box(width = 12,
               title = "Linear regression",
               solidHeader = TRUE,
-              verbatimTextOutput("fitLinearRegression"),
+              verbatimTextOutput("summaryLinearRegression"),
               status = "primary", 
-              collapsible = TRUE#, 
-              # plotOutput("plotLinearRegression", height = 500)
+              collapsible = TRUE, 
+              plotOutput("plotLinearRegression", height = 500)
           )
         )
         
@@ -341,7 +341,9 @@ server <- function(input, output, session) {
       end = c(lubridate::year(dateEnd),
               lubridate::quarter(dateEnd, with_year = FALSE))
     )
+    
     if (nrow(v$dataProj) > 1) {
+      v$dataProj <- v$dataProj[, !(colnames(v$dataProj) %in% c(input$DepVar))]
       v$dataProj <- na.trim(v$dataProj)
     }
     
@@ -520,7 +522,7 @@ server <- function(input, output, session) {
     }
     
     # ensure defaultEnd doesn't exceed slider limits
-    defaultEnd <- lubridate::yq(defaultStart) + years(5)
+    defaultEnd <- lubridate::yq(defaultStart) + lubridate::years(5)
     if ((defaultEnd -  
          lubridate::yq(dateListFormatted[length(dateListFormatted)])) > 0) {
       defaultEnd <- lubridate::yq(dateListFormatted[length(dateListFormatted)])
@@ -675,7 +677,7 @@ server <- function(input, output, session) {
             plotData <- xts::as.xts(v$dataDepVar)
             
             p <- dygraphs::dygraph(plotData) %>%
-              dyRangeSelector(height = 40)
+              dyRangeSelector(height = 40) 
             return(p)
           }
       }
@@ -754,7 +756,7 @@ server <- function(input, output, session) {
   
 
   ## Linear regression ----
-  output$fitLinearRegression <- renderPrint({
+  fitLinearRegression <- reactive({
     req(input$DepVar, input$YearVar, input$PeriodVar)
     #browser()
     # get data and remove time variable
@@ -765,18 +767,26 @@ server <- function(input, output, session) {
                                                                         input$YearVar,
                                                                         input$PeriodVar)))]
     varsToInclude <- c(varsToInclude, "season")
-
+    
     # setup formula for linear model
     strFormula <- stats::reformulate(varsToInclude, response = input$DepVar)
     
     # build lm model
     fit <- forecast::tslm(formula = strFormula, data = fitData)
+    return(fit)
+  }) 
+  
+  output$summaryLinearRegression <- renderPrint({
+    # build lm model
+    fit <- fitLinearRegression()
     return(summary(fit))
   })
   
   forecastLinearRegression <- reactive({
+    # fit model
     fit <- fitLinearRegression()
     
+    # forecast forward
     fcast <- forecast(
       object = fit,
       newdata = as.data.frame(v$dataProj),
@@ -801,26 +811,29 @@ server <- function(input, output, session) {
     naive <- forecastNaive()
     decomposition <- forecastDecomposition()
     holtwinters <- forecastHoltWinters()
-    # regression <- forecastLinearRegression()
+    regression <- forecastLinearRegression()
     
     # put together plot
     plotData <- ts.union(
       hist, 
       naive$mean, 
       decomposition$mean, 
-      holtwinters$mean#,
-      # regression$mean
+      holtwinters$mean,
+      regression$mean
     )
     
     # rename variables for readability
     colnames(plotData) <- c("Historical data",
                          "Naive forecast",
                          "Time Series Decomposition forecast", 
-                         "Holt-Winters forecast")
+                         "Holt-Winters forecast",
+                         "Linear regression forecast")
     
     p <- dygraph(plotData,
                  main = "Comparison of forecasts"
-                 )
+                 ) %>%
+      dyRangeSelector(height = 40) %>%
+      dySeries("Historical data", drawPoints = TRUE, color = "black")
     return(p)
   })
 }
