@@ -708,7 +708,10 @@ server <- function(input, output, session) {
       if (nrow(df) == 0) {
         return(NULL)
       } else {
-        return(plot(df))
+        df <- df[, !(colnames(df) %in% c(input$YearVar,
+                                         input$PeriodVar))]
+        p <- plot(df, main = "Plots of all variables")
+        return(p)
       }
     }
   })
