@@ -461,17 +461,17 @@ server <- function(input, output, session) {
     
     # find default end for historical data 
     # (based on when dependent variable ends)
-    if (is.null(input$dataFilePath)) {
+    if (is.null(input$DepVar)) {
       defaultEnd <- dateListFormatted[length(dateListFormatted)]
     } else {
       # find the last data point for the selected dependent variable
-      dataDepVar <- df %>%
-        select(input$YearVar, input$PeriodVar, input$DepVar) %>%
-      dataDepvar <- na.trim(dataDepVar)
-      dataDepVar <- dataDepVar[nrow(dataDepVar), ]
+      lastDepVarDataPoint <- df %>%
+        select(input$YearVar, input$PeriodVar, input$DepVar)
+      lastDepVarDataPoint <- na.trim(lastDepVarDataPoint)
+      lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
       
-      defaultEnd <- c(dataDepVar[, input$YearVar],
-                      dataDepVar[, input$Periodvar])
+      defaultEnd <- c(as.numeric(lastDepVarDataPoint[, input$YearVar]),
+                      as.numeric(lastDepVarDataPoint[, input$PeriodVar]))
     }
     
     # put together widget
