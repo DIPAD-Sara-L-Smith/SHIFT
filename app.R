@@ -644,11 +644,11 @@ server <- function(input, output, session) {
     )
     
     # rename variables for readability
-    colnames(plotData) <- c("Historical data",
-                            "Naive forecast",
-                            "Time Series Decomposition forecast", 
-                            "Holt-Winters forecast",
-                            "Linear regression forecast")
+    colnames(plotData) <- c("Historical",
+                            "Naive",
+                            "Time Series Decomposition", 
+                            "Holt-Winters",
+                            "Linear regression")
     
     return(plotData)
   })
@@ -827,7 +827,8 @@ server <- function(input, output, session) {
       dySeries(colnames(plotData)[2], drawPoints = TRUE, color = "grey") %>%
       dySeries(colnames(plotData)[3], drawPoints = TRUE, color = "green") %>%
       dySeries(colnames(plotData)[4], drawPoints = TRUE, color = "purple") %>%
-      dySeries(colnames(plotData)[5], drawPoints = TRUE, color = "blue")
+      dySeries(colnames(plotData)[5], drawPoints = TRUE, color = "blue") %>%
+      dyLegend(width = 700)
     return(p)
   })
   
