@@ -17,8 +17,12 @@ is_valid_df <- function(df){
                                        map(~is_continuous(.)))),
                           msg = "Data is not continuous")
   
-  # Headings conform to standards
-  # TODO check headings of df are valid. 
+  # Some of the fit functions don't play nicely with non-standard column names, i.e., spaces
+  # Check by comparing to the function which builds nice names 
+  assertthat::assert_that(any(names(df) == make.names(names(df), unique = TRUE)),
+                          msg = paste("The column headings contain some bad characters",
+                                      "probably a space. Fix in the data or consider adding", 
+                                      "make.names(names(df)) to your data-prep script"))
   
   cat('Loaded a valid dataframe\n')
   return(TRUE)
@@ -40,6 +44,7 @@ merge_df <- function(df_left, df_right){
 }
 
 is_continuous <- function(df){
+  # TODO investigate using zoo:trim_na to make this function a bit clearer.
   # Checks whether a dataset column is continuous with no missing values. 
   # NA are allowed at the begining and end as datasets have different history lengths
   
@@ -58,4 +63,21 @@ is_continuous <- function(df){
   }
   
   return(continuous)
+}
+
+
+are_names_valid <- function(col_names){
+  # check if the names are appropriate
+  
+  good_names = make.names(col_names, unique=TRUE)
+  name_check = names(df) == good_names
+  
+  if (any(name_check)) {
+    bad_names = col_names[!name_check]
+    cat('(',paste(bad_names, collapse=", "), ') are not valid R names\n', sep = "")
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+
 }
