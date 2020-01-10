@@ -18,7 +18,10 @@ is_valid_df <- function(df){
                           msg = "Data is not continuous")
   
   # Headings conform to standards
+<<<<<<< HEAD
   # TODO check headings of df are valid. 
+=======
+>>>>>>> 6794aaaf0ef4e313860d17fc015c5d5717a2507b
   
   cat('Loaded a valid dataframe\n')
   return(TRUE)
@@ -54,7 +57,10 @@ is_continuous <- function(df){
   
   if (!continuous) {
     cat('Column: ',names(df), ' is continuous, it has missing values in the middle\n')
+<<<<<<< HEAD
     cat('Consider using dplyr::fill or fill_interp in your data prep script.\n')
+=======
+>>>>>>> 6794aaaf0ef4e313860d17fc015c5d5717a2507b
   }
   
   return(continuous)
