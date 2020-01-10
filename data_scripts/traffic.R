@@ -26,3 +26,5 @@ df <- df %>%
   drop_na(Quarter) %>% 
   fill(Year) %>%
   extract(Quarter, into = "Quarter", regex = "([1234])") 
+
+names(df) <- make.names(names(df))

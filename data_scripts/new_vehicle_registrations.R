@@ -30,6 +30,4 @@ df <- df %>%
   separate(Date, into=c("Year", "Quarter"), sep =" Q", convert = TRUE) %>%
   select(Year:Total) 
 
-
-
-
+names(df) <- make.names(names(df))

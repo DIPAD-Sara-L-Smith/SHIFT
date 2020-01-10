@@ -34,4 +34,4 @@ df <- df %>%
   mutate_if(is.character, list(~suppressWarnings(as.numeric(.)))) %>%
   fill(Cars:Total, .direction="up")
 
-
+names(df) <- make.names(names(df))
