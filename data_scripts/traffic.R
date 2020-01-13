@@ -5,26 +5,30 @@
 library(tidyverse)
 
 
-data_location = "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/852702/tra2501.ods"
+data_location <- 
+  "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/852702/tra2501.ods"
 
 # read_ods can't read ODS directly from the web so download to a temp location
-temp_file = tempfile()
-download.file(data_location, 
-              temp_file, 
-              quiet = TRUE,
-              mode="wb")
+temp_file <- tempfile()
+
+download.file(data_location,
+  temp_file,
+  quiet = TRUE,
+  mode = "wb"
+)
 
 df <- readODS::read_ods(temp_file,
-                        skip = 6, 
-                        sheet = 'TRA2501b')
+  skip = 6,
+  sheet = "TRA2501b"
+)
 
 # Remove the file from temp directory
 file.remove(temp_file)
 
 df <- df %>%
   select(-3) %>%
-  drop_na(Quarter) %>% 
+  drop_na(Quarter) %>%
   fill(Year) %>%
-  extract(Quarter, into = "Quarter", regex = "([1234])") 
+  extract(Quarter, into = "Quarter", regex = "([1234])")
 
 names(df) <- make.names(names(df))
