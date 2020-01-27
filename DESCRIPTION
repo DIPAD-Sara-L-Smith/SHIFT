@@ -1,0 +1,12 @@
+Package: shift
+Title: SHiny Improved Forecasting Tool
+Version: 0.0.0.9000
+Authors@R: c(person('Sara', 'Smith', email = 'sara.smith@dft.gov.uk', role = c('cre', 'aut')), person('David', 'Gillespie', email = 'david.gillespie@dvsa.gov.uk', role ='aut'))
+Description: A forecasting tool built with Shiny by DfT and DVSA.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    shiny, 
+    golem
+RoxygenNote: 7.0.2
