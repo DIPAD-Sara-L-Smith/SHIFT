@@ -3,20 +3,21 @@ app_ui <- function() {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    # List the first level UI elements here 
+    # List the first level UI elements here
     fluidPage(
-      h1("shift")
+      h1("shift"),
+      mod_load_data_ui("load_data_ui_1")
     )
   )
 }
 
 #' @import shiny
 golem_add_external_resources <- function(){
-  
+
   addResourcePath(
     'www', system.file('app/www', package = 'shift')
   )
- 
+
   tags$head(
     golem::activate_js(),
     golem::favicon()
