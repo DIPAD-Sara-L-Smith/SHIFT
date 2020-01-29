@@ -6,8 +6,7 @@
 #' @return a dataframe containing the combines files
 #' @export
 #'
-load_user_data <-function(upload){
-
+load_user_data <- function(upload) {
   return(user_data)
 }
 
@@ -23,8 +22,7 @@ load_user_data <-function(upload){
 #' @examples
 #' @importFrom purrr reduce
 #' @importFrom dplyr full_join
-merge_user_data <- function(df_list, cols = c('Year', 'Quarter')){
-
+merge_user_data <- function(df_list, cols = c("Year", "Quarter")) {
   df <-
     reduce(
       df_list,
@@ -37,7 +35,7 @@ merge_user_data <- function(df_list, cols = c('Year', 'Quarter')){
 }
 
 
-check_valid_df <- function(df){
+check_valid_df <- function(df) {
   # TODO add inline docs
   # TODO copy previous code for checking validity
   return(valid)
