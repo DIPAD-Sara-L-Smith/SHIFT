@@ -14,15 +14,26 @@ load_user_data <-function(upload){
 
 #' Merge a list of valid dataframes into a single dataframe.
 #'
-#' @param data_list a list of valid dataframes
+#' @param df_list A list of valid dataframes
+#' @param cols The columns used to perform the join by. Default = c("Year", "Quarter")
 #'
-#' @return A merged data frame
+#' @return The merged dataframes as a single dataframe.
 #' @export
 #'
 #' @examples
-merge_user_data <- function(data_list){
-  # TODO look into using purrr:reduce() to merge an unknown number of dfs.
-  return(merged_data)
+#' @importFrom purrr reduce
+#' @importFrom dplyr full_join
+merge_user_data <- function(df_list, cols = c('Year', 'Quarter')){
+
+  df <-
+    reduce(
+      df_list,
+      function(...) {
+        full_join(..., by = cols)
+      }
+    )
+
+  return(df)
 }
 
 
