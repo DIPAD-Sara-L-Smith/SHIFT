@@ -14,6 +14,10 @@ golem::add_module( name = "my_other_module" ) # Name of the module
 
 usethis::use_package( "purrr" ) # To call each time you need a new package
 usethis::use_package( "dplyr" )
+usethis::use_package( "tools" )
+usethis::use_package( "assertthat" )
+usethis::use_package( "vroom" )
+usethis::use_pipe()
 
 ## 2.3 Add tests
 

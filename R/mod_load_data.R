@@ -38,8 +38,7 @@ mod_load_data_server <- function(input, output, session, r){
   # When we see a change to the input object
   # load the file.
   observeEvent(input$file, {
-    # TODO add dataload functions
-    r$data <- (input$file)
+    r$data <- load_user_data(input$file)
   })
 
 }

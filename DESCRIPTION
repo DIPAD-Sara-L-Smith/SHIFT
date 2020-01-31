@@ -10,5 +10,9 @@ Imports:
     shiny,
     golem,
     purrr,
-    dplyr
+    dplyr,
+    tools,
+    assertthat,
+    magrittr,
+    vroom
 RoxygenNote: 7.0.2
