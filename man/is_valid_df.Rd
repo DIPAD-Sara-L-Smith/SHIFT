@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_load.R
 \name{is_valid_df}
 \alias{is_valid_df}
-\title{is_valid_df -Determines whether a dataframe is valid to be used for forecasting}
+\title{is_valid_df - Determines whether a dataframe is valid to be used for forecasting.}
 \usage{
 is_valid_df(df)
 }
@@ -13,5 +13,5 @@ is_valid_df(df)
 a boolean describing whether the dataframe is valid.
 }
 \description{
-is_valid_df -Determines whether a dataframe is valid to be used for forecasting
+is_valid_df - Determines whether a dataframe is valid to be used for forecasting.
 }

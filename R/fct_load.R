@@ -6,15 +6,35 @@
 #' @return a dataframe containing the combines files
 #' @export
 #' @importFrom tools file_ext file_path_sans_ext
+#' @importFrom purrr pmap set_names
+#' @importFrom dplyr select
+#' @importFrom magrittr %>%
 load_user_data <- function(upload) {
 
+  # For each file uploaded, check the extension and then load with the appropriate function.
+  dfs <- upload %>%
+    select(name, datapath) %>%
+    pmap(
+      function(name, datapath) {
+        switch(tolower(file_ext(name)),
+          "csv" = load_csv(datapath),
+          "r" = load_R_file(datapath),
+          "xls" = load_excel(datapath),
+          "xlsx" = load_excel(datapath), # Could we match xls and xlsx with regex?
+          # If the extension is not one we want, warn the user and return a NULL.
+          # Although fileInput should not allow others.
+          {
+            warning("Did not recognise the file extension. It should be csv, R or xls(x)")
+            NULL
+          }
+        )
+      }
+    ) %>%
+    set_names(file_path_sans_ext(upload$name))
 
-  if (file_ext(upload$name) == "csv") {
-    cat("Loading a csv file\n")
-    df <- load_csv(upload$datapath)
-  }
-
-  user_data <- df
+  # TODO fix the names output from this merge as they are a bit unfriendly.
+  user_data <- merge_user_data(dfs)
+  browser()
   return(user_data)
 }
 
@@ -50,9 +70,9 @@ merge_user_data <- function(df_list, cols = c("Year", "Quarter")) {
 #' @export
 #'
 load_r_file <- function(filename) {
-  if (is_valid_df(df)) {
-    return(df)
-  }
+  warning("Not yet supported, Returning NULL")
+  df <- NULL
+  return(df)
 }
 
 
@@ -75,7 +95,20 @@ load_csv <- function(filename) {
 }
 
 
-#' is_valid_df -Determines whether a dataframe is valid to be used for forecasting
+#' load_excel
+#'
+#' @param filename a string containing the filename.
+#'
+#' @return a dataframe containg the data.
+#' @export
+load_excel <- function(filename) {
+  warning("Not yet supported, Returning NULL")
+  df <- NULL
+  return(df)
+}
+
+
+#' is_valid_df - Determines whether a dataframe is valid to be used for forecasting.
 #'
 #' @param df a single dataframe to be checked.
 #'
@@ -113,7 +146,7 @@ is_valid_df <- function(df) {
   # Check by comparing to the function which builds nice names
   # TODO replace messy call with one to function.
   # TODO should be force make.names onto each dataframe?
-  assert_that(any(names(df) == make.names(names(df), unique = TRUE)),
+  assert_that(are_df_names_valid(df),
     msg = paste(
       "The column headings contain some bad characters",
       "probably a space. Fix in the data or consider adding",
@@ -125,7 +158,6 @@ is_valid_df <- function(df) {
   cat("Loaded a valid dataframe\n")
   return(TRUE)
 }
-
 
 
 #' is_df_continous determines whether there are any missing values in the middle of a dataframe column.
