@@ -11,7 +11,8 @@
 #' @importFrom magrittr %>%
 load_user_data <- function(upload) {
 
-  # For each file uploaded, check the extension and then load with the appropriate function.
+  # For each file uploaded, check the extension and then load with the
+  # # appropriate function.
   dfs <- upload %>%
     select(name, datapath) %>%
     pmap(
@@ -20,11 +21,13 @@ load_user_data <- function(upload) {
           "csv" = load_csv(datapath),
           "r" = load_R_file(datapath),
           "xls" = load_excel(datapath),
-          "xlsx" = load_excel(datapath), # Could we match xls and xlsx with regex?
-          # If the extension is not one we want, warn the user and return a NULL.
-          # Although fileInput should not allow others.
+          "xlsx" = load_excel(datapath), # Could we match xls(x) with regex?
+          # If the extension is not one we want, warn the user and
+          # return a NULL. Although fileInput should not allow others.
           {
-            warning("Did not recognise the file extension. It should be csv, R or xls(x)")
+            warning(paste(
+              "Did not recognise the file extension.",
+              "It should be csv, R or xls(x)"))
             NULL
           }
         )
@@ -33,8 +36,10 @@ load_user_data <- function(upload) {
     set_names(file_path_sans_ext(upload$name))
 
   # TODO fix the names output from this merge as they are a bit unfriendly.
+  # Not sure what the best way to go about this is. Maybe appending the filename
+  # when the file is loaded? This will mean names are long and when only one
+  # file is used it will look a bit daft.
   user_data <- merge_user_data(dfs)
-  browser()
   return(user_data)
 }
 
@@ -42,14 +47,17 @@ load_user_data <- function(upload) {
 #' Merge a list of valid dataframes into a single dataframe.
 #'
 #' @param df_list A list of valid dataframes
-#' @param cols The columns used to perform the join by. Default = c("Year", "Quarter")
+#' @param cols The columns used to perform the join by.
+#' Default = c("Year", "Quarter")
 #'
 #' @return The merged dataframes as a single dataframe.
 #' @export
 #'
 #' @importFrom purrr reduce
 #' @importFrom dplyr full_join
-merge_user_data <- function(df_list, cols = c("Year", "Quarter")) {
+merge_user_data <- function(
+                            df_list,
+                            cols = c("Year", "Quarter")) {
   df <-
     reduce(
       df_list,
@@ -108,7 +116,8 @@ load_excel <- function(filename) {
 }
 
 
-#' is_valid_df - Determines whether a dataframe is valid to be used for forecasting.
+#' is_valid_df - Determines whether a dataframe is valid to be used for
+#'  forecasting.
 #'
 #' @param df a single dataframe to be checked.
 #'
@@ -142,8 +151,8 @@ is_valid_df <- function(df) {
   msg = "Data is not continuous."
   )
 
-  # Some of the fit functions don't play nicely with non-standard column names, i.e., spaces
-  # Check by comparing to the function which builds nice names
+  # Some of the fit functions don't play nicely with non-standard column names,
+  # i.e., spaces. Check by comparing to the function which builds nice names
   # TODO replace messy call with one to function.
   # TODO should be force make.names onto each dataframe?
   assert_that(are_df_names_valid(df),
@@ -160,7 +169,8 @@ is_valid_df <- function(df) {
 }
 
 
-#' is_df_continous determines whether there are any missing values in the middle of a dataframe column.
+#' is_df_continous determines whether there are any missing values in the middle
+#'  of a dataframe column.
 #'
 #' @param df
 #'
@@ -170,7 +180,7 @@ is_valid_df <- function(df) {
 is_df_continuous <- function(df) {
   # TODO investigate using zoo:trim_na to make this function a bit clearer.
   # Checks whether a dataset column is continuous with no missing values.
-  # NA are allowed at the begining and end as datasets have different history lengths
+  # NA are allowed at the begining and end as datasets have different lengths.
 
   # Find the index of all missing values and take the diff
   index_diff <- diff(which(!is.na(df)))
@@ -182,7 +192,9 @@ is_df_continuous <- function(df) {
   continuous <- all(index_diff == 1)
 
   if (!continuous) {
-    cat("Column: ", names(df), " is continuous, it has missing values in the middle\n")
+    cat("Column: ",
+        names(df),
+        " is continuous, it has missing values in the middle\n")
     cat("Consider using dplyr::fill or fill_interp in your data prep script.\n")
   }
 
@@ -190,7 +202,8 @@ is_df_continuous <- function(df) {
 }
 
 
-#' are_df_names_valid determines whether df has appropriate names. I.e., no spaces.
+#' are_df_names_valid determines whether df has appropriate names, i.e.,
+#' no spaces.
 #'
 #' @param col_names
 #'
@@ -204,7 +217,7 @@ are_df_names_valid <- function(col_names) {
 
   if (any(name_check)) {
     bad_names <- col_names[!name_check]
-    cat("(", paste(bad_names, collapse = ", "), ") are not valid R names\n", sep = "")
+    cat("(", paste0(bad_names, collapse = ", "), ") are not valid R names\n")
     return(FALSE)
   } else {
     return(TRUE)

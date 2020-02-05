@@ -2,7 +2,8 @@
 % Please edit documentation in R/fct_load.R
 \name{are_df_names_valid}
 \alias{are_df_names_valid}
-\title{are_df_names_valid determines whether df has appropriate names. I.e., no spaces.}
+\title{are_df_names_valid determines whether df has appropriate names, i.e.,
+no spaces.}
 \usage{
 are_df_names_valid(col_names)
 }
@@ -13,5 +14,6 @@ are_df_names_valid(col_names)
 A boolean indicating whether the names are valid.
 }
 \description{
-are_df_names_valid determines whether df has appropriate names. I.e., no spaces.
+are_df_names_valid determines whether df has appropriate names, i.e.,
+no spaces.
 }

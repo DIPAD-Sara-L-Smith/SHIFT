@@ -2,7 +2,8 @@
 % Please edit documentation in R/fct_load.R
 \name{is_df_continuous}
 \alias{is_df_continuous}
-\title{is_df_continous determines whether there are any missing values in the middle of a dataframe column.}
+\title{is_df_continous determines whether there are any missing values in the middle
+ of a dataframe column.}
 \usage{
 is_df_continuous(df)
 }
@@ -13,5 +14,6 @@ is_df_continuous(df)
 A boolean indicting whether there is missing data.
 }
 \description{
-is_df_continous determines whether there are any missing values in the middle of a dataframe column.
+is_df_continous determines whether there are any missing values in the middle
+ of a dataframe column.
 }

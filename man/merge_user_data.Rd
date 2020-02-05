@@ -9,7 +9,8 @@ merge_user_data(df_list, cols = c("Year", "Quarter"))
 \arguments{
 \item{df_list}{A list of valid dataframes}
 
-\item{cols}{The columns used to perform the join by. Default = c("Year", "Quarter")}
+\item{cols}{The columns used to perform the join by.
+Default = c("Year", "Quarter")}
 }
 \value{
 The merged dataframes as a single dataframe.
