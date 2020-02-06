@@ -12,9 +12,9 @@
 #'
 #' @keywords internal
 #' @export
-#' @importFrom shiny NS tagList fileInput actionButton
+#' @importFrom shiny NS tagList fileInput actionButton downloadButton downloadHandler
 #' @importFrom DT renderDT DTOutput
-#'
+#' @importFrom shinyWidgets switchInput
 mod_load_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -28,11 +28,38 @@ mod_load_data_ui <- function(id) {
       ),
       multiple = TRUE
     ),
+
+    switchInput(
+      ns("overwrite"),
+      onLabel = "Overwrite",
+      offLabel = "Append",
+      value = TRUE,
+      inline = TRUE,
+      size = "small"
+    ),
+
     DTOutput(ns("user_DT")),
-    actionButton(ns("undo"), label = "Undo", icon = icon("undo")),
-    actionButton(ns("keep_col"), label = "Keep Selected"),
-    actionButton(ns("drop_col"), label = "Drop Selected"),
-    actionButton(ns("add_data"), label = "Add more data", icon = icon("plus-square")),
+
+    actionButton(
+      ns("undo"),
+      label = "Undo Last",
+      icon = icon("undo")
+    ),
+
+    actionButton(
+      ns("keep_col"),
+      label = "Keep Selected"
+    ),
+
+    actionButton(
+      ns("drop_col"),
+      label = "Drop Selected"
+    ),
+
+    downloadButton(
+      ns("download_data"),
+      label = "Download"
+    )
   )
 }
 
@@ -48,7 +75,13 @@ mod_load_data_server <- function(input, output, session, r) {
   # When we see a change to the input object
   # load the file.
   observeEvent(input$file, {
-    r$data <- load_user_data(input$file)
+    if (input$overwrite) {
+      r$data_old <- r$data
+      r$data <- load_user_data(input$file)
+    } else {
+      r$data_old <- r$data
+      r$data <- merge_user_data(list(r$data, load_user_data(input$file)))
+    }
   })
 
   # Whenever the underlying data changes update the DT which displays it.
@@ -82,21 +115,14 @@ mod_load_data_server <- function(input, output, session, r) {
       r$data <- r$data_old
     }
   })
-  # Deal with the user adding more data to the current dataframe.
-  observeEvent(input$add_data, {
-    req(r$data)
-
-    r$data_old <- r$data
-    # r$data <- merge_user_data( list(r$data_old, load_user_data(input$file)) )
-  })
 
   # Drop columns
   observeEvent(input$drop_col, {
     req(r$data, input$user_DT_columns_selected)
-   cols_to_drop <- input$user_DT_columns_selected
-    if( any(c(1,2) %in% cols_to_drop)){
+    cols_to_drop <- input$user_DT_columns_selected
+    if (any(c(1, 2) %in% cols_to_drop)) {
       warning("Dropping Year or Quarter is a bad idea so lets not.")
-      cols_to_drop <- cols_to_drop[cols_to_drop %not_in% c(1,2)]
+      cols_to_drop <- cols_to_drop[cols_to_drop %not_in% c(1, 2)]
     }
 
     r$data_old <- r$data
@@ -108,14 +134,23 @@ mod_load_data_server <- function(input, output, session, r) {
     req(r$data, input$user_DT_columns_selected)
 
     cols_to_keep <- input$user_DT_columns_selected
-    if( any(c(1,2) %not_in% cols_to_keep)){
+    if (any(c(1, 2) %not_in% cols_to_keep)) {
       warning("Dropping Year or Quarter is a bad idea so lets not.")
-      cols_to_keep <- union(c(1,2), cols_to_keep)
+      cols_to_keep <- union(c(1, 2), cols_to_keep)
     }
 
     r$data_old <- r$data
     r$data <- r$data %>% select(1:2, cols_to_keep)
   })
+
+  # Download the dataframe as rds
+  # TODO maybe add a csv option or swap to csv.
+  output$download_data <- downloadHandler(
+    filename = "uploaded_data.rds",
+    content = function(file) {
+      saveRDS(r$data, file)
+    }
+  )
 }
 
 ## To be copied in the UI
@@ -123,4 +158,3 @@ mod_load_data_server <- function(input, output, session, r) {
 
 ## To be copied in the server
 # callModule(mod_load_data_server, "load_data_ui_1")
-

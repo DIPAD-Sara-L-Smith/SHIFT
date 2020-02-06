@@ -19,6 +19,7 @@ usethis::use_package( "assertthat" )
 usethis::use_package( "vroom" )
 usethis::use_package( "shinydashboard" )
 usethis::use_package( "DT" )
+usethis::use_package( "shinyWidgets" )
 usethis::use_pipe()
 
 ## 2.3 Add tests

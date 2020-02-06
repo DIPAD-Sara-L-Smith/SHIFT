@@ -37,7 +37,7 @@ app_ui <- function() {
             fluidRow(
               box(
                 width = 12,
-                h4("Use this tab to explore a dataset of your choice."),
+                h4("Load your data here."),
                 mod_load_data_ui("load_data_ui_1")
               )
             ),

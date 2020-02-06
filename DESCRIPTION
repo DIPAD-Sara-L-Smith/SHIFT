@@ -17,5 +17,6 @@ Imports:
     vroom,
     shinydashboard,
     DT,
-    htmltools
+    htmltools,
+    shinyWidgets
 RoxygenNote: 7.0.2
