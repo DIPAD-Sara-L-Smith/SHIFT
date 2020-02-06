@@ -27,7 +27,8 @@ load_user_data <- function(upload) {
           {
             warning(paste(
               "Did not recognise the file extension.",
-              "It should be csv, R or xls(x)"))
+              "It should be csv, R or xls(x)"
+            ))
             NULL
           }
         )
@@ -55,8 +56,7 @@ load_user_data <- function(upload) {
 #'
 #' @importFrom purrr reduce
 #' @importFrom dplyr full_join
-merge_user_data <- function(
-                            df_list,
+merge_user_data <- function(df_list,
                             cols = c("Year", "Quarter")) {
   df <-
     reduce(
@@ -65,6 +65,7 @@ merge_user_data <- function(
         full_join(..., by = cols)
       }
     )
+  cat("Merged", length(df_list), "dataframes together.\n")
 
   return(df)
 }
@@ -192,9 +193,11 @@ is_df_continuous <- function(df) {
   continuous <- all(index_diff == 1)
 
   if (!continuous) {
-    cat("Column: ",
-        names(df),
-        " is continuous, it has missing values in the middle\n")
+    cat(
+      "Column: ",
+      names(df),
+      " is continuous, it has missing values in the middle\n"
+    )
     cat("Consider using dplyr::fill or fill_interp in your data prep script.\n")
   }
 

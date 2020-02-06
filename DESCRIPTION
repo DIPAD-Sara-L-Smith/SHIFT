@@ -15,5 +15,7 @@ Imports:
     assertthat,
     magrittr,
     vroom,
-    shinydashboard
+    shinydashboard,
+    DT,
+    htmltools
 RoxygenNote: 7.0.2
