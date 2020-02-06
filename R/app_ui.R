@@ -14,16 +14,16 @@ app_ui <- function() {
       dashboardSidebar(
         sidebarMenu(
           menuItem("Explore data",
-                   tabName = "explore",
-                   icon = icon("table")
+            tabName = "explore",
+            icon = icon("table")
           ),
           menuItem("Compare forecasts",
-                   tabName = "forecasts",
-                   icon = icon("line-chart")
+            tabName = "forecasts",
+            icon = icon("line-chart")
           ),
           menuItem("Review regression models",
-                   tabName = "review-regression",
-                   icon = icon("list-ol")
+            tabName = "review-regression",
+            icon = icon("list-ol")
           )
         )
       ),
@@ -34,13 +34,27 @@ app_ui <- function() {
           ## Explore data tab -----
           tabItem(
             tabName = "explore",
+            # TODO discuss with Sara whether this layout belongs in here or in
+            # the modules. I'm leaning towards modules, but not certain why.
             fluidRow(
               box(
                 width = 12,
+                status = "primary",
+                collapsible = TRUE,
+                collapsed = FALSE,
                 h4("Load your data here."),
                 mod_load_data_ui("load_data_ui_1")
               )
             ),
+            fluidRow(
+              box(
+                width = 12,
+                collapsible = TRUE,
+                collapsed = FALSE,
+                h4("Look at it here."),
+                mod_plot_data_ui("plot_data_ui_1")
+              )
+            )
           ), # tabItem end
 
           # Compare forecasts -----
@@ -66,10 +80,9 @@ app_ui <- function() {
 }
 
 #' @import shiny
-golem_add_external_resources <- function(){
-
+golem_add_external_resources <- function() {
   addResourcePath(
-    'www', system.file('app/www', package = 'shift')
+    "www", system.file("app/www", package = "shift")
   )
 
   tags$head(
@@ -78,7 +91,6 @@ golem_add_external_resources <- function(){
     # Add here all the external resources
     # If you have a custom.css in the inst/app/www
     # Or for example, you can add shinyalert::useShinyalert() here
-    tags$link(rel="stylesheet", type="text/css", href="www/custom.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "www/custom.css")
   )
 }
-

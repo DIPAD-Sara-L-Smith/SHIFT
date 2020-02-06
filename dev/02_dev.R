@@ -8,7 +8,7 @@
 ## 2.1 Add modules
 ##
 golem::add_module( name = "load_data" ) # Name of the module
-golem::add_module( name = "my_other_module" ) # Name of the module
+golem::add_module( name = "plot_data" ) # Name of the module
 
 ## 2.2 Add dependencies
 
