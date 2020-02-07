@@ -40,9 +40,10 @@ app_ui <- function() {
               box(
                 width = 12,
                 status = "primary",
+                solidHeader = TRUE,
                 collapsible = TRUE,
                 collapsed = FALSE,
-                h4("Load your data here."),
+                title = "Load your data here.",
                 mod_load_data_ui("load_data_ui_1")
               )
             ),
@@ -51,7 +52,9 @@ app_ui <- function() {
                 width = 12,
                 collapsible = TRUE,
                 collapsed = FALSE,
-                h4("Look at it here."),
+                title = "Look at it here.",
+                status = "primary",
+                solidHeader = TRUE,
                 mod_plot_data_ui("plot_data_ui_1")
               )
             )
