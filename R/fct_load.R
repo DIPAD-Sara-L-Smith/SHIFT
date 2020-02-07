@@ -1,4 +1,3 @@
-
 #' Load and convert user selected data
 #'
 #' @param upload a dataframe containing a details of uploaded files.
@@ -71,7 +70,7 @@ merge_user_data <- function(df_list,
 }
 
 
-#' load_r_file
+#' read an r script
 #'
 #' @param filename a string of the r file to be run.
 #'
@@ -85,7 +84,19 @@ load_r_file <- function(filename) {
 }
 
 
-#' load_csv
+#' read a dataframe from an rds file
+#'
+#' @param filename
+#'
+#' @return a dataframe
+load_rds_file <- function(filename) {
+  df <- readRDS(filename)
+  if (is_valid_df(df)){
+    return(df)
+  }
+}
+
+#' read a csv
 #'
 #' @param filename a string containing the filename.
 #'
@@ -104,7 +115,7 @@ load_csv <- function(filename) {
 }
 
 
-#' load_excel
+#' read excel
 #'
 #' @param filename a string containing the filename.
 #'
