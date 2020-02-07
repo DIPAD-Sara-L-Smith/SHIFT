@@ -12,11 +12,12 @@
 #'
 #' @keywords internal
 #' @export
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList uiOuput renderUI selectInput
+#' @importFrom dygraphs renderDygraph
 mod_plot_data_ui <- function(id){
   ns <- NS(id)
   tagList(
-
+    uiOutput(ns("dep_var_selector")),
   )
 }
 
@@ -28,6 +29,21 @@ mod_plot_data_ui <- function(id){
 
 mod_plot_data_server <- function(input, output, session, r){
   ns <- session$ns
+
+  # Selector for dependent variable
+  output$dep_var_selector <- renderUI({
+    req(r$data)
+    selectInput("dep_var_selector",
+                label = "Select you Dependent Variable:",
+                choices = names(r$data %>% select(-c("Year", "Quarter"))),
+                )
+  })
+
+  # dyGraph of the independent variable
+  output$ind_var_dygraph <- renderDygraph({
+    req(r$data, input$ind_var_selector)
+    #function to convert from df to dygraph
+  })
 }
 
 ## To be copied in the UI
