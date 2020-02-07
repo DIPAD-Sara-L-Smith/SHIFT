@@ -24,7 +24,8 @@ mod_load_data_ui <- function(id) {
       accept = c(
         ".csv",
         ".xlxs",
-        ".R"
+        ".R",
+        ".rds"
       ),
       multiple = TRUE
     ),

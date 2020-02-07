@@ -18,7 +18,8 @@ load_user_data <- function(upload) {
       function(name, datapath) {
         switch(tolower(file_ext(name)),
           "csv" = load_csv(datapath),
-          "r" = load_R_file(datapath),
+          "r" = load_r_file(datapath),
+          "rds" = load_rds_file(datapath),
           "xls" = load_excel(datapath),
           "xlsx" = load_excel(datapath), # Could we match xls(x) with regex?
           # If the extension is not one we want, warn the user and
@@ -26,7 +27,7 @@ load_user_data <- function(upload) {
           {
             warning(paste(
               "Did not recognise the file extension.",
-              "It should be csv, R or xls(x)"
+              "It should be csv, R, rds or xls(x)"
             ))
             NULL
           }
