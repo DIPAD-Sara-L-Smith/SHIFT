@@ -13,7 +13,7 @@
 #' @keywords internal
 #' @export
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
-#' @importFrom dygraphs renderDygraph dygraphOutput
+#' @importFrom dygraphs renderDygraph dygraphOutput dygraph dyRangeSelector dyLegend
 mod_plot_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -49,8 +49,11 @@ mod_plot_data_server <- function(input, output, session, r) {
     output$dep_var_dygraph <- renderDygraph({
       req(r$data, input$dep_var_selector)
       # function to convert from df to dygraph
-      browser()
-      df.ts <- df_to_ts(r$data)
+
+      p <- dygraph(df_to_xts(r$data)) %>%
+        dyLegend(show = "follow",
+                 labelsSeparateLines = TRUE) %>%
+        dyRangeSelector(height = 40)
     })
   })
 
