@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_load.R
 \name{load_csv}
 \alias{load_csv}
-\title{load_csv}
+\title{read a csv}
 \usage{
 load_csv(filename)
 }
@@ -13,5 +13,5 @@ load_csv(filename)
 a dataframe containg the data.
 }
 \description{
-load_csv
+read a csv
 }

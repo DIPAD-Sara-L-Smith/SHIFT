@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_load.R
 \name{load_excel}
 \alias{load_excel}
-\title{load_excel}
+\title{read excel}
 \usage{
 load_excel(filename)
 }
@@ -13,5 +13,5 @@ load_excel(filename)
 a dataframe containg the data.
 }
 \description{
-load_excel
+read excel
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_load.R
 \name{load_r_file}
 \alias{load_r_file}
-\title{load_r_file}
+\title{read an r script}
 \usage{
 load_r_file(filename)
 }
@@ -13,5 +13,5 @@ load_r_file(filename)
 a dataframe containg the data.
 }
 \description{
-load_r_file
+read an r script
 }

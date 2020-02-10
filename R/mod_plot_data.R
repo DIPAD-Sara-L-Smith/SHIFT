@@ -12,7 +12,7 @@
 #'
 #' @keywords internal
 #' @export
-#' @importFrom shiny NS tagList uiOuput renderUI selectInput
+#' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom dygraphs renderDygraph
 mod_plot_data_ui <- function(id){
   ns <- NS(id)
