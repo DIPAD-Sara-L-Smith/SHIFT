@@ -93,7 +93,7 @@ load_r_file <- function(filename) {
 #' @return a dataframe
 load_rds_file <- function(filename) {
   df <- readRDS(filename)
-  if (is_valid_df(df)){
+  if (is_valid_df(df)) {
     return(df)
   }
 }
@@ -159,9 +159,9 @@ is_valid_df <- function(df) {
   )
 
   # Has unique indexes -  Make sure there are not repeated Year-Quarter Combos
-  assert_that( is_row_index_unique(df),
+  assert_that(is_row_index_unique(df),
     msg = "Dataframe contains duplicate dates with multiple values."
-    )
+  )
 
   # Data is continuous
   assert_that(all(unlist(df %>%
@@ -174,7 +174,7 @@ is_valid_df <- function(df) {
   # i.e., spaces. Check by comparing to the function which builds nice names
   # TODO replace messy call with one to function.
   # TODO should be force make.names onto each dataframe?
-  assert_that(are_df_names_valid(df),
+  assert_that(are_df_names_valid(names(df)),
     msg = paste(
       "The column headings contain some bad characters",
       "probably a space. Fix in the data or consider adding",
@@ -234,10 +234,10 @@ are_df_names_valid <- function(col_names) {
   # check if the names are appropriate
 
   good_names <- make.names(col_names, unique = TRUE)
-  name_check <- names(df) == good_names
+  name_check <- col_names == good_names
 
   if (any(!name_check)) {
-    warning('Invalid names found in dataframe header.')
+    warning("Invalid names found in dataframe header.")
     print(glue("* '{col_names[!name_check]}' is not a valid R column name."))
     return(FALSE)
   } else {
