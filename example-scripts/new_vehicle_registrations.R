@@ -30,7 +30,9 @@ file.remove(temp_file)
 # Filter to grab only the Quarterly data and drop unused columns.
 df <- df %>%
   filter(grepl("Q", Date)) %>%
+  filter(!duplicated(Date)) %>%
   separate(Date, into = c("Year", "Quarter"), sep = " Q", convert = TRUE) %>%
   select(Year:Total)
+
 
 names(df) <- make.names(names(df))
