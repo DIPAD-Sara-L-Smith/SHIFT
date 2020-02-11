@@ -66,7 +66,7 @@ merge_user_data <- function(df_list,
         full_join(..., by = cols)
       }
     )
-  print("Merged", length(df_list), "dataframes together.\n")
+  print(paste("Merged", length(df_list), "dataframes together."))
 
   return(df)
 }
@@ -183,7 +183,7 @@ is_valid_df <- function(df) {
   )
 
   # TODO paramatise this so it only prints when logging is on.
-  print("Loaded a valid dataframe\n")
+  print("Loaded a valid dataframe")
   return(TRUE)
 }
 
@@ -211,11 +211,7 @@ is_df_continuous <- function(df) {
   continuous <- all(index_diff == 1)
 
   if (!continuous) {
-    print(
-      "Column: ",
-      names(df),
-      " is continuous, it has missing values in the middle\n"
-    )
+    print(paste("Column:", names(df), "is continuous, it has missing values in the middle"))
     print("Consider using dplyr::fill or fill_interp in your data prep script.\n")
   }
 
