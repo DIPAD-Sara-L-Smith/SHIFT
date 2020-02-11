@@ -16,6 +16,7 @@ load_user_data <- function(upload) {
     select(name, datapath) %>%
     pmap(
       function(name, datapath) {
+        print(paste("Loading file:", name))
         switch(tolower(file_ext(name)),
           "csv" = load_csv(datapath),
           "r" = load_r_file(datapath),
@@ -65,7 +66,7 @@ merge_user_data <- function(df_list,
         full_join(..., by = cols)
       }
     )
-  cat("Merged", length(df_list), "dataframes together.\n")
+  print("Merged", length(df_list), "dataframes together.\n")
 
   return(df)
 }
@@ -157,6 +158,11 @@ is_valid_df <- function(df) {
     msg = "Dataframe does not contain a column called Quarter."
   )
 
+  # Has unique indexes -  Make sure there are not repeated Year-Quarter Combos
+  assert_that( is_row_index_unique(df),
+    msg = "Dataframe contains duplicate dates with multiple values."
+    )
+
   # Data is continuous
   assert_that(all(unlist(df %>%
     select(-c("Year", "Quarter")) %>%
@@ -177,7 +183,7 @@ is_valid_df <- function(df) {
   )
 
   # TODO paramatise this so it only prints when logging is on.
-  cat("Loaded a valid dataframe\n")
+  print("Loaded a valid dataframe\n")
   return(TRUE)
 }
 
@@ -205,12 +211,12 @@ is_df_continuous <- function(df) {
   continuous <- all(index_diff == 1)
 
   if (!continuous) {
-    cat(
+    print(
       "Column: ",
       names(df),
       " is continuous, it has missing values in the middle\n"
     )
-    cat("Consider using dplyr::fill or fill_interp in your data prep script.\n")
+    print("Consider using dplyr::fill or fill_interp in your data prep script.\n")
   }
 
   return(continuous)
@@ -230,9 +236,35 @@ are_df_names_valid <- function(col_names) {
   good_names <- make.names(col_names, unique = TRUE)
   name_check <- names(df) == good_names
 
-  if (any(name_check)) {
-    bad_names <- col_names[!name_check]
-    cat("(", paste0(bad_names, collapse = ", "), ") are not valid R names\n")
+  if (any(!name_check)) {
+    warning('Invalid names found in dataframe header.')
+    print(glue("* '{col_names[!name_check]}' is not a valid R column name."))
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+}
+
+
+#' Checks whether dates are unique or if rows have multiple values.
+#'
+#' @param df
+#'
+#' @return A boolean indicating whether the rows are unique
+#' @export
+#' @importFrom dplyr transmute filter
+#' @importFrom glue glue glue_data
+is_row_index_unique <- function(df) {
+  df <- df %>%
+    transmute(YQ = paste0(Year, " Q", Quarter)) %>%
+    filter(duplicated(YQ))
+
+  if (nrow(df) > 0) {
+    warning("Found duplicate dates.")
+    print(glue("* Row {df$YQ %>% head(5)} has multiple values."))
+    if (nrow(df) > 5) {
+      print(glue("* ... and {nrow(df)-5} more rows"))
+    }
     return(FALSE)
   } else {
     return(TRUE)
