@@ -18,8 +18,9 @@ mod_plot_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
     actionButton(ns("browser_button"), label = "Browser()"),
+    dygraphOutput(ns("dep_var_dygraph")),
     uiOutput(ns("dep_var_selector")),
-    dygraphOutput(ns("dep_var_dygraph"))
+    uiOutput(ns("ind_var_selector"))
   )
 }
 
@@ -32,38 +33,50 @@ mod_plot_data_ui <- function(id) {
 mod_plot_data_server <- function(input, output, session, r) {
   ns <- session$ns
 
-  # Selector for dependent variable
-  output$dep_var_selector <- renderUI({
+  # Each time we see a change to r$data we should regenerat the times series
+  # object. This is quite quick at the moment, but may need to be triggered by
+  # something else if it starts to hold things up.
+  observeEvent(r$data, {
     req(r$data)
-    items <- names(r$data %>% select(-c("Year", "Quarter")))
-
-    selectInput(ns("dep_var_selector"),
-      label = "Select you Independent Variable:",
-      choices = items,
-      selected = items[1]
-    )
+    r$xts <- df_to_xts(r$data)
   })
 
-  observeEvent(input$dep_var_selector, {
+  observeEvent(r$xts, {
     # dyGraph of the independent variable
     output$dep_var_dygraph <- renderDygraph({
-      req(r$data, input$dep_var_selector)
+      req(r$xts)
       # function to convert from df to dygraph
-
-      p <- dygraph(df_to_xts(r$data)) %>%
-        dyLegend(show = "follow",
-                 labelsSeparateLines = TRUE) %>%
+      p <- dygraph(r$xts) %>%
+        dyLegend(
+          show = "follow",
+          labelsSeparateLines = TRUE
+        ) %>%
         dyRangeSelector(height = 40)
     })
   })
 
+  # Selector for dependent variable
+  output$dep_var_selector <- renderUI({
+    req(r$xts)
+    selectInput(ns("dep_var_selector"),
+      label = "Select your Dependent Variable:",
+      choices = names(r$xts)
+    )
+  })
+
+  # Selector for independent variables
+  output$ind_var_selector <- renderUI({
+    req(r$xts, input$dep_var_selector)
+    selectInput(ns("ind_var_selector"),
+      label = "Select your Independent Variables: (*) Multiple Allowed",
+      # drop the current dep_var from the options
+      choices = setdiff(names(r$xts), input$dep_var_selector),
+      multiple = TRUE
+      )
+  })
+
+  # Delete for prod, or add to golem_dev function.
   observeEvent(input$browser_button, {
     browser()
   })
 }
-
-## To be copied in the UI
-# mod_plot_data_ui("plot_data_ui_1")
-
-## To be copied in the server
-# callModule(mod_plot_data_server, "plot_data_ui_1")
