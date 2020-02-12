@@ -1,3 +1,5 @@
+# This file probably needs a name change.
+
 #' Convert a dataframe to an XTS object. Only works for Year Quarters
 #'
 #' @param df
@@ -15,8 +17,37 @@ df_to_xts <- function(df) {
     df,
     xts(
       df %>% select(-c(Year, Quarter)),
-      as.yearqtr(Year + (Quarter-1)/4)
+      as.yearqtr(Year + (Quarter - 1) / 4)
     )
   )
   return(df_xts)
 }
+
+
+#' Converts a xts object into a dataframe compatible with SHIFT
+#'
+#' @param x an xts object
+#'
+#' @return a dataframe
+#' @importFrom zoo index
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr separate
+xts_to_df <- function(x) {
+  # Again this works for only year quarters. If we expand the app it needs a
+  # rethink.
+  df <- cbind(
+    Date = zoo::index(x),
+    tibble::as_tibble(x)
+  ) %>%
+    tidyr::separate(Date,
+      into = c("Year", "Quarter"),
+      sep = " Q",
+      convert = TRUE
+    )
+  return(df)
+}
+
+# Here is an idea for a test for these functions for when we get round to adding
+# the tests.
+# > identical(df, xts_to_df(df_to_xts(df)))
+# [1] TRUE
