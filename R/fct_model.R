@@ -31,4 +31,6 @@ fit_linear <- function(df, ind_var, dep_var, start, end){
 
 }
 
-predict_models <- function(fits, )
+predict_models <- function(fits ){
+
+}
