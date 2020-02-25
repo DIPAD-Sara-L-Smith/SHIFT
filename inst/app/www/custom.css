@@ -1,0 +1,36 @@
+
+/* logo */
+.skin-blue .main-header .logo {
+    background-color: #006c56;
+}
+
+/* logo when hovered */
+.skin-blue .main-header .logo:hover {
+    background-color: #006c56;
+}
+
+/* navbar (rest of the header) */
+.skin-blue .main-header .navbar {
+    background-color: #006c56;
+}
+
+/* other links in the sidebarmenu when hovered */
+.skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+    background-color: #006c56;
+}
+/* toggle button when hovered  */
+.skin-blue .main-header .navbar .sidebar-toggle:hover{
+    background-color: #006c56;
+}
+/* primary status box */
+.box.box-solid.box-primary>.box-header {
+    color:#fff;
+    background:#006c56
+}
+
+.box.box-solid.box-primary {
+    border-bottom-color:#006c56;
+    border-left-color:#006c56;
+    border-right-color:#006c56;
+    border-top-color:#006c56;
+}
