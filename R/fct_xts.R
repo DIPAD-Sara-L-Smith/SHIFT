@@ -1,5 +1,3 @@
-# This file probably needs a name change.
-
 #' Convert a dataframe to an XTS object. Only works for Year Quarters
 #'
 #' @param df
