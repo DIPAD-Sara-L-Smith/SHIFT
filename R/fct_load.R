@@ -55,38 +55,17 @@ load_user_data <- function(upload) {
 #' @return The merged dataframes as a single dataframe.
 #' @export
 #'
-#' @importFrom purrr reduce map2
+#' @importFrom purrr reduce
 #' @importFrom dplyr full_join
 merge_user_data <- function(df_list,
                             cols = c("Year", "Quarter")) {
-
-  # Add the dataframe source as an attribute so they can be used as a suffix
-  # when they are joined.
-  df_list <- map2(
-    df_list,
-    names(df_list),
-    function(x, y) {
-      attr(x, "source") <- y
-      x
-    }
-  )
-
-  df <- reduce(
-    df_list,
-    function(x, y) {
-      full_join(x, y,
-        by = cols,
-        suffix = c(
-          ifelse(is.null(attr(x, "source")),
-            "",
-            paste0("_", toupper(attr(x, "source")))
-          ),
-          paste0("_", toupper(attr(y, "source")))
-        )
-      )
-    }
-  )
-
+  df <-
+    reduce(
+      df_list,
+      function(...) {
+        full_join(..., by = cols)
+      }
+    )
   print(paste("Merged", length(df_list), "dataframes together."))
 
   return(df)
