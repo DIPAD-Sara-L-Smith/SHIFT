@@ -1,4 +1,4 @@
-fit_models <- function(xf, ind_var, dep_var, start, end, forecasts){
+fit_models <- function(xf, dep_var, dep_var, start, end, forecasts){
   # Not tested
   fits <- lapply(forecasts, function(){
   switch(forecast,
@@ -18,7 +18,7 @@ fit_models <- function(xf, ind_var, dep_var, start, end, forecasts){
 #' Holt-Winters forecast on the data.
 #'
 #' @param df data frame of data
-#' @param ind_var string - name of indpendent variable to forecast
+#' @param dep_var string - name of dependent variable to forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
 #'
@@ -27,9 +27,9 @@ fit_models <- function(xf, ind_var, dep_var, start, end, forecasts){
 #'
 #' @importFrom stats HoltWinters
 #' @importFrom stats window
-fit_holtwinters <- function(df, ind_var, start, end){
+fit_holtwinters <- function(df, dep_var, start, end){
   # subset to the selected variable
-  df_xts <- df_to_xts(df, ind_var, start, end)
+  df_xts <- df_to_xts(df, dep_var, start, end)
 
   # get fit object
   fit <- stats::HoltWinters(df_xts)
@@ -40,7 +40,7 @@ fit_holtwinters <- function(df, ind_var, start, end){
 #' decomposition forecast on the data.
 #'
 #' @param df data frame of data
-#' @param ind_var string - name of indpendent variable to forecast
+#' @param dep_var string - name of dependent variable to forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
 #'
@@ -49,9 +49,9 @@ fit_holtwinters <- function(df, ind_var, start, end){
 #'
 #' @importFrom stats stl
 #' @importFrom stats window
-fit_decomp <- function(df, ind_var, start, end){
+fit_decomp <- function(df, dep_var, start, end){
   # subset to the selected variable
-  df_xts <- df_to_xts(df, ind_var, start, end)
+  df_xts <- df_to_xts(df, dep_var, start, end)
 
   # get fit object
   fit <- stats::stl(df_xts, s.window = "period")
@@ -62,7 +62,7 @@ fit_decomp <- function(df, ind_var, start, end){
 #' forecast on the data.
 #'
 #' @param df data frame of data
-#' @param ind_var string - name of indpendent variable to forecast
+#' @param dep_var string - name of dependent variable to forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
 #'
@@ -70,19 +70,40 @@ fit_decomp <- function(df, ind_var, start, end){
 #' @export
 #'
 #' @importFrom forecast naive
-fit_naive <- function(df, ind_var, start, end) {
+fit_naive <- function(df, dep_var, start, end) {
   # subset to the selected variable
-  df_xts <- df_to_xts(df, ind_var, start, end)
+  df_xts <- df_to_xts(df, dep_var, start, end)
 
   # get fit object
   fit <- forecast::naive(df)
   return(fit)
 }
 
+# TODO set defaults for start/end throughout this script
+#' fit_linear - takes a data frame and returns the fit object for a linear
+#' regression forecast on the data.
+#'
+#' @param df data frame of data
+#' @param dep_var string - name of dependent variable to forecast
+#' @param ind_var string - vector of names of independent variables to fit
+#' @param start vector - start year and quarter in format c(YYYY, Q)
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#'
+#' @return fit object for a linear regression forecast on the data in df
+#' @export
+#'
+#' @importFrom forecast tslm
+fit_linear <- function(df, dep_var, ind_var, start, end){
+  # get time series object
+  vars <- append(dep_var, ind_var)
+  df_ts <- df_to_ts(df, vars, start, end)
 
-fit_linear <- function(df, ind_var, dep_var, start, end){
-
+  # build and return lm model object
+  fit <- forecast::tslm(formula = as.formula(paste0(dep_var, " ~ . + season")),
+                        data = df_ts)
+  return(fit)
 }
+
 
 predict_models <- function(fits ){
 
