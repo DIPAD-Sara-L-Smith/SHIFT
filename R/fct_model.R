@@ -47,17 +47,47 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 #' @return data frame containing predictions/forecasts for multiple models
 #' @importFrom forecast forecast
 #' @export
-predict_models <- function(model_fits, n_periods_to_forecast = 4){
+predict_models <- function(model_fits, proj_indep_var,
+                           n_periods_to_forecast = 4){
   # run through all model fits and produce predictions
   predictions <- lapply(model_fits, function(fit){
     # TODO improve this check if fit is valid
+
+    # Holt-Winters, Time Series Decomposition, Naive forecast -
+    # don't need to consider projected independent variable data
     if (any(attr(fit, "class") %in% c("HoltWinters",
                                   "forecast",
-                                  "stl",
-                                  "tslm"))) {
+                                  "stl"))) {
       return(forecast::forecast(fit, h = n_periods_to_forecast))
+    } else if (attr(fit, "class") == "tslm") {
+      # linear regression model -
+      # different predict call to consider projected independent variable data
+      # First, check if we have all the data we need to forecast
+      ind_var_names <- names(myfit$data)
+      ind_var_names <- ind_var_names[which(ind_var_names %not_in% c("data",
+                                                                "trend",
+                                                                "season"))]
+
+      if (all(ind_var_names %in% names(proj_indep_var))) {
+        fcast <- forecast::forecast(
+          object = fit,
+          newdata = as.data.frame(proj_indep_var),
+          level = c(80, 95),
+          fan = TRUE,
+          h = n_periods_to_forecast
+        )
+        return(fcast)
+      } else {
+        # Projected data missing - alert user
+        warning(paste0("Linear regression forecast not produced due to the
+                       following not having data in the projected independent
+                       variable dataset: "))
+        return(NULL)
+      }
     } else {
-      warning("Error in predict_models(): fit object not valid.")
+      warning(paste0("Error in predict_models(): fit object - ",
+        attr(fit, "class"),
+        "not valid."))
       return(NULL)
     }
   })
