@@ -1,19 +1,38 @@
 
 ## Fit / Predict models (all types) -----
 
-fit_models <- function(xf, dep_var, ind_var, start, end, forecasts){
-  # Not tested
-  fits <- lapply(forecasts, function(){
-    switch(forecast,
-           'holtwinters' = get_holtwinters(),
-           'decomp' = get_decomp(),
-           'naive' = get_naive(),
-           'linear' = get_linear(),
+#' fit_models - find model fit objects for all selected model types
+#'
+#' @param df data frame containing data
+#' @param dep_var string - name of dependent variable to forecast
+#' @param ind_var string - vector of names of independent variables to fit
+#' @param start vector - start year and quarter in format c(YYYY, Q)
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param forecasts list of string values detailing which forecasts to include
+#'
+#' @return list of model fit objects
+#' @importFrom forecast forecast
+#' @export
+fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
+  # Run through the list of forecasts and get fit for each relevant model
+  fits <- lapply(forecasts_to_include, function(model_type){
+    model_fit <- switch(model_type,
+           'holtwinters' = fit_holtwinters(df, dep_var, start, end),
+           'decomposition' = fit_decomp(df, dep_var, start, end),
+           'naive' = fit_naive(df, dep_var, start, end),
+           'linear' = fit_linear(df, dep_var, ind_var, start, end),
+
            # Default case
-           {warning('Forecast type not recognised.')
-             NULL})
+           {warning(paste0('Forecast type - ', model_type, ' - not recognised.'))
+             return(NULL)
+             }
+           )
+    return(model_fit)
   })
 
+  # rename list so we can easily extract the one we need
+  names(fits) <- forecasts_to_include
+  return(fits)
 }
 
 #' predict_models - calculate forecasts
