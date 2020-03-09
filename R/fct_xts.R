@@ -129,6 +129,28 @@ xts_to_df <- function(x) {
   return(df)
 }
 
+#' Calculates differenced data for the selected data frame.
+#' This is used in the forecasting to make the data stationary.
+#' Note that it excludes columns: 'Year', 'Quarter'.
+#'
+#' @param df data frame to be differencd
+#'
+#' @return a dataframe
+diff_df <- function(df){
+
+  #  TODO Fix this!
+
+  # Remove 'Year' and 'Quarter'
+  time_variables <- df %>%
+    select(one_of(c("Year", "Quarter")))
+
+  differenced_data <- sapply(df, function(my_column) {
+    diff(as.numeric(my_column))
+    })
+
+  # recombine columns
+  return(dplyr::bind_cols(head(time_variables, -1), differenced_data))
+}
 
 # Here is an idea for a test for these functions for when we get round to adding
 # the tests.
