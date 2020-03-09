@@ -49,7 +49,7 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 #' @export
 predict_models <- function(model_fits, n_periods_to_forecast = 4){
   # run through all model fits and produce predictions
-  predict_models <- lapply(model_fits, function(fit){
+  predictions <- lapply(model_fits, function(fit){
     # TODO improve this check if fit is valid
     if (any(attr(fit, "class") %in% c("HoltWinters",
                                   "forecast",
@@ -58,8 +58,13 @@ predict_models <- function(model_fits, n_periods_to_forecast = 4){
       return(forecast::forecast(fit, h = n_periods_to_forecast))
     } else {
       warning("Error in predict_models(): fit object not valid.")
+      return(NULL)
     }
   })
+
+  # rename list
+  names(predictions) <- names(model_fits)
+  return(predictions)
 }
 
 
