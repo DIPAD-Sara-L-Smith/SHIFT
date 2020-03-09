@@ -168,7 +168,7 @@ fit_naive <- function(df, dep_var, start, end) {
   df_ts <- df_to_ts(df, dep_var, start, end)
 
   # get fit object
-  fit <- forecast::naive(df)
+  fit <- forecast::naive(df_ts)
   return(fit)
 }
 
