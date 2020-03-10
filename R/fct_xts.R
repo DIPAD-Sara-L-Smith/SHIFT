@@ -137,19 +137,26 @@ xts_to_df <- function(x) {
 #'
 #' @return a dataframe
 diff_df <- function(df){
+  # check if data frame is valid
+  if (is_valid_df(df)) {
+    # separate out 'Year' and 'Quarter' (we don't want to difference these)
+    time_variables <- df %>%
+      select(one_of(c("Year", "Quarter")))
 
-  #  TODO Fix this!
+    data_variables <- df %>%
+      select(-one_of(c("Year", "Quarter")))
 
-  # Remove 'Year' and 'Quarter'
-  time_variables <- df %>%
-    select(one_of(c("Year", "Quarter")))
+    # calculate differences
+    differenced_data <- sapply(data_variables, function(my_column) {
+      diff(as.numeric(my_column))
+      })
 
-  differenced_data <- sapply(df, function(my_column) {
-    diff(as.numeric(my_column))
-    })
-
-  # recombine columns
-  return(dplyr::bind_cols(head(time_variables, -1), differenced_data))
+    # recombine columns
+    return(dplyr::bind_cols(head(time_variables, -1),
+                            as.data.frame(differenced_data)))
+  } else {
+    warning("Data frame being differenced is not valid.")
+  }
 }
 
 # Here is an idea for a test for these functions for when we get round to adding
