@@ -14,6 +14,9 @@
 #' @importFrom forecast forecast
 #' @export
 fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
+  # check all lower case
+  forecasts_to_include <- tolower(forecasts_to_include)
+
   # Run through the list of forecasts and get fit for each relevant model
   fits <- lapply(forecasts_to_include, function(model_type){
     model_fit <- switch(model_type,
