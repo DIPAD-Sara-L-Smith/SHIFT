@@ -128,29 +128,24 @@ fit_holtwinters <- function(df, dep_var, start, end){
   return(fit)
 }
 
-#' plot_holtwinters -
-#' @description A function that takes a data frame and returns the plot of the
-#' Holt-Winters forecast for the selected column of data.
+#' get_holtwinters_plotdata
+#' @description A function that takes the model fit object and returns a data
+#' frame containing the x and y data required for a plot of the actuals,
+#' forecast, and 95% confidence interval.
 #'
-#' @param df data frame of data
-#' @param dep_var string - name of dependent variable to forecast
-#' @param start vector - start year and quarter in format c(YYYY, Q)
-#' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param fit - Holt-Winters model object
 #'
 #' @return plotly line graph of forecast
 #' @export
 #'
-#' @importFrom stats HoltWinters
-#' @importFrom stats window
-#' @importFrom plotly plot_ly
-plot_holtwinters <- function(df, dep_var, start, end){
-  # find Holt-Winters model
-  fit <- fit_holtwinters(df, dep_var, start, end)
-
-  # get forecast
+#' @importFrom stats ts.union
+#' @importFrom zoo as.yearqtr
+get_holtwinters_plotdata <- function(fit) {
+  # calculate forecast
   fcast <- predict_models(model_fits = list(fit),
                           n_periods_to_forecast = 8)
 
+  # gather data from forecast list
   ts_actuals <- fcast[[1]]$x
   start_actuals <- start(ts_actuals)
   start_forecast <- start(fcast[[1]]$model$fitted[, "xhat"])
@@ -169,10 +164,51 @@ plot_holtwinters <- function(df, dep_var, start, end){
                     start = start_forecast,
                     frequency = freq_actuals)
 
+  # put data together into a single data frame
   y <- stats::ts.union(ts_actuals, ts_forecast,
                        ts_lower_95, ts_upper_95)
   x_labels <- zoo::as.yearqtr(time(y))
   data <- as.data.frame(cbind(x_labels, y))
+
+  return(data)
+}
+
+
+#' plot_forecast
+#' @description A function that takes a data frame and returns the plot of the
+#' selected forecast for the selected column of data.
+#'
+#' @param df data frame of data
+#' @param dep_var string - name of dependent variable to forecast
+#' @param start vector - start year and quarter in format c(YYYY, Q)
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#'
+#' @return plotly line graph of forecast
+#' @export
+#'
+#' @importFrom plotly plot_ly
+#' @importFrom zoo as.yearqtr
+plot_forecast <- function(df, dep_var, start, end, forecast_type){
+  browser()
+
+  # find model
+  forecast_type <- tolower(forecast_type)
+  fit <- switch(forecast_type,
+    "holtwinters" = fit_holtwinters(df, dep_var, start, end),
+    "naive" = fit_naive(df, dep_var, start, end),
+    "decomposition" = fit_decomp(df, dep_var, start, end),
+    "linear" = fit_linear(df, dep_var, ind_var, start, end),
+    warning("plot_forecast: forecast_type not recognised.")
+  )
+
+  # get plot data from fit object
+  data <- switch(forecast_type,
+                 "holtwinters" = get_holtwinters_plotdata(fit),
+                 "naive" = get_naive_plotdata(fit),
+                 "decomposition" = get_decomposition_plotdata(fit),
+                 "linear" = get_linearreg_plotdata(fit),
+                 warning("plot_forecast: forecast_type not recognised.")
+  )
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
@@ -194,7 +230,10 @@ plot_holtwinters <- function(df, dep_var, start, end){
               showlegend = FALSE,
               line = list(color = 'transparent'),
               opacity = 0.75) %>%
-    layout(title = "Holt-Winters Forecast (with 95% CI)",
+    layout(title = paste0(tools::toTitleCase(forecast_type),
+                          " forecast of ",
+                          tools::toTitleCase(dep_var),
+                          " (with 95% CI)"),
            paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
            xaxis = list(title = "",
                         gridcolor = 'rgb(255,255,255)',
@@ -223,7 +262,7 @@ plot_holtwinters <- function(df, dep_var, start, end){
     add_trace(y = ~y.ts_forecast,
               type = "scatter",
               mode = "lines+markers",
-              name = "Holt-Winters forecast",
+              name = "Forecast",
               color = I("chocolate"),
               text = paste0(zoo::as.yearqtr(data$x_labels),
                             ": ",
