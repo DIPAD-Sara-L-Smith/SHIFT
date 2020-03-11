@@ -39,13 +39,15 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 }
 
 #' predict_models - calculate forecasts
+#' @description A function that returns a list of forecasts for the input
+#' model fits.
 #'
-#' @param fit list - model object(s) containing fit
-
-#' @param dep_var string - name of dependent variable to forecast
-#' @param ind_var string - vector of names of independent variables to fit
-#' @param start vector - start year and quarter in format c(YYYY, Q)
-#' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param model_fits list of model fit objects to use in forecast. Can use
+#' fit_models() to calculate these.
+#' @param proj_indep_var if linear regression model is included in model_fits,
+#' this data frame is required, containing projected data to use in the forecast
+#' @param n_periods_to_forecast integer - number of periods to forecast forward.
+#' Default is 4 periods.
 #'
 #' @return data frame containing predictions/forecasts for multiple models
 #' @importFrom forecast forecast
@@ -123,6 +125,29 @@ fit_holtwinters <- function(df, dep_var, start, end){
 
   # get fit object
   fit <- stats::HoltWinters(df_ts)
+  return(fit)
+}
+
+#' plot_holtwinters -
+#' @description A function that takes a data frame and returns the plot of the
+#' Holt-Winters forecast for the selected column of data.
+#'
+#' @param df data frame of data
+#' @param dep_var string - name of dependent variable to forecast
+#' @param start vector - start year and quarter in format c(YYYY, Q)
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#'
+#' @return fit object for a Holt-Winters forecast on the data in df
+#' @export
+#'
+#' @importFrom stats HoltWinters
+#' @importFrom stats window
+plot_holtwinters <- function(df, dep_var, start, end){
+  # find Holt-Winters model
+  fit <- fit_holtwinters(df, dep_var, start, end)
+
+  # get forecast
+  fcast <- predict_models(fit, )
   return(fit)
 }
 
