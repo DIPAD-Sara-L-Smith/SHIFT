@@ -137,18 +137,99 @@ fit_holtwinters <- function(df, dep_var, start, end){
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
 #'
-#' @return fit object for a Holt-Winters forecast on the data in df
+#' @return plotly line graph of forecast
 #' @export
 #'
 #' @importFrom stats HoltWinters
 #' @importFrom stats window
+#' @importFrom plotly plot_ly
 plot_holtwinters <- function(df, dep_var, start, end){
   # find Holt-Winters model
   fit <- fit_holtwinters(df, dep_var, start, end)
 
   # get forecast
-  fcast <- predict_models(fit, )
-  return(fit)
+  fcast <- predict_models(model_fits = list(fit),
+                          n_periods_to_forecast = 8)
+
+  ts_actuals <- fcast[[1]]$x
+  start_actuals <- start(ts_actuals)
+  start_forecast <- start(fcast[[1]]$model$fitted[, "xhat"])
+  freq_actuals <- frequency(ts_actuals)
+
+  ts_forecast <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
+                      fcast[[1]]$mean),
+                    start = start_forecast,
+                    frequency = freq_actuals)
+  ts_lower_95 <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
+                      fcast[[1]]$lower[, "95%"]),
+                    start = start_forecast,
+                    frequency = freq_actuals)
+  ts_upper_95 <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
+                      fcast[[1]]$upper[, "95%"]),
+                    start = start_forecast,
+                    frequency = freq_actuals)
+
+  y <- stats::ts.union(ts_actuals, ts_forecast,
+                       ts_lower_95, ts_upper_95)
+  x_labels <- zoo::as.yearqtr(time(y))
+  data <- as.data.frame(cbind(x_labels, y))
+
+  # produce plot
+  plot <- plotly::plot_ly(data = data,
+                  x = ~x_labels) %>%
+    add_trace(y = ~y.ts_upper_95,
+              mode = "lines",
+              name = "Upper 95% CI",
+              color = I("sandy brown"),
+              showlegend = FALSE,
+              line = list(color = 'transparent'),
+              type = "scatter",
+              opacity = 0.75) %>%
+    add_trace(y = ~y.ts_lower_95,
+              mode = "lines",
+              name = "Lower 95% CI",
+              color = I("sandy brown"),
+              fill = "tonexty",
+              type = "scatter",
+              showlegend = FALSE,
+              line = list(color = 'transparent'),
+              opacity = 0.75) %>%
+    layout(title = "Holt-Winters Forecast (with 95% CI)",
+           paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
+           xaxis = list(title = "",
+                        gridcolor = 'rgb(255,255,255)',
+                        showgrid = TRUE,
+                        showline = FALSE,
+                        showticklabels = TRUE,
+                        tickcolor = 'rgb(127,127,127)',
+                        ticks = 'outside',
+                        zeroline = FALSE),
+           yaxis = list(title = "",
+                        gridcolor = 'rgb(255,255,255)',
+                        showgrid = TRUE,
+                        showline = FALSE,
+                        showticklabels = TRUE,
+                        tickcolor = 'rgb(127,127,127)',
+                        ticks = 'outside',
+                        zeroline = FALSE)) %>%
+    add_trace(y = ~y.ts_actuals,
+              mode = "lines+markers",
+              type = "scatter",
+              name = "Actuals",
+              color = I("dim grey"),
+              text = paste0(zoo::as.yearqtr(data$x_labels),
+                ": ",
+                round(data$y.ts_actuals))) %>%
+    add_trace(y = ~y.ts_forecast,
+              type = "scatter",
+              mode = "lines+markers",
+              name = "Holt-Winters forecast",
+              color = I("chocolate"),
+              text = paste0(zoo::as.yearqtr(data$x_labels),
+                            ": ",
+                            round(data$y.ts_forecast)))
+
+  return(plot)
 }
 
 
