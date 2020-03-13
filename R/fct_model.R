@@ -54,8 +54,6 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 #' @export
 predict_models <- function(model_fits, proj_indep_var = NULL,
                            n_periods_to_forecast = 4){
-  browser()
-
   # run through all model fits and produce predictions
   predictions <- lapply(model_fits, function(fit){
     # TODO improve this check if fit is valid
@@ -66,7 +64,7 @@ predict_models <- function(model_fits, proj_indep_var = NULL,
                                   "forecast",
                                   "stl"))) {
       return(forecast::forecast(fit, h = n_periods_to_forecast))
-    } else if (attr(fit, "class") == "tslm") {
+    } else if (all(attr(fit, "class") == c("tslm", "lm"))) {
       # linear regression model -
       # different predict call to consider projected independent variable data
       # First, check if we have all the data we need to forecast
@@ -80,7 +78,7 @@ predict_models <- function(model_fits, proj_indep_var = NULL,
           object = fit,
           newdata = as.data.frame(proj_indep_var),
           level = c(80, 95),
-          fan = TRUE,
+          fan = FALSE,
           h = n_periods_to_forecast
         )
         return(fcast)
@@ -143,10 +141,6 @@ fit_holtwinters <- function(df, dep_var, start, end){
 #' @importFrom stats ts.union
 #' @importFrom zoo as.yearqtr
 get_forecast_plotdata <- function(fit, proj_data = NULL) {
-  browser()
-
-
-
   # calculate forecast
   fcast <- predict_models(model_fits = list(fit),
                           proj_indep_var = proj_data,
@@ -185,13 +179,10 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                       start = start_forecast,
                       frequency = freq_actuals)
   } else if (model_type == "holtwinters") {
-    # get model forecast object
-    fcast <- unlist(fcast, recursive = FALSE)
-
     # get time series for plot
     ts_actuals <- fcast$x
     start_actuals <- start(ts_actuals)
-    start_forecast <- start(fcast$model$fitted[, "xhat"])
+    start_forecast <- start(fcast$fitted[, "xhat"])
     freq_actuals <- frequency(ts_actuals)
 
     ts_forecast <- ts(c(fcast$fitted[, "xhat"],
@@ -204,6 +195,25 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                       frequency = freq_actuals)
     ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
                         fcast$upper[, "95%"]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+  } else if (model_type == "linear") {
+    # get time series for plot
+    ts_actuals <- fcast$x
+    start_actuals <- start(ts_actuals)
+    start_forecast <- start(fcast$fitted)
+    freq_actuals <- frequency(ts_actuals)
+
+    ts_forecast <- ts(c(fcast$fitted,
+                        fcast$mean),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_lower_95 <- ts(c(fcast$fitted,
+                        fcast$lower[, 2]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_upper_95 <- ts(c(fcast$fitted,
+                        fcast$upper[, 2]),
                       start = start_forecast,
                       frequency = freq_actuals)
   } else {
