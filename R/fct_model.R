@@ -52,8 +52,10 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 #' @return data frame containing predictions/forecasts for multiple models
 #' @importFrom forecast forecast
 #' @export
-predict_models <- function(model_fits, proj_indep_var,
+predict_models <- function(model_fits, proj_indep_var = NULL,
                            n_periods_to_forecast = 4){
+  browser()
+
   # run through all model fits and produce predictions
   predictions <- lapply(model_fits, function(fit){
     # TODO improve this check if fit is valid
@@ -68,7 +70,7 @@ predict_models <- function(model_fits, proj_indep_var,
       # linear regression model -
       # different predict call to consider projected independent variable data
       # First, check if we have all the data we need to forecast
-      ind_var_names <- names(myfit$data)
+      ind_var_names <- names(fit$data)
       ind_var_names <- ind_var_names[which(ind_var_names %not_in% c("data",
                                                                 "trend",
                                                                 "season"))]
@@ -128,41 +130,86 @@ fit_holtwinters <- function(df, dep_var, start, end){
   return(fit)
 }
 
-#' get_holtwinters_plotdata
+#' get_forecast_plotdata
 #' @description A function that takes the model fit object and returns a data
 #' frame containing the x and y data required for a plot of the actuals,
 #' forecast, and 95% confidence interval.
 #'
-#' @param fit - Holt-Winters model object
+#' @param fit - model object
 #'
 #' @return plotly line graph of forecast
 #' @export
 #'
 #' @importFrom stats ts.union
 #' @importFrom zoo as.yearqtr
-get_holtwinters_plotdata <- function(fit) {
+get_forecast_plotdata <- function(fit, proj_data = NULL) {
+  browser()
+
+
+
   # calculate forecast
   fcast <- predict_models(model_fits = list(fit),
+                          proj_indep_var = proj_data,
                           n_periods_to_forecast = 8)
+  fcast <- unlist(fcast, recursive = FALSE)
+
+  # find model type
+  model_type <- switch(fcast$method,
+                       "STL +  ETS(M,A,N)" = "decomposition",
+                       "Naive method" = "naive",
+                       "HoltWinters" = "holtwinters",
+                       "Linear regression model" = "linear",
+
+                       { warning(paste0("get_forecast_plotdata:
+                                 Forecast type ", fcast$method,
+                                        " not recognised."))}
+  )
 
   # gather data from forecast list
-  ts_actuals <- fcast[[1]]$x
-  start_actuals <- start(ts_actuals)
-  start_forecast <- start(fcast[[1]]$model$fitted[, "xhat"])
-  freq_actuals <- frequency(ts_actuals)
+  if (model_type %in% c("decomposition", "naive")) {
+    ts_actuals <- fcast$x
+    start_actuals <- start(ts_actuals)
+    start_forecast <- start(fcast$fitted)
+    freq_actuals <- frequency(ts_actuals)
 
-  ts_forecast <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
-                      fcast[[1]]$mean),
-                    start = start_forecast,
-                    frequency = freq_actuals)
-  ts_lower_95 <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
-                      fcast[[1]]$lower[, "95%"]),
-                    start = start_forecast,
-                    frequency = freq_actuals)
-  ts_upper_95 <- ts(c(fcast[[1]]$model$fitted[, "xhat"],
-                      fcast[[1]]$upper[, "95%"]),
-                    start = start_forecast,
-                    frequency = freq_actuals)
+    ts_forecast <- ts(c(fcast$fitted,
+                        fcast$mean),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_lower_95 <- ts(c(fcast$fitted,
+                        fcast$lower[, "95%"]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_upper_95 <- ts(c(fcast$fitted,
+                        fcast$upper[, "95%"]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+  } else if (model_type == "holtwinters") {
+    # get model forecast object
+    fcast <- unlist(fcast, recursive = FALSE)
+
+    # get time series for plot
+    ts_actuals <- fcast$x
+    start_actuals <- start(ts_actuals)
+    start_forecast <- start(fcast$model$fitted[, "xhat"])
+    freq_actuals <- frequency(ts_actuals)
+
+    ts_forecast <- ts(c(fcast$fitted[, "xhat"],
+                        fcast$mean),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_lower_95 <- ts(c(fcast$fitted[, "xhat"],
+                        fcast$lower[, "95%"]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
+                        fcast$upper[, "95%"]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+  } else {
+    # TODO default / error
+
+  }
 
   # put data together into a single data frame
   y <- stats::ts.union(ts_actuals, ts_forecast,
@@ -188,8 +235,9 @@ get_holtwinters_plotdata <- function(fit) {
 #'
 #' @importFrom plotly plot_ly
 #' @importFrom zoo as.yearqtr
-plot_forecast <- function(df, dep_var, start, end, forecast_type){
-  browser()
+plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
+                          forecast_type){
+  # browser()
 
   # find model
   forecast_type <- tolower(forecast_type)
@@ -297,6 +345,8 @@ fit_decomp <- function(df, dep_var, start, end){
 }
 
 
+
+
 ## Naive -----
 
 #' fit_naive - takes a data frame and returns the fit object for a naive
@@ -339,12 +389,13 @@ fit_naive <- function(df, dep_var, start, end) {
 #'
 #' @importFrom forecast tslm
 fit_linear <- function(df, dep_var, ind_var, start, end){
-  # get time series object
+  # get time series object containing only the relevant variables
   vars <- append(dep_var, ind_var)
   df_ts <- df_to_ts(df, vars, start, end)
 
   # build and return lm model object
-  fit <- forecast::tslm(formula = as.formula(paste0(dep_var, " ~ . + season")),
-                        data = df_ts)
+  fit <- forecast::tslm(formula = as.formula(
+    paste0(dep_var, " ~ ", paste(ind_var, " + "), "season")
+    ), data = df_ts)
   return(fit)
 }
