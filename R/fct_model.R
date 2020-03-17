@@ -204,8 +204,12 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #'
 #' @param df data frame of data
 #' @param dep_var string - name of dependent variable to forecast
+#' @param ind_var string - vector of names of indepedent variables to use in
+#' forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param forecast_type - string value giving forecast type to use. One of:
+#' "holtwinters", "naive", "decomposition", "linear".
 #'
 #' @return plotly line graph of forecast
 #' @export
@@ -227,13 +231,15 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   )
 
   # get plot data from fit object
-  data <- switch(forecast_type,
-                 "holtwinters" = get_holtwinters_plotdata(fit),
-                 "naive" = get_naive_plotdata(fit),
-                 "decomposition" = get_decomposition_plotdata(fit),
-                 "linear" = get_linearreg_plotdata(fit),
-                 warning("plot_forecast: forecast_type not recognised.")
-  )
+  if (forecast_type == "linear") {
+    # fetch projected data from df
+    end_row <- df %>%
+      rownames_to_column() %>%
+      filter(Year == end[1] & Quarter == end[2])
+
+    proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
+  }
+  data <- get_forecast_plotdata(fit, proj_data)
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
