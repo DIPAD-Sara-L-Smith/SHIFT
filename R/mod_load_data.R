@@ -30,12 +30,6 @@ mod_load_data_ui <- function(id) {
       multiple = TRUE
     ),
 
-    checkboxInput(
-      ns("diff"),
-      label = "Difference data",
-      value = TRUE
-    ),
-
     switchInput(
       ns("overwrite"),
       onLabel = "Overwrite",
@@ -66,7 +60,16 @@ mod_load_data_ui <- function(id) {
     downloadButton(
       ns("download_data"),
       label = "Download"
-    )
+    ),
+
+    switchInput(
+      ns("diff"),
+      onLabel = "Differenced",
+      offLabel = "Not Differenced",
+      value = FALSE,
+      inline = TRUE,
+      size = "medium"
+    ),
   )
 }
 
@@ -90,10 +93,10 @@ mod_load_data_server <- function(input, output, session, r) {
       r$data <- merge_user_data(list(r$data, load_user_data(input$file)))
     }
 
-    # If user has selected to difference data, do so now
-    if (input$diff) {
-      r$data <- diff_df(r$data)
-    }
+    # # If user has selected to difference data, do so now
+    # if (input$diff) {
+    #   r$data <- diff_df(r$data)
+    # }
   })
 
   # Whenever the underlying data changes update the DT which displays it.
@@ -126,7 +129,7 @@ mod_load_data_server <- function(input, output, session, r) {
       r$data <- diff_df(r$data)
     } else {
       message("Undo differencing of data.")
-      r$data <- diff(r$data) * -1
+      r$data <- diffinv_df(r$data)
     }
   })
 
