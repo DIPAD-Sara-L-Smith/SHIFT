@@ -159,6 +159,38 @@ diff_df <- function(df){
   }
 }
 
+#' diffinv_df
+#' Calculates the inverse of differenced data for the selected data frame.
+#' This is used in the forecasting to make the data stationary.
+#' Note that it excludes columns: 'Year', 'Quarter'.
+#'
+#' @param df data frame to be differencd
+#'
+#' @return a dataframe
+#' @importFrom stats diffinv
+diffinv_df <- function(df){
+  # check if data frame is valid
+  if (is_valid_df(df)) {
+    # separate out 'Year' and 'Quarter' (we don't want to difference these)
+    time_variables <- df %>%
+      select(one_of(c("Year", "Quarter")))
+
+    data_variables <- df %>%
+      select(-one_of(c("Year", "Quarter")))
+
+    # calculate differences
+    differenced_data <- sapply(data_variables, function(my_column) {
+      stats::diffinv(as.numeric(my_column))
+    })
+
+    # recombine columns
+    return(dplyr::bind_cols(head(time_variables, -1),
+                            as.data.frame(differenced_data)))
+  } else {
+    warning("Data frame being un-differenced is not valid.")
+  }
+}
+
 # Here is an idea for a test for these functions for when we get round to adding
 # the tests.
 # > identical(df, xts_to_df(df_to_xts(df)))
