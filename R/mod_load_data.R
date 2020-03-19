@@ -30,6 +30,12 @@ mod_load_data_ui <- function(id) {
       multiple = TRUE
     ),
 
+    checkboxInput(
+      ns("diff"),
+      label = "Difference data",
+      value = TRUE
+    ),
+
     switchInput(
       ns("overwrite"),
       onLabel = "Overwrite",
@@ -83,6 +89,11 @@ mod_load_data_server <- function(input, output, session, r) {
       r$data_old <- r$data
       r$data <- merge_user_data(list(r$data, load_user_data(input$file)))
     }
+
+    # If user has selected to difference data, do so now
+    if (input$diff) {
+      r$data <- diff_df(r$data)
+    }
   })
 
   # Whenever the underlying data changes update the DT which displays it.
@@ -105,6 +116,20 @@ mod_load_data_server <- function(input, output, session, r) {
     )
   })
 
+  # Difference the data if user selects checkbox to do so.
+  observeEvent(input$diff, {
+    #browser()
+    req(r$data)
+    if (input$diff) {
+      message("Difference data.")
+      r$data_old <- r$data
+      r$data <- diff_df(r$data)
+    } else {
+      message("Undo differencing of data.")
+      r$data <- diff(r$data) * -1
+    }
+  })
+
   # If the users hits undo revert to the previous dataset, quite crude but might
   # be useful if you make a mistake with the columns. Could be expaned to revert
   # more changes if we make data_old a list of old dataframes. One should do for
@@ -122,7 +147,7 @@ mod_load_data_server <- function(input, output, session, r) {
     req(r$data, input$user_DT_columns_selected)
     cols_to_drop <- input$user_DT_columns_selected
     if (any(c(1, 2) %in% cols_to_drop)) {
-      warning("Dropping Year or Quarter is a bad idea so lets not.")
+      warning("Dropping Year or Quarter is a bad idea so let's not.")
       cols_to_drop <- cols_to_drop[cols_to_drop %not_in% c(1, 2)]
     }
 
@@ -136,7 +161,7 @@ mod_load_data_server <- function(input, output, session, r) {
 
     cols_to_keep <- input$user_DT_columns_selected
     if (any(c(1, 2) %not_in% cols_to_keep)) {
-      warning("Dropping Year or Quarter is a bad idea so lets not.")
+      warning("Dropping Year or Quarter is a bad idea so let's not.")
       cols_to_keep <- union(c(1, 2), cols_to_keep)
     }
 
