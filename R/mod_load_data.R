@@ -68,7 +68,7 @@ mod_load_data_ui <- function(id) {
       offLabel = "Not Differenced",
       value = FALSE,
       inline = TRUE,
-      size = "medium"
+      size = "normal"
     ),
   )
 }
@@ -87,16 +87,13 @@ mod_load_data_server <- function(input, output, session, r) {
   observeEvent(input$file, {
     if (input$overwrite) {
       r$data_old <- r$data
+      r$data_undiff <- r$data
       r$data <- load_user_data(input$file)
     } else {
       r$data_old <- r$data
-      r$data <- merge_user_data(list(r$data, load_user_data(input$file)))
+      r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
+      r$data_undiff <- r$data
     }
-
-    # # If user has selected to difference data, do so now
-    # if (input$diff) {
-    #   r$data <- diff_df(r$data)
-    # }
   })
 
   # Whenever the underlying data changes update the DT which displays it.
@@ -121,15 +118,14 @@ mod_load_data_server <- function(input, output, session, r) {
 
   # Difference the data if user selects checkbox to do so.
   observeEvent(input$diff, {
-    #browser()
-    req(r$data)
+    req(r$data, r$data_undiff)
     if (input$diff) {
-      message("Difference data.")
-      r$data_old <- r$data
+      # message("Difference data.")
+      r$data_undiff <- r$data
       r$data <- diff_df(r$data)
     } else {
-      message("Undo differencing of data.")
-      r$data <- diffinv_df(r$data)
+      # message("Undo differencing of data.")
+      r$data <- r$data_undiff
     }
   })
 
@@ -156,6 +152,8 @@ mod_load_data_server <- function(input, output, session, r) {
 
     r$data_old <- r$data
     r$data <- r$data %>% select(-cols_to_drop)
+
+    r$data_undiff <- r$data_undiff %>% select(-cols_to_drop)
   })
 
   # Keep columns
@@ -170,6 +168,8 @@ mod_load_data_server <- function(input, output, session, r) {
 
     r$data_old <- r$data
     r$data <- r$data %>% select(1:2, cols_to_keep)
+
+    r$data_undiff <- r$data_undiff %>% select(1:2, cols_to_keep)
   })
 
   # Download the dataframe as rds
