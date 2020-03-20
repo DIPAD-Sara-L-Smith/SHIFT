@@ -103,6 +103,96 @@ predict_models <- function(model_fits, proj_indep_var = NULL,
 }
 
 
+#' get_forecast_plotdata
+#' @description A function that takes the model fit object and returns a data
+#' frame containing the x and y data required for a plot of the actuals,
+#' forecast, and 95% confidence interval.
+#'
+#' @param fit - model object
+#' @param proj_data - data frame containing forecast data for independent
+#' variables.
+#'
+#' @return plotly line graph of forecast
+#' @export
+#'
+#' @importFrom stats ts.union
+#' @importFrom zoo as.yearqtr
+get_forecast_plotdata <- function(fit, proj_data = NULL) {
+  # calculate forecast
+  fcast <- predict_models(model_fits = list(fit),
+                          proj_indep_var = proj_data,
+                          n_periods_to_forecast = 8)
+  fcast <- unlist(fcast, recursive = FALSE)
+
+  # find model type
+  model_type <- switch(fcast$method,
+                       "STL +  ETS(M,A,N)" = "decomposition",
+                       "STL +  ETS(A,N,N)" = "decomposition",
+                       "Naive method" = "naive",
+                       "HoltWinters" = "holtwinters",
+                       "Linear regression model" = "linear",
+
+                       { warning(paste0("get_forecast_plotdata:
+                                 Forecast type ", fcast$method,
+                                        " not recognised."))
+                         return(NULL) }
+  )
+
+  # gather data from forecast list
+  if (model_type %in% c("decomposition", "naive", "linear", "holtwinters")) {
+    ts_actuals <- fcast$x
+    start_actuals <- start(ts_actuals)
+    start_forecast <- start(fcast$fitted)
+    freq_actuals <- frequency(ts_actuals)
+
+    ts_forecast <- ts(c(fcast$fitted,
+                        fcast$mean),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_lower_95 <- ts(c(fcast$fitted,
+                        fcast$lower[, 2]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+    ts_upper_95 <- ts(c(fcast$fitted,
+                        fcast$upper[, 2]),
+                      start = start_forecast,
+                      frequency = freq_actuals)
+  # } else if (model_type == "holtwinters") {
+  #   # get time series for plot
+  #   ts_actuals <- fcast$x
+  #   start_actuals <- start(ts_actuals)
+  #   start_forecast <- start(fcast$fitted[, "xhat"])
+  #   freq_actuals <- frequency(ts_actuals)
+  #
+  #   ts_forecast <- ts(c(fcast$fitted[, "xhat"],
+  #                       fcast$mean),
+  #                     start = start_forecast,
+  #                     frequency = freq_actuals)
+  #   ts_lower_95 <- ts(c(fcast$fitted[, "xhat"],
+  #                       fcast$lower[, "95%"]),
+  #                     start = start_forecast,
+  #                     frequency = freq_actuals)
+  #   ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
+  #                       fcast$upper[, "95%"]),
+  #                     start = start_forecast,
+  #                     frequency = freq_actuals)
+  } else {
+    # model_type not recognised
+    warning("get_forecast_plotdata(): model_type not recognised from fit
+            object.")
+    return(NULL)
+  }
+
+  # put data together into a single data frame
+  y <- stats::ts.union(ts_actuals, ts_forecast,
+                       ts_lower_95, ts_upper_95)
+  x_labels <- zoo::as.yearqtr(time(y))
+  data <- as.data.frame(cbind(x_labels, y))
+
+  return(data)
+}
+
+
 #' plot_forecast
 #' @description A function that takes a data frame and returns the plot of the
 #' selected forecast for the selected column of data.
@@ -115,10 +205,10 @@ predict_models <- function(model_fits, proj_indep_var = NULL,
 #' @return plotly line graph of forecast
 #' @export
 #'
-#' @importFrom plotly plot_ly
+#' @importFrom plotly plot_ly add_trace layout
 #' @importFrom zoo as.yearqtr
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
-                          forecast_type){
+                          forecast_type, proj_data = NULL){
   # find start / end if not given
   if (missing(start)) {
     start <- c(df$Year[1], df$Quarter[1])
@@ -139,18 +229,12 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   )
 
   # get plot data from fit object
-  data <- switch(forecast_type,
-                 "holtwinters" = get_holtwinters_plotdata(fit),
-                 "naive" = get_naive_plotdata(fit),
-                 "decomposition" = get_decomposition_plotdata(fit),
-                 "linear" = get_linearreg_plotdata(fit),
-                 warning("plot_forecast: forecast_type not recognised.")
-  )
+  data <- get_forecast_plotdata(fit, proj_data)
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
                           x = ~x_labels) %>%
-    add_trace(y = ~y.ts_upper_95,
+    plotly::add_trace(y = ~y.ts_upper_95,
               mode = "lines",
               name = "Upper 95% CI",
               color = I("sandy brown"),
@@ -158,7 +242,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
               line = list(color = 'transparent'),
               type = "scatter",
               opacity = 0.75) %>%
-    add_trace(y = ~y.ts_lower_95,
+    plotly::add_trace(y = ~y.ts_lower_95,
               mode = "lines",
               name = "Lower 95% CI",
               color = I("sandy brown"),
@@ -167,7 +251,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
               showlegend = FALSE,
               line = list(color = 'transparent'),
               opacity = 0.75) %>%
-    layout(title = paste0(tools::toTitleCase(forecast_type),
+    plotly::layout(title = paste0(tools::toTitleCase(forecast_type),
                           " forecast of ",
                           tools::toTitleCase(dep_var),
                           " (with 95% CI)"),
@@ -188,7 +272,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                         tickcolor = 'rgb(127,127,127)',
                         ticks = 'outside',
                         zeroline = FALSE)) %>%
-    add_trace(y = ~y.ts_actuals,
+    plotly::add_trace(y = ~y.ts_actuals,
               mode = "lines+markers",
               type = "scatter",
               name = "Actuals",
@@ -196,7 +280,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
               text = paste0(zoo::as.yearqtr(data$x_labels),
                             ": ",
                             round(data$y.ts_actuals))) %>%
-    add_trace(y = ~y.ts_forecast,
+    plotly::add_trace(y = ~y.ts_forecast,
               type = "scatter",
               mode = "lines+markers",
               name = "Forecast",
@@ -232,109 +316,6 @@ fit_holtwinters <- function(df, dep_var, start, end){
   fit <- stats::HoltWinters(df_ts)
   return(fit)
 }
-
-#' get_forecast_plotdata
-#' @description A function that takes the model fit object and returns a data
-#' frame containing the x and y data required for a plot of the actuals,
-#' forecast, and 95% confidence interval.
-#'
-#' @param fit - model object
-#'
-#' @return plotly line graph of forecast
-#' @export
-#'
-#' @importFrom stats ts.union
-#' @importFrom zoo as.yearqtr
-get_forecast_plotdata <- function(fit, proj_data = NULL) {
-  # calculate forecast
-  fcast <- predict_models(model_fits = list(fit),
-                          proj_indep_var = proj_data,
-                          n_periods_to_forecast = 8)
-  fcast <- unlist(fcast, recursive = FALSE)
-
-  # find model type
-  model_type <- switch(fcast$method,
-                       "STL +  ETS(M,A,N)" = "decomposition",
-                       "Naive method" = "naive",
-                       "HoltWinters" = "holtwinters",
-                       "Linear regression model" = "linear",
-
-                       { warning(paste0("get_forecast_plotdata:
-                                 Forecast type ", fcast$method,
-                                        " not recognised."))}
-  )
-
-  # gather data from forecast list
-  if (model_type %in% c("decomposition", "naive")) {
-    ts_actuals <- fcast$x
-    start_actuals <- start(ts_actuals)
-    start_forecast <- start(fcast$fitted)
-    freq_actuals <- frequency(ts_actuals)
-
-    ts_forecast <- ts(c(fcast$fitted,
-                        fcast$mean),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_lower_95 <- ts(c(fcast$fitted,
-                        fcast$lower[, "95%"]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_upper_95 <- ts(c(fcast$fitted,
-                        fcast$upper[, "95%"]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-  } else if (model_type == "holtwinters") {
-    # get time series for plot
-    ts_actuals <- fcast$x
-    start_actuals <- start(ts_actuals)
-    start_forecast <- start(fcast$fitted[, "xhat"])
-    freq_actuals <- frequency(ts_actuals)
-
-    ts_forecast <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$mean),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_lower_95 <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$lower[, "95%"]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$upper[, "95%"]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-  } else if (model_type == "linear") {
-    # get time series for plot
-    ts_actuals <- fcast$x
-    start_actuals <- start(ts_actuals)
-    start_forecast <- start(fcast$fitted)
-    freq_actuals <- frequency(ts_actuals)
-
-    ts_forecast <- ts(c(fcast$fitted,
-                        fcast$mean),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_lower_95 <- ts(c(fcast$fitted,
-                        fcast$lower[, 2]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_upper_95 <- ts(c(fcast$fitted,
-                        fcast$upper[, 2]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-  } else {
-    # TODO default / error
-
-  }
-
-  # put data together into a single data frame
-  y <- stats::ts.union(ts_actuals, ts_forecast,
-                       ts_lower_95, ts_upper_95)
-  x_labels <- zoo::as.yearqtr(time(y))
-  data <- as.data.frame(cbind(x_labels, y))
-
-  return(data)
-}
-
 
 
 
@@ -391,8 +372,6 @@ fit_naive <- function(df, dep_var, start, end) {
 
 ## Linear Regression -----
 
-# TODO set defaults for start/end throughout this script
-
 #' fit_linear - takes a data frame and returns the fit object for a linear
 #' regression forecast on the data.
 #'
@@ -417,3 +396,57 @@ fit_linear <- function(df, dep_var, ind_var, start, end){
     ), data = df_ts)
   return(fit)
 }
+
+
+#' get_proj_data
+#' @description Takes a data frame of time series data and an end point and
+#' returns a data frame with just the data from after that point. To be used
+#' to get project data for independent variables from a data frame of combined
+#' historical and projection data.
+#'
+#' @param df data frame of data
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#'
+#' @return data frame of projection data for all columns
+#' @export
+#'
+#' @importFrom dplyr select arrange filter n
+#' @importFrom tibble rownames_to_column
+get_proj_data <- function(df, end){
+  # check if df is valid
+  if (is_valid_df(df)) {
+    # sort data
+    df_sorted <- df %>%
+      dplyr::select(everything()) %>%
+      tibble::rownames_to_column() %>%
+      dplyr::arrange(Year, Quarter)
+
+    # find last row of historical data
+    df_row_number <- df_sorted %>%
+      dplyr::filter(Year == end[1] & Quarter == end[2])
+
+    # check if end date is in data
+    if (nrow(df_row_number) == 0) {
+      # end date isn't in data
+      warning("get_proj_data: end date isn't in data in df.")
+      return(NULL)
+    } else if (nrow(df_row_number) > 1 ) {
+      # multiple rows of data returned - raise error with user
+      warning("get_proj_data: multiple rows of data in df match end date.")
+      return(NULL)
+    } else {
+      # one row of data returned - get row index to use to filter out projected
+      # data
+      df_row_number <- as.numeric(df_row_number$rowname) + 1
+
+      # filter data to only rows after the last row
+      df_proj_data <- df_sorted %>%
+        dplyr::slice(df_row_number:dplyr::n())
+      return(df_proj_data)
+    }
+  } else {
+    warning("get_proj_data: df is not a valid data frame.")
+    return(NULL)
+  }
+}
+
