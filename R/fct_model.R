@@ -103,6 +103,111 @@ predict_models <- function(model_fits, proj_indep_var = NULL,
 }
 
 
+#' plot_forecast
+#' @description A function that takes a data frame and returns the plot of the
+#' selected forecast for the selected column of data.
+#'
+#' @param df data frame of data
+#' @param dep_var string - name of dependent variable to forecast
+#' @param start vector - start year and quarter in format c(YYYY, Q)
+#' @param end vector - end year and quarter in format c(YYYY, Q)
+#'
+#' @return plotly line graph of forecast
+#' @export
+#'
+#' @importFrom plotly plot_ly
+#' @importFrom zoo as.yearqtr
+plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
+                          forecast_type){
+  # find start / end if not given
+  if (missing(start)) {
+    start <- c(df$Year[1], df$Quarter[1])
+  }
+
+  if (missing(end)) {
+    end <- c(tail(df$Year, n = 1), tail(df$Quarter, n = 1))
+  }
+
+  # find model
+  forecast_type <- tolower(forecast_type)
+  fit <- switch(forecast_type,
+                "holtwinters" = fit_holtwinters(df, dep_var, start, end),
+                "naive" = fit_naive(df, dep_var, start, end),
+                "decomposition" = fit_decomp(df, dep_var, start, end),
+                "linear" = fit_linear(df, dep_var, ind_var, start, end),
+                warning("plot_forecast: forecast_type not recognised.")
+  )
+
+  # get plot data from fit object
+  data <- switch(forecast_type,
+                 "holtwinters" = get_holtwinters_plotdata(fit),
+                 "naive" = get_naive_plotdata(fit),
+                 "decomposition" = get_decomposition_plotdata(fit),
+                 "linear" = get_linearreg_plotdata(fit),
+                 warning("plot_forecast: forecast_type not recognised.")
+  )
+
+  # produce plot
+  plot <- plotly::plot_ly(data = data,
+                          x = ~x_labels) %>%
+    add_trace(y = ~y.ts_upper_95,
+              mode = "lines",
+              name = "Upper 95% CI",
+              color = I("sandy brown"),
+              showlegend = FALSE,
+              line = list(color = 'transparent'),
+              type = "scatter",
+              opacity = 0.75) %>%
+    add_trace(y = ~y.ts_lower_95,
+              mode = "lines",
+              name = "Lower 95% CI",
+              color = I("sandy brown"),
+              fill = "tonexty",
+              type = "scatter",
+              showlegend = FALSE,
+              line = list(color = 'transparent'),
+              opacity = 0.75) %>%
+    layout(title = paste0(tools::toTitleCase(forecast_type),
+                          " forecast of ",
+                          tools::toTitleCase(dep_var),
+                          " (with 95% CI)"),
+           paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
+           xaxis = list(title = "",
+                        gridcolor = 'rgb(255,255,255)',
+                        showgrid = TRUE,
+                        showline = FALSE,
+                        showticklabels = TRUE,
+                        tickcolor = 'rgb(127,127,127)',
+                        ticks = 'outside',
+                        zeroline = FALSE),
+           yaxis = list(title = "",
+                        gridcolor = 'rgb(255,255,255)',
+                        showgrid = TRUE,
+                        showline = FALSE,
+                        showticklabels = TRUE,
+                        tickcolor = 'rgb(127,127,127)',
+                        ticks = 'outside',
+                        zeroline = FALSE)) %>%
+    add_trace(y = ~y.ts_actuals,
+              mode = "lines+markers",
+              type = "scatter",
+              name = "Actuals",
+              color = I("dim grey"),
+              text = paste0(zoo::as.yearqtr(data$x_labels),
+                            ": ",
+                            round(data$y.ts_actuals))) %>%
+    add_trace(y = ~y.ts_forecast,
+              type = "scatter",
+              mode = "lines+markers",
+              name = "Forecast",
+              color = I("chocolate"),
+              text = paste0(zoo::as.yearqtr(data$x_labels),
+                            ": ",
+                            round(data$y.ts_forecast)))
+
+  return(plot)
+}
+
 
 ## Holt-Winters -----
 
@@ -231,110 +336,6 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 }
 
 
-#' plot_forecast
-#' @description A function that takes a data frame and returns the plot of the
-#' selected forecast for the selected column of data.
-#'
-#' @param df data frame of data
-#' @param dep_var string - name of dependent variable to forecast
-#' @param start vector - start year and quarter in format c(YYYY, Q)
-#' @param end vector - end year and quarter in format c(YYYY, Q)
-#'
-#' @return plotly line graph of forecast
-#' @export
-#'
-#' @importFrom plotly plot_ly
-#' @importFrom zoo as.yearqtr
-plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
-                          forecast_type){
-  # find start / end if not given
-  if (missing(start)) {
-    start <- c(df$Year[1], df$Quarter[1])
-  }
-
-  if (missing(end)) {
-    end <- c(tail(df$Year, n = 1), tail(df$Quarter, n = 1))
-  }
-
-  # find model
-  forecast_type <- tolower(forecast_type)
-  fit <- switch(forecast_type,
-    "holtwinters" = fit_holtwinters(df, dep_var, start, end),
-    "naive" = fit_naive(df, dep_var, start, end),
-    "decomposition" = fit_decomp(df, dep_var, start, end),
-    "linear" = fit_linear(df, dep_var, ind_var, start, end),
-    warning("plot_forecast: forecast_type not recognised.")
-  )
-
-  # get plot data from fit object
-  data <- switch(forecast_type,
-                 "holtwinters" = get_holtwinters_plotdata(fit),
-                 "naive" = get_naive_plotdata(fit),
-                 "decomposition" = get_decomposition_plotdata(fit),
-                 "linear" = get_linearreg_plotdata(fit),
-                 warning("plot_forecast: forecast_type not recognised.")
-  )
-
-  # produce plot
-  plot <- plotly::plot_ly(data = data,
-                  x = ~x_labels) %>%
-    add_trace(y = ~y.ts_upper_95,
-              mode = "lines",
-              name = "Upper 95% CI",
-              color = I("sandy brown"),
-              showlegend = FALSE,
-              line = list(color = 'transparent'),
-              type = "scatter",
-              opacity = 0.75) %>%
-    add_trace(y = ~y.ts_lower_95,
-              mode = "lines",
-              name = "Lower 95% CI",
-              color = I("sandy brown"),
-              fill = "tonexty",
-              type = "scatter",
-              showlegend = FALSE,
-              line = list(color = 'transparent'),
-              opacity = 0.75) %>%
-    layout(title = paste0(tools::toTitleCase(forecast_type),
-                          " forecast of ",
-                          tools::toTitleCase(dep_var),
-                          " (with 95% CI)"),
-           paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
-           xaxis = list(title = "",
-                        gridcolor = 'rgb(255,255,255)',
-                        showgrid = TRUE,
-                        showline = FALSE,
-                        showticklabels = TRUE,
-                        tickcolor = 'rgb(127,127,127)',
-                        ticks = 'outside',
-                        zeroline = FALSE),
-           yaxis = list(title = "",
-                        gridcolor = 'rgb(255,255,255)',
-                        showgrid = TRUE,
-                        showline = FALSE,
-                        showticklabels = TRUE,
-                        tickcolor = 'rgb(127,127,127)',
-                        ticks = 'outside',
-                        zeroline = FALSE)) %>%
-    add_trace(y = ~y.ts_actuals,
-              mode = "lines+markers",
-              type = "scatter",
-              name = "Actuals",
-              color = I("dim grey"),
-              text = paste0(zoo::as.yearqtr(data$x_labels),
-                ": ",
-                round(data$y.ts_actuals))) %>%
-    add_trace(y = ~y.ts_forecast,
-              type = "scatter",
-              mode = "lines+markers",
-              name = "Forecast",
-              color = I("chocolate"),
-              text = paste0(zoo::as.yearqtr(data$x_labels),
-                            ": ",
-                            round(data$y.ts_forecast)))
-
-  return(plot)
-}
 
 
 ## Time Series Decomposition -----
