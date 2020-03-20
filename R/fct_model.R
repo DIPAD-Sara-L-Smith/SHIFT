@@ -247,7 +247,14 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom zoo as.yearqtr
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type){
-  # browser()
+  # find start / end if not given
+  if (missing(start)) {
+    start <- c(df$Year[1], df$Quarter[1])
+  }
+
+  if (missing(end)) {
+    end <- c(tail(df$Year, n = 1), tail(df$Quarter, n = 1))
+  }
 
   # find model
   forecast_type <- tolower(forecast_type)
