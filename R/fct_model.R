@@ -157,25 +157,6 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                         fcast$upper[, 2]),
                       start = start_forecast,
                       frequency = freq_actuals)
-  # } else if (model_type == "holtwinters") {
-  #   # get time series for plot
-  #   ts_actuals <- fcast$x
-  #   start_actuals <- start(ts_actuals)
-  #   start_forecast <- start(fcast$fitted[, "xhat"])
-  #   freq_actuals <- frequency(ts_actuals)
-  #
-  #   ts_forecast <- ts(c(fcast$fitted[, "xhat"],
-  #                       fcast$mean),
-  #                     start = start_forecast,
-  #                     frequency = freq_actuals)
-  #   ts_lower_95 <- ts(c(fcast$fitted[, "xhat"],
-  #                       fcast$lower[, "95%"]),
-  #                     start = start_forecast,
-  #                     frequency = freq_actuals)
-  #   ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
-  #                       fcast$upper[, "95%"]),
-  #                     start = start_forecast,
-  #                     frequency = freq_actuals)
   } else {
     # model_type not recognised
     warning("get_forecast_plotdata(): model_type not recognised from fit
@@ -201,6 +182,12 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @param dep_var string - name of dependent variable to forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param forecast_type - string - name of forecast to use. One of: naive,
+#' holtwinters, decomposition, linear.
+#' @param proj_data data frame (default NULL) of projected data to use if
+#' producing a linear regression forecast.
+#' @param diff_starting_value numeric (default NULL) - if data is differenced,
+#' where to start adding differences.
 #'
 #' @return plotly line graph of forecast
 #' @export
@@ -208,7 +195,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom plotly plot_ly add_trace layout
 #' @importFrom zoo as.yearqtr
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
-                          forecast_type, proj_data = NULL){
+                          forecast_type, proj_data = NULL, diff_inv = FALSE){
   # find start / end if not given
   if (missing(start)) {
     start <- c(df$Year[1], df$Quarter[1])
@@ -227,6 +214,11 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                 "linear" = fit_linear(df, dep_var, ind_var, start, end),
                 warning("plot_forecast: forecast_type not recognised.")
   )
+
+  # get projection data (if not included)
+  if (forecast_type == "linear" & is.null(proj_data)) {
+    proj_data <- get_proj_data(df, end)
+  }
 
   # get plot data from fit object
   data <- get_forecast_plotdata(fit, proj_data)
@@ -441,7 +433,8 @@ get_proj_data <- function(df, end){
 
       # filter data to only rows after the last row
       df_proj_data <- df_sorted %>%
-        dplyr::slice(df_row_number:dplyr::n())
+        dplyr::slice(df_row_number:dplyr::n()) %>%
+        select(-one_of("rowname"))
       return(df_proj_data)
     }
   } else {
