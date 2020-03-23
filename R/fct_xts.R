@@ -129,7 +129,8 @@ xts_to_df <- function(x) {
   return(df)
 }
 
-#' Calculates differenced data for the selected data frame.
+#' diff_df
+#' @description Calculates differenced data for the selected data frame.
 #' This is used in the forecasting to make the data stationary.
 #' Note that it excludes columns: 'Year', 'Quarter'.
 #'
@@ -159,37 +160,55 @@ diff_df <- function(df){
   }
 }
 
-#' diffinv_df
-#' Calculates the inverse of differenced data for the selected data frame.
-#' This is used in the forecasting to make the data stationary.
-#' Note that it excludes columns: 'Year', 'Quarter'.
+
+#' diff_inv_df
+#' Undo differencing.
 #'
-#' @param df data frame to be differencd
+#' @param df - dataframe of differences
+#' @param starting_values - dataframe of starting values (one row, one per
+#' column in df).
 #'
 #' @return a dataframe
+#'
 #' @importFrom stats diffinv
-diffinv_df <- function(df){
+#' @importFrom dplyr bind_cols select one_of
+diff_inv_df <- function(df, starting_values){
+  #browser()
   # check if data frame is valid
   if (is_valid_df(df)) {
-    # separate out 'Year' and 'Quarter' (we don't want to difference these)
+    # separate out 'Year' and 'Quarter' (we don't want to change these)
     time_variables <- df %>%
       select(one_of(c("Year", "Quarter")))
 
     data_variables <- df %>%
       select(-one_of(c("Year", "Quarter")))
 
-    # calculate differences
-    differenced_data <- sapply(data_variables, function(my_column) {
-      stats::diffinv(as.numeric(my_column))
-    })
+    # check all variables have a starting value
+    if (all(names(data_variables) %in% names(starting_values))) {
+      starting_values <- starting_values %>%
+        select(one_of(names(data_variables)))
+
+      # calculate differences
+      output <- diffinv(as.matrix(data_variables),
+                             xi = as.matrix(starting_values))
+    } else {
+      warning("diff_inv_df: At least one of the variables in this dataset
+              do not have a starting value.")
+      return(NULL)
+    }
 
     # recombine columns
-    return(dplyr::bind_cols(head(time_variables, -1),
-                            as.data.frame(differenced_data)))
+    output <- dplyr::bind_cols(time_variables,
+                            as.data.frame(head(output, -1)))
+    names(output) <- c("Year", "Quarter", names(data_variables))
+    return(output)
   } else {
-    warning("Data frame being un-differenced is not valid.")
+    warning("Data frame being differenced is not valid.")
+    return(NULL)
   }
 }
+
+
 
 # Here is an idea for a test for these functions for when we get round to adding
 # the tests.
