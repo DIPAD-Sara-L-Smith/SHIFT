@@ -239,7 +239,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 
     proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
   }
-  data <- get_forecast_plotdata(fit, proj_data)
+  data <- get_forecast_plotdata(fit, as.data.frame(proj_data))
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
