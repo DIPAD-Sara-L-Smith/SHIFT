@@ -60,7 +60,16 @@ mod_load_data_ui <- function(id) {
     downloadButton(
       ns("download_data"),
       label = "Download"
-    )
+    ),
+
+    switchInput(
+      ns("diff"),
+      onLabel = "Differenced",
+      offLabel = "Not Differenced",
+      value = FALSE,
+      inline = TRUE,
+      size = "normal"
+    ),
   )
 }
 
@@ -78,10 +87,12 @@ mod_load_data_server <- function(input, output, session, r) {
   observeEvent(input$file, {
     if (input$overwrite) {
       r$data_old <- r$data
+      r$data_undiff <- r$data
       r$data <- load_user_data(input$file)
     } else {
       r$data_old <- r$data
-      r$data <- merge_user_data(list(r$data, load_user_data(input$file)))
+      r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
+      r$data_undiff <- r$data
     }
   })
 
@@ -105,6 +116,19 @@ mod_load_data_server <- function(input, output, session, r) {
     )
   })
 
+  # Difference the data if user selects checkbox to do so.
+  observeEvent(input$diff, {
+    req(r$data, r$data_undiff)
+    if (input$diff) {
+      # message("Difference data.")
+      r$data_undiff <- r$data
+      r$data <- diff_df(r$data)
+    } else {
+      # message("Undo differencing of data.")
+      r$data <- r$data_undiff
+    }
+  })
+
   # If the users hits undo revert to the previous dataset, quite crude but might
   # be useful if you make a mistake with the columns. Could be expaned to revert
   # more changes if we make data_old a list of old dataframes. One should do for
@@ -122,12 +146,14 @@ mod_load_data_server <- function(input, output, session, r) {
     req(r$data, input$user_DT_columns_selected)
     cols_to_drop <- input$user_DT_columns_selected
     if (any(c(1, 2) %in% cols_to_drop)) {
-      warning("Dropping Year or Quarter is a bad idea so lets not.")
+      warning("Dropping Year or Quarter is a bad idea so let's not.")
       cols_to_drop <- cols_to_drop[cols_to_drop %not_in% c(1, 2)]
     }
 
     r$data_old <- r$data
     r$data <- r$data %>% select(-cols_to_drop)
+
+    r$data_undiff <- r$data_undiff %>% select(-cols_to_drop)
   })
 
   # Keep columns
@@ -136,12 +162,14 @@ mod_load_data_server <- function(input, output, session, r) {
 
     cols_to_keep <- input$user_DT_columns_selected
     if (any(c(1, 2) %not_in% cols_to_keep)) {
-      warning("Dropping Year or Quarter is a bad idea so lets not.")
+      warning("Dropping Year or Quarter is a bad idea so let's not.")
       cols_to_keep <- union(c(1, 2), cols_to_keep)
     }
 
     r$data_old <- r$data
     r$data <- r$data %>% select(1:2, cols_to_keep)
+
+    r$data_undiff <- r$data_undiff %>% select(1:2, cols_to_keep)
   })
 
   # Download the dataframe as rds
