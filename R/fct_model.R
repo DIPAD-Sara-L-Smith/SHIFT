@@ -102,23 +102,15 @@ predict_models <- function(model_fits, proj_data = NULL,
   return(predictions)
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 #' get_forecast_plotdata
 #' @description A function that takes the model fit object and returns a data
 #' frame containing the x and y data required for a plot of the actuals,
 #' forecast, and 95% confidence interval.
 #'
 #' @param fit - model object
-<<<<<<< HEAD
 #' @param proj_data - data frame of projected independent variable data to use
 #' in forecast
-=======
-#' @param proj_data - data frame containing forecast data for independent
-#' variables.
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 #'
 #' @return plotly line graph of forecast
 #' @export
@@ -150,22 +142,13 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                        "Linear regression model" = "linear",
 
                        { warning(paste0("get_forecast_plotdata:
-<<<<<<< HEAD
                                         Forecast type ", fcast$method,
                                         " not recognised.")) }
   )
 
   # gather data from forecast list
   if (model_type %in% c("decomposition", "naive", "linear")) {
-=======
-                                 Forecast type ", fcast$method,
-                                        " not recognised."))
-                         return(NULL) }
-  )
 
-  # gather data from forecast list
-  if (model_type %in% c("decomposition", "naive", "linear", "holtwinters")) {
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
     ts_actuals <- fcast$x
     start_actuals <- start(ts_actuals)
     start_forecast <- start(fcast$fitted)
@@ -183,7 +166,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                         fcast$upper[, 2]),
                       start = start_forecast,
                       frequency = freq_actuals)
-<<<<<<< HEAD
+
   } else if (model_type == "holtwinters") {
     # get time series for plot
     ts_actuals <- fcast$x
@@ -206,12 +189,6 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   } else {
     # Warning message already generated in initial swtich call - just return
     # null here
-=======
-  } else {
-    # model_type not recognised
-    warning("get_forecast_plotdata(): model_type not recognised from fit
-            object.")
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
     return(NULL)
   }
 
@@ -235,17 +212,12 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
-<<<<<<< HEAD
 #' @param forecast_type - string value giving forecast type to use. One of:
 #' "holtwinters", "naive", "decomposition", "linear".
-=======
-#' @param forecast_type - string - name of forecast to use. One of: naive,
-#' holtwinters, decomposition, linear.
 #' @param proj_data data frame (default NULL) of projected data to use if
 #' producing a linear regression forecast.
 #' @param diff_starting_value numeric (default NULL) - if data is differenced,
 #' where to start adding differences.
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 #'
 #' @return plotly line graph of forecast
 #' @export
@@ -279,7 +251,6 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   }
 
   # get plot data from fit object
-<<<<<<< HEAD
   if (forecast_type == "linear") {
     # fetch projected data from df
     end_row <- df %>%
@@ -289,18 +260,12 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
     proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
   }
   data <- get_forecast_plotdata(fit, as.data.frame(proj_data))
-=======
-  data <- get_forecast_plotdata(fit, proj_data)
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
                           x = ~x_labels) %>%
-<<<<<<< HEAD
-    add_trace(y = ~y.ts_upper_95,
-=======
+
     plotly::add_trace(y = ~y.ts_upper_95,
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
               mode = "lines",
               name = "Upper 95% CI",
               color = I("sandy brown"),
@@ -346,11 +311,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
               text = paste0(zoo::as.yearqtr(data$x_labels),
                             ": ",
                             round(data$y.ts_actuals))) %>%
-<<<<<<< HEAD
-    add_trace(y = ~y.ts_forecast,
-=======
     plotly::add_trace(y = ~y.ts_forecast,
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
               type = "scatter",
               mode = "lines+markers",
               name = "Forecast",
@@ -363,11 +324,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 }
 
 
-<<<<<<< HEAD
 
-
-=======
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 ## Holt-Winters -----
 
 #' fit_holtwinters - takes a data frame and returns the fit object for a
@@ -393,10 +350,6 @@ fit_holtwinters <- function(df, dep_var, start, end){
 }
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 25de8daecb16da6c3c3975748a197e3c2551ec19
 ## Time Series Decomposition -----
 
 #' fit_decomp - takes a data frame and returns the fit object for a time series
