@@ -14,13 +14,15 @@
 #' @export
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom dygraphs renderDygraph dygraphOutput dygraph dyRangeSelector dyLegend
+#' @importFrom plotly plotlyOutput
 mod_plot_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
     actionButton(ns("browser_button"), label = "Browser()"),
     dygraphOutput(ns("dep_var_dygraph")),
     uiOutput(ns("dep_var_selector")),
-    uiOutput(ns("ind_var_selector"))
+    uiOutput(ns("ind_var_selector")),
+    plotlyOutput(ns("plot_holtwinters"))
   )
 }
 
@@ -33,7 +35,7 @@ mod_plot_data_ui <- function(id) {
 mod_plot_data_server <- function(input, output, session, r) {
   ns <- session$ns
 
-  # Each time we see a change to r$data we should regenerat the times series
+  # Each time we see a change to r$data we should regenerate the times series
   # object. This is quite quick at the moment, but may need to be triggered by
   # something else if it starts to hold things up.
   observeEvent(r$data, {
@@ -73,6 +75,19 @@ mod_plot_data_server <- function(input, output, session, r) {
       choices = setdiff(names(r$xts), input$dep_var_selector),
       multiple = TRUE
       )
+  })
+
+  # Graph of Holt-Winters forecast
+  observeEvent(r$data, {
+    # dyGraph of the independent variable
+    output$plot_holtwinters <- renderPlotly({
+      req(r$data)
+
+      # function to convert from df to dygraph
+      p <- plot_forecast(
+
+         )
+    })
   })
 
   # Delete for prod, or add to golem_dev function.
