@@ -123,9 +123,11 @@ mod_load_data_server <- function(input, output, session, r) {
       # message("Difference data.")
       r$data_undiff <- r$data
       r$data <- diff_df(r$data)
+      r$flg_diff <- TRUE
     } else {
       # message("Undo differencing of data.")
       r$data <- r$data_undiff
+      r$flg_diff <- FALSE
     }
   })
 
