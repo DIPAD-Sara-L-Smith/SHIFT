@@ -79,14 +79,23 @@ mod_plot_data_server <- function(input, output, session, r) {
 
   # Graph of Holt-Winters forecast
   observeEvent(r$data, {
+    req(r$data, input$dep_var_selector)
+
     # dyGraph of the independent variable
-    output$plot_holtwinters <- renderPlotly({
+    output$plot_holtwinters <- plotly::renderPlotly({
       req(r$data)
 
       # function to convert from df to dygraph
       p <- plot_forecast(
-
-         )
+        df = r$data,
+        dep_var = input$dep_var_selector,
+        ind_var = NULL,
+        # start,
+        # end,
+        forecast_type = "holtwinters",
+        proj_data = NULL,
+        diff_inv = FALSE
+        )
     })
   })
 

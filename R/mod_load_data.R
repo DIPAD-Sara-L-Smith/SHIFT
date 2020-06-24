@@ -69,7 +69,7 @@ mod_load_data_ui <- function(id) {
       value = FALSE,
       inline = TRUE,
       size = "normal"
-    ),
+    )
   )
 }
 
@@ -87,8 +87,8 @@ mod_load_data_server <- function(input, output, session, r) {
   observeEvent(input$file, {
     if (input$overwrite) {
       r$data_old <- r$data
-      r$data_undiff <- r$data
       r$data <- load_user_data(input$file)
+      r$data_undiff <- r$data
     } else {
       r$data_old <- r$data
       r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
@@ -151,25 +151,31 @@ mod_load_data_server <- function(input, output, session, r) {
     }
 
     r$data_old <- r$data
-    r$data <- r$data %>% select(-cols_to_drop)
+    r$data <- r$data %>% dplyr::select(-cols_to_drop)
 
-    r$data_undiff <- r$data_undiff %>% select(-cols_to_drop)
+    r$data_undiff <- r$data_undiff %>% dplyr::select(-cols_to_drop)
   })
 
   # Keep columns
   observeEvent(input$keep_col, {
+    # browser()
     req(r$data, input$user_DT_columns_selected)
 
+    #TODO - this assumes Year and Quarter are in cols 1:2.
     cols_to_keep <- input$user_DT_columns_selected
     if (any(c(1, 2) %not_in% cols_to_keep)) {
       warning("Dropping Year or Quarter is a bad idea so let's not.")
       cols_to_keep <- union(c(1, 2), cols_to_keep)
     }
 
+    # store a copy of the data pre-change so that user can undo one step
     r$data_old <- r$data
-    r$data <- r$data %>% select(1:2, cols_to_keep)
 
-    r$data_undiff <- r$data_undiff %>% select(1:2, cols_to_keep)
+    # keep selected columns only
+    r$data <- r$data %>% dplyr::select(Year, Quarter, cols_to_keep)
+
+    # update undifferenced copy for reference
+    r$data_undiff <- r$data_undiff[, cols_to_keep]
   })
 
   # Download the dataframe as rds

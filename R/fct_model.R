@@ -118,6 +118,8 @@ predict_models <- function(model_fits, proj_data = NULL,
 #' @importFrom stats ts.union
 #' @importFrom zoo as.yearqtr
 get_forecast_plotdata <- function(fit, proj_data = NULL) {
+  req(fit)
+
   # check if proj_data valid
   if (!is.null(proj_data)) {
     if (!is_valid_df(proj_data)) {
@@ -147,7 +149,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   )
 
   # gather data from forecast list
-  if (model_type %in% c("decomposition", "naive", "linear")) {
+  if (model_type %in% c("decomposition", "naive", "linear", "holtwinters")) {
 
     ts_actuals <- fcast$x
     start_actuals <- start(ts_actuals)
@@ -164,26 +166,6 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
                       frequency = freq_actuals)
     ts_upper_95 <- ts(c(fcast$fitted,
                         fcast$upper[, 2]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-
-  } else if (model_type == "holtwinters") {
-    # get time series for plot
-    ts_actuals <- fcast$x
-    start_actuals <- start(ts_actuals)
-    start_forecast <- start(fcast$fitted[, "xhat"])
-    freq_actuals <- frequency(ts_actuals)
-
-    ts_forecast <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$mean),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_lower_95 <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$lower[, "95%"]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_upper_95 <- ts(c(fcast$fitted[, "xhat"],
-                        fcast$upper[, "95%"]),
                       start = start_forecast,
                       frequency = freq_actuals)
   } else {
@@ -248,6 +230,9 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   # get projection data (if not included)
   if (forecast_type == "linear" & is.null(proj_data)) {
     proj_data <- get_proj_data(df, end)
+  } else {
+    # if not linear forecast, make sure to set proj_data to NULL
+    proj_data <- NULL
   }
 
   # get plot data from fit object
@@ -258,8 +243,9 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       filter(Year == end[1] & Quarter == end[2])
 
     proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
+    proj_data <- as.data.frame(proj_data)
   }
-  data <- get_forecast_plotdata(fit, as.data.frame(proj_data))
+  data <- get_forecast_plotdata(fit, proj_data)
 
   # produce plot
   plot <- plotly::plot_ly(data = data,
