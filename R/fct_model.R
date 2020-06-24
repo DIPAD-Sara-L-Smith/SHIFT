@@ -466,3 +466,20 @@ get_proj_data <- function(df, end){
   }
 }
 
+
+#' undiff_ts
+#' @description Takes a data frame of differenced time series data and a
+#' starting value, and returns an undifferenced time series. Dimensions of `df`
+#' and `start_value` must be the same, i.e. every series must have a starting
+#' value.
+#'
+#' TODO - work out if we want to use time series, tibbles or data frames here
+#' @param df time series of data
+#' @param start_value double - starting value of time series (to add differences
+#' to)
+#'
+#' @return data frame of time series
+#' @export
+#'
+#' @importFrom dplyr select arrange filter n
+# undiff_ts <- function(df, end){

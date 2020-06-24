@@ -4,22 +4,22 @@
 \alias{predict_models}
 \title{predict_models - calculate forecasts}
 \usage{
-predict_models(model_fits, proj_indep_var, n_periods_to_forecast = 4)
+predict_models(model_fits, proj_data = NULL, n_periods_to_forecast = 4)
 }
 \arguments{
-\item{fit}{list - model object(s) containing fit}
+\item{model_fits}{list of model fit objects to use in forecast. Can use
+fit_models() to calculate these.}
 
-\item{dep_var}{string - name of dependent variable to forecast}
+\item{proj_data}{if linear regression model is included in model_fits,
+this data frame is required, containing projected data to use in the forecast}
 
-\item{ind_var}{string - vector of names of independent variables to fit}
-
-\item{start}{vector - start year and quarter in format c(YYYY, Q)}
-
-\item{end}{vector - end year and quarter in format c(YYYY, Q)}
+\item{n_periods_to_forecast}{integer - number of periods to forecast forward.
+Default is 4 periods.}
 }
 \value{
 data frame containing predictions/forecasts for multiple models
 }
 \description{
-predict_models - calculate forecasts
+A function that returns a list of forecasts for the input
+model fits.
 }

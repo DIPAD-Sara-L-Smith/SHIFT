@@ -9,6 +9,7 @@
 ##
 golem::add_module( name = "load_data" ) # Name of the module
 golem::add_module( name = "plot_data" ) # Name of the module
+golem::add_module( name = "review_forecasts" ) # Name of the module
 
 ## 2.2 Add dependencies
 

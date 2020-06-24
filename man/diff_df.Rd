@@ -2,9 +2,7 @@
 % Please edit documentation in R/fct_xts.R
 \name{diff_df}
 \alias{diff_df}
-\title{Calculates differenced data for the selected data frame.
-This is used in the forecasting to make the data stationary.
-Note that it excludes columns: 'Year', 'Quarter'.}
+\title{diff_df}
 \usage{
 diff_df(df)
 }

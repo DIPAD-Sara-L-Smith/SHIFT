@@ -21,8 +21,8 @@ mod_plot_data_ui <- function(id) {
     actionButton(ns("browser_button"), label = "Browser()"),
     dygraphOutput(ns("dep_var_dygraph")),
     uiOutput(ns("dep_var_selector")),
-    uiOutput(ns("ind_var_selector")),
-    plotlyOutput(ns("plot_holtwinters"))
+    uiOutput(ns("ind_var_selector"))
+    # plotlyOutput(ns("plot_holtwinters"))
   )
 }
 
@@ -57,6 +57,11 @@ mod_plot_data_server <- function(input, output, session, r) {
     })
   })
 
+  observeEvent(input$dep_var_selector, {
+    req(input$dep_var_selector)
+    r$dep_var <- input$dep_var_selector
+  })
+
   # Selector for dependent variable
   output$dep_var_selector <- renderUI({
     req(r$xts)
@@ -77,27 +82,27 @@ mod_plot_data_server <- function(input, output, session, r) {
       )
   })
 
-  # Graph of Holt-Winters forecast
-  observeEvent(r$data, {
-    req(r$data, input$dep_var_selector)
-
-    # dyGraph of the independent variable
-    output$plot_holtwinters <- plotly::renderPlotly({
-      req(r$data)
-
-      # function to convert from df to dygraph
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = input$dep_var_selector,
-        ind_var = NULL,
-        # start,
-        # end,
-        forecast_type = "holtwinters",
-        proj_data = NULL,
-        diff_inv = FALSE
-        )
-    })
-  })
+  # # Graph of Holt-Winters forecast
+  # observeEvent(r$data, {
+  #   req(r$data, input$dep_var_selector)
+  #
+  #   # dyGraph of the independent variable
+  #   output$plot_holtwinters <- plotly::renderPlotly({
+  #     req(r$data)
+  #
+  #     # function to convert from df to dygraph
+  #     p <- plot_forecast(
+  #       df = r$data,
+  #       dep_var = input$dep_var_selector,
+  #       ind_var = NULL,
+  #       # start,
+  #       # end,
+  #       forecast_type = "holtwinters",
+  #       proj_data = NULL,
+  #       diff_inv = FALSE
+  #       )
+  #   })
+  # })
 
   # Delete for prod, or add to golem_dev function.
   observeEvent(input$browser_button, {
