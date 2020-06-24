@@ -13,7 +13,7 @@ app_ui <- function() {
       # Sidebar with a slider input for number of bins
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Explore data",
+          menuItem("Read in data",
             tabName = "explore",
             icon = icon("table")
           ),
