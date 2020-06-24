@@ -467,6 +467,7 @@ get_proj_data <- function(df, end){
 }
 
 
+# TODO - complete if needed
 #' undiff_ts
 #' @description Takes a data frame of differenced time series data and a
 #' starting value, and returns an undifferenced time series. Dimensions of `df`

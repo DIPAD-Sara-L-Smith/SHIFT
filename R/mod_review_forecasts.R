@@ -29,16 +29,18 @@ mod_review_forecasts_ui <- function(id){
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
-        title = "Historic data",
+        title = "Compare short-term forecasts",
         status = "primary",
         solidHeader = TRUE,
+        h3("Short-term forecasts"),
+        p("This box allows you to compare all short-term forecasts."),
         dygraphOutput(ns("dep_var_dygraph"))
       ),
 
       box(
         width = 12,
         collapsible = TRUE,
-        collapsed = FALSE,
+        collapsed = TRUE,
         title = "Naive",
         status = "primary",
         solidHeader = TRUE,
@@ -48,7 +50,7 @@ mod_review_forecasts_ui <- function(id){
       box(
         width = 12,
         collapsible = TRUE,
-        collapsed = FALSE,
+        collapsed = TRUE,
         title = "Holt-Winters",
         status = "primary",
         solidHeader = TRUE,
@@ -58,7 +60,7 @@ mod_review_forecasts_ui <- function(id){
       box(
         width = 12,
         collapsible = TRUE,
-        collapsed = FALSE,
+        collapsed = TRUE,
         title = "Time Series Decomposition",
         status = "primary",
         solidHeader = TRUE,
