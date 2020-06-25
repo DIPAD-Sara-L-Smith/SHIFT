@@ -138,7 +138,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   # find model type
   model_type <- switch(fcast$method,
                        "STL +  ETS(M,A,N)" = "decomposition",
-                       "STL +  ETS(A,N,N)" = "decomposition",
+                       "STL +  ETS(A,A,N)" = "decomposition",
                        "Naive method" = "naive",
                        "HoltWinters" = "holtwinters",
                        "Linear regression model" = "linear",
@@ -222,8 +222,6 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   # standardise forecast_type list
   forecast_type <- tolower(forecast_type)
 
-
-
   # run through each forecast, getting data and adding to plot
   i <- 0
   for (forecast_type_i in forecast_type) {
@@ -300,7 +298,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   # finalise plot with layout, etc.
   plot <- plot %>%
     plotly::add_trace(y = ~y.ts_actuals,
-                      mode = "lines+markers",
+                      mode = "lines",
                       type = "scatter",
                       name = "Actuals",
                       color = I("black")) %>%
@@ -370,7 +368,7 @@ fit_holtwinters <- function(df, dep_var, start, end){
 #'
 #' @importFrom stats stl
 #' @importFrom stats window
-fit_decomp <- function(df, dep_var, start, end){
+fit_decomp <- function(df, dep_var, start = NULL, end = NULL){
   # subset to the selected variable
   df_ts <- df_to_ts(df, dep_var, start, end)
 
