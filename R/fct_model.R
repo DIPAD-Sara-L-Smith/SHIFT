@@ -136,12 +136,11 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   fcast <- unlist(fcast, recursive = FALSE)
 
   # find model type
-  model_type <- switch(fcast$method,
-                       "STL +  ETS(M,A,N)" = "decomposition",
-                       "STL +  ETS(A,A,N)" = "decomposition",
-                       "Naive method" = "naive",
-                       "HoltWinters" = "holtwinters",
-                       "Linear regression model" = "linear",
+  model_type <- switch(substring(fcast$method, 1, 3),
+                       "STL" = "decomposition",
+                       "Nai" = "naive",
+                       "Hol" = "holtwinters",
+                       "Lin" = "linear",
 
                        { warning(paste0("get_forecast_plotdata:
                                         Forecast type ", fcast$method,

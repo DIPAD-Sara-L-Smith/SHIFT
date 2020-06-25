@@ -34,7 +34,7 @@ mod_review_forecasts_ui <- function(id){
         solidHeader = TRUE,
         h3("Short-term forecasts"),
         p("This box allows you to compare all short-term forecasts."),
-        dygraphOutput(ns("dep_var_dygraph"))
+        plotly::plotlyOutput(ns("plot_shortterm"))
       ),
 
       box(
@@ -86,18 +86,37 @@ mod_review_forecasts_server <- function(input, output, session, r){
     r$xts <- df_to_xts(r$data)
   })
 
+  # observeEvent(r$xts, {
+  #   # dyGraph of the independent variable
+  #   output$dep_var_dygraph <- renderDygraph({
+  #     req(r$xts)
+  #     # function to convert from df to dygraph
+  #     p <- dygraph(r$xts) %>%
+  #       dyLegend(
+  #         show = "follow",
+  #         labelsSeparateLines = TRUE
+  #       ) %>%
+  #       dyRangeSelector(height = 40)
+  #   })
+  # })
+
+  # graph comparing multiple short-term forecasts with CIs
   observeEvent(r$xts, {
-    # dyGraph of the independent variable
-    output$dep_var_dygraph <- renderDygraph({
-      req(r$xts)
-      # function to convert from df to dygraph
-      p <- dygraph(r$xts) %>%
-        dyLegend(
-          show = "follow",
-          labelsSeparateLines = TRUE
-        ) %>%
-        dyRangeSelector(height = 40)
-    })
+    req(r$data, r$dep_var)
+
+    output$plot_shortterm <- plotly::renderPlotly(
+      p <- plot_forecast(
+        df = r$data,
+        dep_var = r$dep_var,
+        # start,
+        # end,
+        forecast_type = c("naive",
+                          "holtwinters",
+                          "decomposition"),
+        proj_data = NULL,
+        diff_inv = FALSE
+      )
+    )
   })
 
   # Graph of Holt-Winters forecast
