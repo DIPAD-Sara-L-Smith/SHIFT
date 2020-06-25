@@ -194,8 +194,8 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' forecast
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
-#' @param forecast_type - string value giving forecast type to use. One of:
-#' "holtwinters", "naive", "decomposition", "linear".
+#' @param forecast_types - vector of string values giving forecast types to use.
+#' One of: "holtwinters", "naive", "decomposition", "linear".
 #' @param proj_data data frame (default NULL) of projected data to use if
 #' producing a linear regression forecast.
 #' @param diff_starting_value numeric (default NULL) - if data is differenced,
@@ -208,6 +208,8 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom zoo as.yearqtr
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL, diff_inv = FALSE){
+  # browser()
+
   # find start / end if not given
   if (missing(start)) {
     start <- c(df$Year[1], df$Quarter[1])
@@ -217,94 +219,111 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
     end <- c(tail(df$Year, n = 1), tail(df$Quarter, n = 1))
   }
 
-  # find model
+  # standardise forecast_type list
   forecast_type <- tolower(forecast_type)
-  fit <- switch(forecast_type,
-                "holtwinters" = fit_holtwinters(df, dep_var, start, end),
-                "naive" = fit_naive(df, dep_var, start, end),
-                "decomposition" = fit_decomp(df, dep_var, start, end),
-                "linear" = fit_linear(df, dep_var, ind_var, start, end),
-                warning("plot_forecast: forecast_type not recognised.")
-  )
 
-  # get projection data (if not included)
-  if (forecast_type == "linear" & is.null(proj_data)) {
-    proj_data <- get_proj_data(df, end)
-  } else {
-    # if not linear forecast, make sure to set proj_data to NULL
-    proj_data <- NULL
+
+
+  # run through each forecast, getting data and adding to plot
+  i <- 0
+  for (forecast_type_i in forecast_type) {
+    i <- i + 1
+    fit <- switch(forecast_type_i,
+                  "holtwinters" = fit_holtwinters(df, dep_var, start, end),
+                  "naive" = fit_naive(df, dep_var, start, end),
+                  "decomposition" = fit_decomp(df, dep_var, start, end),
+                  "linear" = fit_linear(df, dep_var, ind_var, start, end),
+                  warning("plot_forecast: forecast_type not recognised.")
+    )
+
+    # get projection data (if not included)
+    if (forecast_type_i == "linear" & is.null(proj_data)) {
+      proj_data <- get_proj_data(df, end)
+    } else {
+      # if not linear forecast, make sure to set proj_data to NULL
+      proj_data <- NULL
+    }
+
+    # get plot data from fit object
+    if (forecast_type_i == "linear") {
+      # fetch projected data from df
+      end_row <- df %>%
+        rownames_to_column() %>%
+        filter(Year == end[1] & Quarter == end[2])
+
+      proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
+      proj_data <- as.data.frame(proj_data)
+    }
+
+    # put together plot data
+    data <- get_forecast_plotdata(fit, proj_data)
+
+    # get colours
+    line_colour <- RColorBrewer::brewer.pal(5, "Dark2")[i]
+    interval_colour <- paste0(substring(line_colour, 1, 7), "FF")
+
+    # if i == 1, produce starting plot with historical data
+    if (i == 1) {
+      plot <- plotly::plot_ly(data = data,
+                              x = ~x_labels)
+    }
+
+    # add forecast to plot
+    plot <- plot %>%
+      plotly::add_trace(y = data$y.ts_upper_95,
+                        mode = "lines",
+                        name = paste0(tools::toTitleCase(forecast_type_i), " - Upper 95% CI"),
+                        color = I(interval_colour),
+                        showlegend = FALSE,
+                        line = list(color = 'transparent'),
+                        type = "scatter",
+                        opacity = 0.1) %>%
+      plotly::add_trace(y = data$y.ts_lower_95,
+                        mode = "lines",
+                        name = paste0(tools::toTitleCase(forecast_type_i), " - Lower 95% CI"),
+                        color = I(interval_colour),
+                        fill = "tonexty",
+                        type = "scatter",
+                        showlegend = FALSE,
+                        line = list(color = 'transparent'),
+                        opacity = 0.1) %>%
+      plotly::add_trace(y = data$y.ts_forecast,
+                        type = "scatter",
+                        mode = "lines",
+                        name = paste0(tools::toTitleCase(forecast_type_i), " forecast"),
+                        color = I(line_colour),
+                        text = paste0(zoo::as.yearqtr(data$x_labels),
+                                      ": ",
+                                      round(data$y.ts_forecast)))
   }
 
-  # get plot data from fit object
-  if (forecast_type == "linear") {
-    # fetch projected data from df
-    end_row <- df %>%
-      rownames_to_column() %>%
-      filter(Year == end[1] & Quarter == end[2])
-
-    proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
-    proj_data <- as.data.frame(proj_data)
-  }
-  data <- get_forecast_plotdata(fit, proj_data)
-
-  # produce plot
-  plot <- plotly::plot_ly(data = data,
-                          x = ~x_labels) %>%
-
-    plotly::add_trace(y = ~y.ts_upper_95,
-              mode = "lines",
-              name = "Upper 95% CI",
-              color = I("sandy brown"),
-              showlegend = FALSE,
-              line = list(color = 'transparent'),
-              type = "scatter",
-              opacity = 0.75) %>%
-    plotly::add_trace(y = ~y.ts_lower_95,
-              mode = "lines",
-              name = "Lower 95% CI",
-              color = I("sandy brown"),
-              fill = "tonexty",
-              type = "scatter",
-              showlegend = FALSE,
-              line = list(color = 'transparent'),
-              opacity = 0.75) %>%
-    plotly::layout(title = paste0(tools::toTitleCase(forecast_type),
-                          " forecast of ",
-                          tools::toTitleCase(dep_var),
-                          " (with 95% CI)"),
-           paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
-           xaxis = list(title = "",
-                        gridcolor = 'rgb(255,255,255)',
-                        showgrid = TRUE,
-                        showline = FALSE,
-                        showticklabels = TRUE,
-                        tickcolor = 'rgb(127,127,127)',
-                        ticks = 'outside',
-                        zeroline = FALSE),
-           yaxis = list(title = "",
-                        gridcolor = 'rgb(255,255,255)',
-                        showgrid = TRUE,
-                        showline = FALSE,
-                        showticklabels = TRUE,
-                        tickcolor = 'rgb(127,127,127)',
-                        ticks = 'outside',
-                        zeroline = FALSE)) %>%
+  # finalise plot with layout, etc.
+  plot <- plot %>%
     plotly::add_trace(y = ~y.ts_actuals,
-              mode = "lines+markers",
-              type = "scatter",
-              name = "Actuals",
-              color = I("dim grey"),
-              text = paste0(zoo::as.yearqtr(data$x_labels),
-                            ": ",
-                            round(data$y.ts_actuals))) %>%
-    plotly::add_trace(y = ~y.ts_forecast,
-              type = "scatter",
-              mode = "lines+markers",
-              name = "Forecast",
-              color = I("chocolate"),
-              text = paste0(zoo::as.yearqtr(data$x_labels),
-                            ": ",
-                            round(data$y.ts_forecast)))
+                      mode = "lines+markers",
+                      type = "scatter",
+                      name = "Actuals",
+                      color = I("black")) %>%
+    plotly::layout(title = paste0("Forecast of ",
+                                  tools::toTitleCase(dep_var),
+                                  " (with 95% CI)"),
+                   paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
+                   xaxis = list(title = "",
+                                gridcolor = 'rgb(255,255,255)',
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = 'rgb(127,127,127)',
+                                ticks = 'outside',
+                                zeroline = FALSE),
+                   yaxis = list(title = "",
+                                gridcolor = 'rgb(255,255,255)',
+                                showgrid = TRUE,
+                                showline = FALSE,
+                                showticklabels = TRUE,
+                                tickcolor = 'rgb(127,127,127)',
+                                ticks = 'outside',
+                                zeroline = FALSE))
 
   return(plot)
 }
