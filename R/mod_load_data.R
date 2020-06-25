@@ -120,13 +120,18 @@ mod_load_data_server <- function(input, output, session, r) {
   observeEvent(input$diff, {
     req(r$data, r$data_undiff)
     if (input$diff) {
-      # message("Difference data.")
+      # store undifferenced version so user can undo if needed
       r$data_undiff <- r$data
+
+      # store starting values so we can inverse difference later
+      r$starting_values <- r$data[1, ]
+
+      # difference data
       r$data <- diff_df(r$data)
       r$flg_diff <- TRUE
     } else {
-      # message("Undo differencing of data.")
       r$data <- r$data_undiff
+      r$starting_values <- NULL
       r$flg_diff <- FALSE
     }
   })
