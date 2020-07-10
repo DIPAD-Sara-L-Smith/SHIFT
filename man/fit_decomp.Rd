@@ -5,7 +5,7 @@
 \title{fit_decomp - takes a data frame and returns the fit object for a time series
 decomposition forecast on the data.}
 \usage{
-fit_decomp(df, dep_var, start, end)
+fit_decomp(df, dep_var, start = NULL, end = NULL)
 }
 \arguments{
 \item{df}{data frame of data}

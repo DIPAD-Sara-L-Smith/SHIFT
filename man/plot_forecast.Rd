@@ -12,7 +12,8 @@ plot_forecast(
   end,
   forecast_type,
   proj_data = NULL,
-  diff_inv = FALSE
+  diff_inv = FALSE,
+  diff_starting_values = NULL
 )
 }
 \arguments{
@@ -27,14 +28,17 @@ forecast}
 
 \item{end}{vector - end year and quarter in format c(YYYY, Q)}
 
-\item{forecast_type}{- string value giving forecast type to use. One of:
-"holtwinters", "naive", "decomposition", "linear".}
-
 \item{proj_data}{data frame (default NULL) of projected data to use if
 producing a linear regression forecast.}
 
-\item{diff_starting_value}{numeric (default NULL) - if data is differenced,
+\item{diff_inv}{boolean (default FALSE) - if data is differenced and you want
+to undo this to compare to the original dataset set to TRUE}
+
+\item{diff_starting_values}{numeric (default NULL) - if data is differenced,
 where to start adding differences.}
+
+\item{forecast_types}{- vector of string values giving forecast types to use.
+One of: "holtwinters", "naive", "decomposition", "linear".}
 }
 \value{
 plotly line graph of forecast

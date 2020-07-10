@@ -197,7 +197,9 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' One of: "holtwinters", "naive", "decomposition", "linear".
 #' @param proj_data data frame (default NULL) of projected data to use if
 #' producing a linear regression forecast.
-#' @param diff_starting_value numeric (default NULL) - if data is differenced,
+#' @param diff_inv boolean (default FALSE) - if data is differenced and you want
+#' to undo this to compare to the original dataset set to TRUE
+#' @param diff_starting_values numeric (default NULL) - if data is differenced,
 #' where to start adding differences.
 #'
 #' @return plotly line graph of forecast
@@ -206,7 +208,8 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom plotly plot_ly add_trace layout
 #' @importFrom zoo as.yearqtr
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
-                          forecast_type, proj_data = NULL, diff_inv = FALSE){
+                          forecast_type, proj_data = NULL,
+                          diff_inv = FALSE, diff_starting_values = NULL){
   # browser()
 
   # find start / end if not given
@@ -254,6 +257,47 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 
     # put together plot data
     data <- get_forecast_plotdata(fit, proj_data)
+
+    # if differenced and we want to inverse difference, do this now
+    if (diff_inv & !is.null(diff_starting_values)) {
+      # function to inverse difference all columns
+      undifference <- function(y, start_value) {
+        # replace NAs with zeroes to avoid errors when running diffinv()
+        y[is.na(y)] <- 0
+
+        y <- stats::diffinv(
+          x = as.matrix(y),
+          xi = as.matrix(start_value)
+        )
+        return(y)
+      }
+
+      # undifference all columns (removing x_labels first)
+      # actuals
+      actuals <- data %>%
+        dplyr::select(y.ts_actuals)
+
+      actuals <- stats::diffinv(
+        x = as.matrix(actuals),
+        xi = as.matrix(diff_starting_values),
+        lag = 1
+      )
+
+      # turn into ts object
+      actuals <- cbind(data$x_labels, actuals[1:nrow(data), ])
+
+      # forecasts
+      forecasts <- data %>%
+        dplyr::select(-c(y.ts_actuals, x_labels)) %>%
+        dplyr::slice(2:n()) %>%
+        purrr::map(~undifference(., diff_starting_values)) %>%
+        as.data.frame()
+
+      forecasts <- rbind(rep(NA, ncol(forecasts)), forecasts)
+
+      # match to x_labels
+      new_data <- cbind(actuals, forecasts[1:nrow(data), ])
+    }
 
     # get colours
     line_colour <- RColorBrewer::brewer.pal(5, "Dark2")[i]

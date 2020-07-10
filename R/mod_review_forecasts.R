@@ -25,7 +25,6 @@ mod_review_forecasts_ui <- function(id){
     # actionButton(ns("browser_button"), label = "Browser()"),
     fluidRow(
       box(
-        # TODO - change this to a compare-all forecasts graph
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
@@ -65,9 +64,21 @@ mod_review_forecasts_ui <- function(id){
         status = "primary",
         solidHeader = TRUE,
         plotlyOutput(ns("plot_decomposition"))
-      )
+      ),
 
-      # TODO - add other forecasts in separate boxes below
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Compare long-term forecasts",
+        status = "primary",
+        solidHeader = TRUE,
+        h3("Long-term forecasts"),
+        p("This box currently only shows the selected linear regression model,
+          but could be developed in the future to show multiple and compare
+          them and related statistics."),
+        plotly::plotlyOutput(ns("plot_longterm"))
+      )
     )
   )
 }
@@ -114,7 +125,10 @@ mod_review_forecasts_server <- function(input, output, session, r){
                           "holtwinters",
                           "decomposition"),
         proj_data = NULL,
-        diff_inv = FALSE
+        diff_inv = r$flg_diff,
+        diff_starting_values = ifelse(r$flg_diff,
+                                      as.matrix(r$starting_values[, r$dep_var]),
+                                      NULL)
       )
     )
   })
@@ -165,6 +179,24 @@ mod_review_forecasts_server <- function(input, output, session, r){
         forecast_type = "decomposition",
         proj_data = NULL,
         diff_inv = FALSE
+      )
+    })
+
+    # graph comparing long-term forecasts with CIs
+    observeEvent(r$xts, {
+      req(r$data, r$dep_var, r$ind_vars)
+
+      output$plot_longterm <- plotly::renderPlotly(
+        p <- plot_forecast(
+          df = r$data,
+          dep_var = r$dep_var,
+          ind_var = r$ind_var,
+          # start,
+          # end,
+          forecast_type = c("linear"),
+          proj_data = NULL,
+          diff_inv = FALSE
+        )
       )
     })
   })

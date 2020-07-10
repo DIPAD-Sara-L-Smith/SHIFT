@@ -62,6 +62,11 @@ mod_plot_data_server <- function(input, output, session, r) {
     r$dep_var <- input$dep_var_selector
   })
 
+  observeEvent(input$ind_var_selector, {
+    req(input$ind_var_selector)
+    r$ind_var <- input$ind_var_selector
+  })
+
   # Selector for dependent variable
   output$dep_var_selector <- renderUI({
     req(r$xts)
