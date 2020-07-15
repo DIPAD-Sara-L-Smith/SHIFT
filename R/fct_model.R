@@ -210,8 +210,6 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL,
                           diff_inv = FALSE, diff_starting_values = NULL){
-  # browser()
-
   # find start / end if not given
   if (missing(start)) {
     start <- c(df$Year[1], df$Quarter[1])
@@ -273,30 +271,55 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       }
 
       # undifference all columns (removing x_labels first)
-      # actuals
-      actuals <- data %>%
-        dplyr::select(y.ts_actuals)
+      # find last x_label with actuals data
+      last_row_with_actuals <- min(which(is.na(data$y.ts_actuals)))
+      first_row_with_forecast <- ifelse((is.na(data$y.ts_forecast[1])),
+                                        max(which(is.na(data$y.ts_forecast))) + 1,
+                                        1)
 
-      actuals <- stats::diffinv(
-        x = as.matrix(actuals),
-        xi = as.matrix(diff_starting_values),
-        lag = 1
-      )
-
-      # turn into ts object
-      actuals <- cbind(data$x_labels, actuals[1:nrow(data), ])
-
-      # forecasts
-      forecasts <- data %>%
-        dplyr::select(-c(y.ts_actuals, x_labels)) %>%
-        dplyr::slice(2:n()) %>%
+      # pick-up x_labels and actuals
+      actuals <- data[, 1:2]
+      actuals[1:(last_row_with_actuals + 1), 2] <- data[2] %>%
+        dplyr::slice(1:last_row_with_actuals) %>%
         purrr::map(~undifference(., diff_starting_values)) %>%
         as.data.frame()
 
-      forecasts <- rbind(rep(NA, ncol(forecasts)), forecasts)
+      # forecasts
+      # for periods where we have historical data, sum differences and previous
+      # historical data points
+      forecast <- data[, 3:ncol(data)]
+      if (first_row_with_forecast == 1) {
+        # every row has a forecast, so we want to ignore the first row
+        # (we don't have an actual figure to apply this to, i.e. t = 0!)
+        # browser()
+        forecast[(first_row_with_forecast + 1):(last_row_with_actuals + 1), ] <-
+          actuals[(first_row_with_forecast):last_row_with_actuals, 2] +
+          forecast[(first_row_with_forecast + 1):(last_row_with_actuals + 1), ]
+      } else {
+        # some rows at the start of the forecast contains NAs, so make sure to
+        # exclude these
+        forecast[(first_row_with_forecast):(last_row_with_actuals + 1), ] <-
+          actuals[(first_row_with_forecast - 1):last_row_with_actuals, 2] +
+          forecast[(first_row_with_forecast):(last_row_with_actuals + 1), ]
+      }
+
+      # for projected data, take the last historical data point and add on the
+      # projected differences
+      calculated_projections <-
+        as.data.frame(purrr::map2(.x = forecast[(last_row_with_actuals + 2):nrow(forecast), ],
+                           .y = forecast[(last_row_with_actuals + 1), ],
+                           .f = ~undifference(.x, .y))
+        )
+
+      forecast[(last_row_with_actuals + 2):nrow(forecast), ] <-
+        calculated_projections[-1, ]
 
       # match to x_labels
-      new_data <- cbind(actuals, forecasts[1:nrow(data), ])
+      data <- cbind(actuals, forecast)
+
+      # re-label columns
+      names(data)[1] <- "x_labels"
+      names(data)[2] <- "y.ts_actuals"
     }
 
     # get colours
