@@ -33,15 +33,15 @@ mod_review_forecasts_ui <- function(id){
         solidHeader = TRUE,
         h3("Short-term forecasts"),
         p("This box allows you to compare all short-term forecasts."),
-        plotly::plotlyOutput(ns("plot_shortterm")),
+        plotly::plotlyOutput(ns("plot_shortterm"))
 
-        conditionalPanel(
-          condition = "r$flg_diff == TRUE",
-          h3("Differenced data"),
-          p("The chart above shows the inverse differenced models - use the
-            chart below to view just the differenced data."),
-          plotly::plotlyOutput(ns("plot_shortterm2"))
-        )
+        # conditionalPanel(
+        #   condition = "is.null(output.plot_shortterm2) == FALSE",
+        #   h3("Differenced data"),
+        #   p("The chart above shows the inverse differenced models - use the
+        #     chart below to view just the differenced data."),
+        #   plotly::plotlyOutput(ns("plot_shortterm2"))
+        # )
       ),
 
       box(
@@ -105,20 +105,6 @@ mod_review_forecasts_server <- function(input, output, session, r){
     r$xts <- df_to_xts(r$data)
   })
 
-  # observeEvent(r$xts, {
-  #   # dyGraph of the independent variable
-  #   output$dep_var_dygraph <- renderDygraph({
-  #     req(r$xts)
-  #     # function to convert from df to dygraph
-  #     p <- dygraph(r$xts) %>%
-  #       dyLegend(
-  #         show = "follow",
-  #         labelsSeparateLines = TRUE
-  #       ) %>%
-  #       dyRangeSelector(height = 40)
-  #   })
-  # })
-
   # graph comparing multiple short-term forecasts with CIs
   observeEvent(r$xts, {
     req(r$data, r$dep_var)
@@ -133,7 +119,9 @@ mod_review_forecasts_server <- function(input, output, session, r){
                           "holtwinters",
                           "decomposition"),
         proj_data = NULL,
-        diff_inv = r$flg_diff,
+        diff_inv = ifelse(is.null(r$flg_diff),
+                          FALSE,
+                          r$flg_diff),
         diff_starting_values = ifelse(r$flg_diff,
                                       as.matrix(r$starting_values[, r$dep_var]),
                                       NULL)
@@ -141,25 +129,29 @@ mod_review_forecasts_server <- function(input, output, session, r){
     )
   })
 
-  # graph comparing multiple short-term forecasts with CIs
-  observeEvent(r$xts, {
-    req(r$data, r$dep_var)
-
-    output$plot_shortterm2 <- plotly::renderPlotly(
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        # start,
-        # end,
-        forecast_type = c("naive",
-                          "holtwinters",
-                          "decomposition"),
-        proj_data = NULL,
-        diff_inv = FALSE,
-        diff_starting_values = NULL
-      )
-    )
-  })
+  # # graph comparing multiple short-term forecasts with CIs
+  # observeEvent(r$xts, {
+  #   req(r$data, r$dep_var, r$flg_diff)
+  #
+  #   output$plot_shortterm2 <- if (r$flg_diff) {
+  #     plotly::renderPlotly(
+  #       p <- plot_forecast(
+  #         df = r$data,
+  #         dep_var = r$dep_var,
+  #         # start,NU
+  #         # end,
+  #         forecast_type = c("naive",
+  #                           "holtwinters",
+  #                           "decomposition"),
+  #         proj_data = NULL,
+  #         diff_inv = FALSE,
+  #         diff_starting_values = NULL
+  #       )
+  #     )
+  #   } else {
+  #     return(NULL)
+  #   }
+  # })
 
   # Graph of Holt-Winters forecast
   observeEvent(r$data, {
@@ -228,6 +220,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
       )
     })
   })
+
 }
 
 ## To be copied in the UI
