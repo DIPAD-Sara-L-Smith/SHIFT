@@ -33,7 +33,15 @@ mod_review_forecasts_ui <- function(id){
         solidHeader = TRUE,
         h3("Short-term forecasts"),
         p("This box allows you to compare all short-term forecasts."),
-        plotly::plotlyOutput(ns("plot_shortterm"))
+        plotly::plotlyOutput(ns("plot_shortterm")),
+
+        conditionalPanel(
+          condition = "r$flg_diff == TRUE",
+          h3("Differenced data"),
+          p("The chart above shows the inverse differenced models - use the
+            chart below to view just the differenced data."),
+          plotly::plotlyOutput(ns("plot_shortterm2"))
+        )
       ),
 
       box(
@@ -129,6 +137,26 @@ mod_review_forecasts_server <- function(input, output, session, r){
         diff_starting_values = ifelse(r$flg_diff,
                                       as.matrix(r$starting_values[, r$dep_var]),
                                       NULL)
+      )
+    )
+  })
+
+  # graph comparing multiple short-term forecasts with CIs
+  observeEvent(r$xts, {
+    req(r$data, r$dep_var)
+
+    output$plot_shortterm2 <- plotly::renderPlotly(
+      p <- plot_forecast(
+        df = r$data,
+        dep_var = r$dep_var,
+        # start,
+        # end,
+        forecast_type = c("naive",
+                          "holtwinters",
+                          "decomposition"),
+        proj_data = NULL,
+        diff_inv = FALSE,
+        diff_starting_values = NULL
       )
     )
   })

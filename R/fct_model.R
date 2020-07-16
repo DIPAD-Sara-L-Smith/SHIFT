@@ -288,33 +288,25 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       # for periods where we have historical data, sum differences and previous
       # historical data points
       forecast <- data[, 3:ncol(data)]
-      if (first_row_with_forecast == 1) {
-        # every row has a forecast, so we want to ignore the first row
-        # (we don't have an actual figure to apply this to, i.e. t = 0!)
-        # browser()
-        forecast[(first_row_with_forecast + 1):(last_row_with_actuals + 1), ] <-
-          actuals[(first_row_with_forecast):last_row_with_actuals, 2] +
-          forecast[(first_row_with_forecast + 1):(last_row_with_actuals + 1), ]
-      } else {
-        # some rows at the start of the forecast contains NAs, so make sure to
-        # exclude these
-        forecast[(first_row_with_forecast):(last_row_with_actuals + 1), ] <-
-          actuals[(first_row_with_forecast - 1):last_row_with_actuals, 2] +
-          forecast[(first_row_with_forecast):(last_row_with_actuals + 1), ]
-      }
+      undiff_forecast <- forecast
+
+      undiff_forecast[first_row_with_forecast:(last_row_with_actuals), ] <-
+        actuals[(first_row_with_forecast):last_row_with_actuals, 2] +
+        forecast[(first_row_with_forecast):(last_row_with_actuals), ]
 
       # for projected data, take the last historical data point and add on the
       # projected differences
       calculated_projections <-
-        as.data.frame(purrr::map2(.x = forecast[(last_row_with_actuals + 2):nrow(forecast), ],
-                           .y = forecast[(last_row_with_actuals + 1), ],
+        as.data.frame(purrr::map2(.x = forecast[(last_row_with_actuals + 1):nrow(forecast), ],
+                           .y = undiff_forecast[(last_row_with_actuals), ],
                            .f = ~undifference(.x, .y))
         )
 
-      forecast[(last_row_with_actuals + 2):nrow(forecast), ] <-
+      undiff_forecast[(last_row_with_actuals + 1):nrow(forecast), ] <-
         calculated_projections[-1, ]
 
       # match to x_labels
+      forecast <- undiff_forecast
       data <- cbind(actuals, forecast)
 
       # re-label columns
