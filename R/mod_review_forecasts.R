@@ -114,7 +114,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
         df = r$data,
         dep_var = r$dep_var,
         # start,
-        # end,
+        end = r$date_end,
         forecast_type = c("naive",
                           "holtwinters",
                           "decomposition"),
@@ -139,7 +139,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
   #         df = r$data,
   #         dep_var = r$dep_var,
   #         # start,NU
-  #         # end,
+  #         end = r$date_end,
   #         forecast_type = c("naive",
   #                           "holtwinters",
   #                           "decomposition"),
@@ -180,7 +180,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
         dep_var = r$dep_var,
         ind_var = NULL,
         # start,
-        # end,
+        end = r$date_end,
         forecast_type = "naive",
         proj_data = NULL,
         diff_inv = FALSE
@@ -195,7 +195,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
         dep_var = r$dep_var,
         ind_var = NULL,
         # start,
-        # end,
+        end = r$date_end,
         forecast_type = "decomposition",
         proj_data = NULL,
         diff_inv = FALSE
@@ -212,7 +212,7 @@ mod_review_forecasts_server <- function(input, output, session, r){
           dep_var = r$dep_var,
           ind_var = r$ind_var,
           # start,
-          # end,
+          end = r$date_end,
           forecast_type = c("linear"),
           proj_data = NULL,
           diff_inv = FALSE

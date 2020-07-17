@@ -69,7 +69,12 @@ mod_load_data_ui <- function(id) {
       value = FALSE,
       inline = TRUE,
       size = "normal"
-    )
+    ),
+
+
+    tags$br(),
+    uiOutput(ns("RangeHistorical"))
+    # uiOutput(ns("RangeProjections"))
   )
 }
 
@@ -184,6 +189,111 @@ mod_load_data_server <- function(input, output, session, r) {
     # update undifferenced copy for reference
     r$data_undiff <- r$data_undiff[, cols_to_keep]
   })
+
+  # when user updates last period of historical data, setup end period for
+  # models
+  observeEvent(input$RangeHistorical, {
+    req(r$data, r$dep_var)
+
+    # read in the bounds for historical data (from user input)
+    r$date_start <- lubridate::yq(input$RangeHistorical[1])
+    r$date_start <- c(lubridate::year(r$date_start), lubridate::quarter(r$date_start))
+    r$date_end <- lubridate::yq(input$RangeHistorical[2])
+    r$date_end <- c(lubridate::year(r$date_end), lubridate::quarter(r$date_end))
+  })
+
+  # slider input - Historical data -----
+  output$RangeHistorical <- renderUI({
+    req(r$data, r$dep_var)
+    df <- r$data
+
+    # create the sequence of Date objects
+    dateList <- seq(lubridate::yq(paste0(df[1, "Year"],
+                                         ": Q",
+                                         df[1, "Quarter"])),
+                    to = lubridate::yq(paste0(df[nrow(df), "Year"],
+                                              ": Q",
+                                              df[nrow(df), "Quarter"])),
+                    by = "quarter")
+
+    # format vector
+    dateListFormatted <- zoo::as.yearqtr(dateList)
+
+    # find default end for historical data
+    # (based on when dependent variable ends)
+    if (is.null(r$dep_var)) {
+      defaultEnd <- dateListFormatted[length(dateListFormatted)]
+    } else {
+      # find the last data point for the selected dependent variable
+      lastDepVarDataPoint <- df %>%
+        select("Year", "Quarter", r$dep_var)
+      lastDepVarDataPoint <- zoo::na.trim(lastDepVarDataPoint)
+      lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
+
+      defaultEnd <- c(as.numeric(lastDepVarDataPoint[, "Year"]),
+                      as.numeric(lastDepVarDataPoint[, "Quarter"]))
+    }
+
+    # put together widget
+    shinyWidgets::sliderTextInput(
+      inputId = ns("RangeHistorical"),
+      label = "Select the start and end points for the historical data",
+      grid = TRUE,
+      force_edges = TRUE,
+      choices = dateListFormatted,
+      selected = c(dateListFormatted[1],
+                   defaultEnd)
+    )
+  })
+
+  # # slider input - Projection data -----
+  # output$RangeProjections <- renderUI({
+  #   req(r$data, r$dep_var, input$rngHistoricalData)
+  #   df <- r$data
+  #
+  #   browser()
+  #
+  #   # create the sequence of Date objects
+  #   dateList <- seq(lubridate::yq(paste0(df[1, "Year"],
+  #                                        ": Q",
+  #                                        df[1, "Quarter"])),
+  #                   to = lubridate::yq(paste0(df[nrow(df), "Year"],
+  #                                             ": Q",
+  #                                             df[nrow(df), "Quarter"])),
+  #                   by = "quarter")
+  #
+  #   # format vector
+  #   dateListFormatted <- zoo::as.yearqtr(dateList)
+  #
+  #   # find default end for historical data
+  #   # (based on when dependent variable ends)
+  #   if (is.null(r$dep_var)) {
+  #     defaultStart <- dateListFormatted[length(dateListFormatted)]
+  #   } else {
+  #     strEndOfHistData <- input$rngHistoricalData[2]
+  #     defaultStart <- zoo::as.yearqtr(strEndOfHistData)
+  #   }
+  #
+  #   # ensure defaultEnd doesn't exceed slider limits
+  #   defaultEnd <- lubridate::yq(defaultStart) + lubridate::years(5)
+  #   if ((defaultEnd -
+  #        lubridate::yq(dateListFormatted[length(dateListFormatted)])) > 0) {
+  #     defaultEnd <- lubridate::yq(dateListFormatted[length(dateListFormatted)])
+  #   }
+  #   defaultEnd <- zoo::as.yearqtr(defaultEnd)
+  #
+  #   # put together widget
+  #   shinyWidgets::sliderTextInput(
+  #     inputId = ns("RangeProjection"),
+  #     label = "Select the end point for the projections",
+  #     grid = TRUE,
+  #     force_edges = TRUE,
+  #     choices = dateListFormatted,
+  #     selected = c(defaultStart,
+  #                  defaultEnd),
+  #     from_fixed = TRUE
+  #   )
+  # })
 
   # Download the dataframe as rds
   # TODO maybe add a csv option or swap to csv.
