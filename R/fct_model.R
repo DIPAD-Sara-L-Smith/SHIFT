@@ -129,7 +129,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
     }
   }
 
-  # calculate forecast
+  # calculate forecasts
   fcast <- predict_models(model_fits = list(fit),
                           proj_data = proj_data,
                           n_periods_to_forecast = 8)
@@ -210,6 +210,11 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL,
                           diff_inv = FALSE, diff_starting_values = NULL){
+
+  # if ("linear" %in% forecast_type) {
+  #   browser()
+  # }
+
   # find start / end if not given
   if (missing(start)) {
     start <- c(df$Year[1], df$Quarter[1])
@@ -242,19 +247,9 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       proj_data <- NULL
     }
 
-    # get plot data from fit object
-    if (forecast_type_i == "linear") {
-      # fetch projected data from df
-      end_row <- df %>%
-        rownames_to_column() %>%
-        filter(Year == end[1] & Quarter == end[2])
-
-      proj_data <- df %>% slice((as.numeric(end_row$rowname) + 1):n())
-      proj_data <- as.data.frame(proj_data)
-    }
-
     # put together plot data
     data <- get_forecast_plotdata(fit, proj_data)
+
 
     # if differenced and we want to inverse difference, do this now
     if (diff_inv & !is.null(diff_starting_values)) {
@@ -272,13 +267,13 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 
       # undifference all columns (removing x_labels first)
       # find last x_label with actuals data
-      last_row_with_actuals <- min(which(is.na(data$y.ts_actuals)))
+      last_row_with_actuals <- min(which(is.na(data$y.ts_actuals))) - 1
       first_row_with_forecast <- ifelse((is.na(data$y.ts_forecast[1])),
                                         max(which(is.na(data$y.ts_forecast))) + 1,
                                         1)
 
-      # pick-up x_labels and actuals
-      actuals <- data[, 1:2]
+      # pick-up x_labels and actuals, then inverse difference the actuals
+      actuals <- data[, 1:2] # differenced data
       actuals[1:(last_row_with_actuals + 1), 2] <- data[2] %>%
         dplyr::slice(1:last_row_with_actuals) %>%
         purrr::map(~undifference(., diff_starting_values)) %>%
@@ -542,14 +537,9 @@ get_proj_data <- function(df, end){
 }
 
 
-# TODO - complete if needed
 #' undiff_ts
-#' @description Takes a data frame of differenced time series data and a
-#' starting value, and returns an undifferenced time series. Dimensions of `df`
-#' and `start_value` must be the same, i.e. every series must have a starting
-#' value.
+#' @description Takes
 #'
-#' TODO - work out if we want to use time series, tibbles or data frames here
 #' @param df time series of data
 #' @param start_value double - starting value of time series (to add differences
 #' to)
@@ -558,4 +548,17 @@ get_proj_data <- function(df, end){
 #' @export
 #'
 #' @importFrom dplyr select arrange filter n
-# undiff_ts <- function(df, end){
+get_starting_values <- function(flg_diff, dep_var, starting_values = NULL) {
+  if (flg_diff) {
+    # data is differenced
+    if (is.null(starting_values)) {
+      return(NULL)
+    } else {
+      return(as.matrix(starting_values[, dep_var]))
+    }
+  } else {
+    # flg_diff is NULL or FALSE
+    return(NULL)
+  }
+}
+

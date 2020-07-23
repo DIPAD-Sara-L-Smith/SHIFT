@@ -64,6 +64,7 @@ mod_plot_data_server <- function(input, output, session, r) {
 
   observeEvent(input$ind_var_selector, {
     req(input$ind_var_selector)
+    # browser()
     r$ind_var <- input$ind_var_selector
   })
 
