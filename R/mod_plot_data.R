@@ -64,7 +64,6 @@ mod_plot_data_server <- function(input, output, session, r) {
 
   observeEvent(input$ind_var_selector, {
     req(input$ind_var_selector)
-    # browser()
     r$ind_var <- input$ind_var_selector
   })
 
@@ -87,28 +86,6 @@ mod_plot_data_server <- function(input, output, session, r) {
       multiple = TRUE
       )
   })
-
-  # # Graph of Holt-Winters forecast
-  # observeEvent(r$data, {
-  #   req(r$data, input$dep_var_selector)
-  #
-  #   # dyGraph of the independent variable
-  #   output$plot_holtwinters <- plotly::renderPlotly({
-  #     req(r$data)
-  #
-  #     # function to convert from df to dygraph
-  #     p <- plot_forecast(
-  #       df = r$data,
-  #       dep_var = input$dep_var_selector,
-  #       ind_var = NULL,
-  #       # start,
-  #       # end,
-  #       forecast_type = "holtwinters",
-  #       proj_data = NULL,
-  #       diff_inv = FALSE
-  #       )
-  #   })
-  # })
 
   # Delete for prod, or add to golem_dev function.
   observeEvent(input$browser_button, {
