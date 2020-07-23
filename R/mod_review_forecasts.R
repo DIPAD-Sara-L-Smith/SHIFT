@@ -33,15 +33,9 @@ mod_review_forecasts_ui <- function(id){
         solidHeader = TRUE,
         h3("Short-term forecasts"),
         p("This box allows you to compare all short-term forecasts."),
-        plotly::plotlyOutput(ns("plot_shortterm"))
-
-        # conditionalPanel(
-        #   condition = "is.null(output.plot_shortterm2) == FALSE",
-        #   h3("Differenced data"),
-        #   p("The chart above shows the inverse differenced models - use the
-        #     chart below to view just the differenced data."),
-        #   plotly::plotlyOutput(ns("plot_shortterm2"))
-        # )
+        plotly::plotlyOutput(ns("plot_shortterm")),
+        shiny::htmlOutput(ns("text_shortterm2")),
+        plotly::plotlyOutput(ns("plot_shortterm2"))
       ),
 
       box(
@@ -106,8 +100,8 @@ mod_review_forecasts_server <- function(input, output, session, r){
   })
 
   # graph comparing multiple short-term forecasts with CIs
-  observeEvent(r$xts, {
-    req(r$data, r$dep_var)
+  observeEvent(r$data, {
+    req(r$dep_var)
 
     output$plot_shortterm <- plotly::renderPlotly(
       p <- plot_forecast(
@@ -122,42 +116,46 @@ mod_review_forecasts_server <- function(input, output, session, r){
         diff_inv = ifelse(is.null(r$flg_diff),
                           FALSE,
                           r$flg_diff),
-        diff_starting_values = ifelse(r$flg_diff,
-                                      as.matrix(r$starting_values[, r$dep_var]),
-                                      NULL)
+        diff_starting_values = get_starting_values(r$flg_diff,
+                                                   r$dep_var,
+                                                   r$starting_values)
       )
     )
-  })
 
-  # # graph comparing multiple short-term forecasts with CIs
-  # observeEvent(r$xts, {
-  #   req(r$data, r$dep_var, r$flg_diff)
-  #
-  #   output$plot_shortterm2 <- if (r$flg_diff) {
-  #     plotly::renderPlotly(
-  #       p <- plot_forecast(
-  #         df = r$data,
-  #         dep_var = r$dep_var,
-  #         # start,NU
-  #         end = r$date_end,
-  #         forecast_type = c("naive",
-  #                           "holtwinters",
-  #                           "decomposition"),
-  #         proj_data = NULL,
-  #         diff_inv = FALSE,
-  #         diff_starting_values = NULL
-  #       )
-  #     )
-  #   } else {
-  #     return(NULL)
-  #   }
-  # })
+    # graph comparing multiple short-term forecasts with CIs
+    output$text_shortterm2 <- shiny::renderUI(
+      if (r$flg_diff) {
+        tags$br()
+        tags$h3("Differenced data")
+        tags$br()
+        tags$p("You have selected to model the differences between your data
+                points. The graph above shows the inverse differenced forecasts,
+                whilst the graph below shows the differenced ones.")
+      } else {
+        tags$p("")
+      }
+    )
 
-  # Graph of Holt-Winters forecast
-  observeEvent(r$data, {
-    req(r$data)
+    output$plot_shortterm2 <- plotly::renderPlotly({
+      if (r$flg_diff) {
+        plot_forecast(
+          df = r$data,
+          dep_var = r$dep_var,
+          # start,
+          end = r$date_end,
+          forecast_type = c("naive",
+                            "holtwinters",
+                            "decomposition"),
+          proj_data = NULL,
+          diff_inv = FALSE,
+          diff_starting_values = NULL
+        )
+      } else {
+        return(NULL)
+      }
+    })
 
-    # Holt-Winters plot
+    # Graph of Holt-Winters forecast
     output$plot_holtwinters <- plotly::renderPlotly({
       # function to convert from df to dygraph
       p <- plot_forecast(
@@ -202,7 +200,10 @@ mod_review_forecasts_server <- function(input, output, session, r){
       )
     })
 
-    # graph comparing long-term forecasts with CIs
+  })
+
+  observeEvent(r$ind_var, { # graph comparing long-term forecasts with CIs
+    req(r$ind_var)
     output$plot_longterm <- plotly::renderPlotly({
       p <- plot_forecast(
         df = r$data,
@@ -215,12 +216,11 @@ mod_review_forecasts_server <- function(input, output, session, r){
         diff_inv = ifelse(is.null(r$flg_diff),
                           FALSE,
                           r$flg_diff),
-        diff_starting_values = ifelse(r$flg_diff,
-                                      as.matrix(r$starting_values[, r$dep_var]),
-                                      NULL)
+        diff_starting_values = get_starting_values(r$flg_diff,
+                                                   r$dep_var,
+                                                   r$starting_values)
       )
     })
-
   })
 
 }
