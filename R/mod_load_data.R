@@ -94,10 +94,12 @@ mod_load_data_server <- function(input, output, session, r) {
       r$data_old <- r$data
       r$data <- load_user_data(input$file)
       r$data_undiff <- r$data
+      r$flg_diff <- FALSE
     } else {
       r$data_old <- r$data
       r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
       r$data_undiff <- r$data
+      r$flg_diff <- FALSE
     }
   })
 
