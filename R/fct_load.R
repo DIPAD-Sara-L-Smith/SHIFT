@@ -19,7 +19,6 @@ load_user_data <- function(upload) {
         print(paste("Loading file:", name))
         switch(tolower(file_ext(name)),
           "csv" = load_csv(datapath),
-          "r" = load_r_file(datapath),
           "rds" = load_rds_file(datapath),
           "xls" = load_excel(datapath),
           "xlsx" = load_excel(datapath), # Could we match xls(x) with regex?
@@ -72,20 +71,6 @@ merge_user_data <- function(df_list,
 }
 
 
-#' read an r script
-#'
-#' @param filename a string of the r file to be run.
-#'
-#' @return a dataframe containg the data.
-#' @export
-#'
-load_r_file <- function(filename) {
-  warning("Not yet supported, Returning NULL")
-  df <- NULL
-  return(df)
-}
-
-
 #' read a dataframe from an rds file
 #'
 #' @param filename
@@ -123,8 +108,13 @@ load_csv <- function(filename) {
 #'
 #' @return a dataframe containg the data.
 #' @export
+#'
+#' @importFrom openxlsx read.xlsx
 load_excel <- function(filename) {
-  warning("Not yet supported, Returning NULL")
+  df <- read.xlsx(
+    filename,
+    check.names = TRUE
+  )
   df <- NULL
   return(df)
 }
