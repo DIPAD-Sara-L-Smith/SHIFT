@@ -132,7 +132,6 @@ load_excel <- function(filename) {
 #' @importFrom dplyr select
 #' @importFrom purrr map
 is_valid_df <- function(df) {
-
   # Is dataframe
   assert_that(is.data.frame(df),
     msg = "This doesn't appear to be a data frame."

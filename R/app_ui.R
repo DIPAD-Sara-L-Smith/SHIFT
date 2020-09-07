@@ -13,7 +13,7 @@ app_ui <- function() {
       # Sidebar with a slider input for number of bins
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Explore data",
+          menuItem("Read in data",
             tabName = "explore",
             icon = icon("table")
           ),
@@ -63,9 +63,7 @@ app_ui <- function() {
           # Compare forecasts -----
           tabItem(
             tabName = "forecasts",
-            fluidRow(
-              p("To be added...")
-            )
+                mod_review_forecasts_ui("review_forecasts_ui_1")
           ), # tabItem end
 
 

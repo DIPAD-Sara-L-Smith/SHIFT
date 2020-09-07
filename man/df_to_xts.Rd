@@ -4,7 +4,7 @@
 \alias{df_to_xts}
 \title{Convert a dataframe to an XTS object. Only works for Year Quarters}
 \usage{
-df_to_xts(df)
+df_to_xts(df, selected_vars = NULL, start = NULL, end = NULL)
 }
 \arguments{
 \item{df}{}
