@@ -71,7 +71,15 @@ app_ui <- function() {
           tabItem(
             tabName = "review-regression",
             fluidRow(
-              p("To be added...")
+              box(
+                width = 12,
+                collapsible = TRUE,
+                collapsed = FALSE,
+                title = "Best subset visual.",
+                status = "primary",
+                solidHeader = TRUE,
+              mod_best_subset_ui("best_subset_ui_1")
+            )
             )
           ) # tabItem end
         )

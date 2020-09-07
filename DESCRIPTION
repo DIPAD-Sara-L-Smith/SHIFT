@@ -19,5 +19,6 @@ Imports:
     DT,
     htmltools,
     shinyWidgets,
-    dygraphs
-RoxygenNote: 7.1.0
+    dygraphs,
+    leaps
+RoxygenNote: 7.0.2
