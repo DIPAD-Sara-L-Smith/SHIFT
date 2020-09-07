@@ -157,8 +157,8 @@ allsubsetregression <- function(dep_var, data, nvars) {
 
   plot <- ggplotly(plot)
 
-  # Generates the
-  model_summaries_df <- tidyr::pivot_wider(res_df, names_from = "variable", values_from = "value")
+  # Generates the results dataframe
+  model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2), names_from = "variable", values_from = "value")
 
   # Compute cross-validation error
   model_ids <- 1:nvars
