@@ -224,10 +224,3 @@ mod_review_forecasts_server <- function(input, output, session, r){
   })
 
 }
-
-## To be copied in the UI
-# mod_review_forecasts_ui("review_forecasts_ui_1")
-
-## To be copied in the server
-# callModule(mod_review_forecasts_server, "review_forecasts_ui_1")
-

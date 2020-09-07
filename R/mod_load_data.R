@@ -172,7 +172,6 @@ mod_load_data_server <- function(input, output, session, r) {
 
   # Keep columns
   observeEvent(input$keep_col, {
-    # browser()
     req(r$data, input$user_DT_columns_selected)
 
     #TODO - this assumes Year and Quarter are in cols 1:2.
@@ -248,55 +247,6 @@ mod_load_data_server <- function(input, output, session, r) {
     )
   })
 
-  # # slider input - Projection data -----
-  # output$RangeProjections <- renderUI({
-  #   req(r$data, r$dep_var, input$rngHistoricalData)
-  #   df <- r$data
-  #
-  #   browser()
-  #
-  #   # create the sequence of Date objects
-  #   dateList <- seq(lubridate::yq(paste0(df[1, "Year"],
-  #                                        ": Q",
-  #                                        df[1, "Quarter"])),
-  #                   to = lubridate::yq(paste0(df[nrow(df), "Year"],
-  #                                             ": Q",
-  #                                             df[nrow(df), "Quarter"])),
-  #                   by = "quarter")
-  #
-  #   # format vector
-  #   dateListFormatted <- zoo::as.yearqtr(dateList)
-  #
-  #   # find default end for historical data
-  #   # (based on when dependent variable ends)
-  #   if (is.null(r$dep_var)) {
-  #     defaultStart <- dateListFormatted[length(dateListFormatted)]
-  #   } else {
-  #     strEndOfHistData <- input$rngHistoricalData[2]
-  #     defaultStart <- zoo::as.yearqtr(strEndOfHistData)
-  #   }
-  #
-  #   # ensure defaultEnd doesn't exceed slider limits
-  #   defaultEnd <- lubridate::yq(defaultStart) + lubridate::years(5)
-  #   if ((defaultEnd -
-  #        lubridate::yq(dateListFormatted[length(dateListFormatted)])) > 0) {
-  #     defaultEnd <- lubridate::yq(dateListFormatted[length(dateListFormatted)])
-  #   }
-  #   defaultEnd <- zoo::as.yearqtr(defaultEnd)
-  #
-  #   # put together widget
-  #   shinyWidgets::sliderTextInput(
-  #     inputId = ns("RangeProjection"),
-  #     label = "Select the end point for the projections",
-  #     grid = TRUE,
-  #     force_edges = TRUE,
-  #     choices = dateListFormatted,
-  #     selected = c(defaultStart,
-  #                  defaultEnd),
-  #     from_fixed = TRUE
-  #   )
-  # })
-
   # Download the dataframe as rds
   # TODO maybe add a csv option or swap to csv.
   output$download_data <- downloadHandler(
@@ -307,8 +257,4 @@ mod_load_data_server <- function(input, output, session, r) {
   )
 }
 
-## To be copied in the UI
-# mod_load_data_ui("load_data_ui_1")
 
-## To be copied in the server
-# callModule(mod_load_data_server, "load_data_ui_1")
