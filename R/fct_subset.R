@@ -5,6 +5,7 @@
 #' @param modeldata Data within model
 #'
 #' @export
+
 model.from.regobject <- function(regobject, modelindex, modeldata) {
   arraywhich <- summary(regobject)$which
 
@@ -96,15 +97,19 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' @importFrom reshape melt
 #' @importFrom ggplot2 ggplot aes geom_line geom_point facet_wrap
 #' @importFrom plotly ggplotly
+#' @importFrom dplyr select
 #' @import ggplot2
 #' @import lattice
 allsubsetregression <- function(dep_var, data, nvars) {
+
+  data <- select(data, -c("Year", "Quarter"))
+
   models <-
     regsubsets(
       formula(paste0(dep_var, "~.")),
-      nbest = 4,
       data = data,
       nvmax = nvars,
+      nbest = 4,
       method = "exhaustive"
     )
   res_sum <- summary(models)
@@ -161,26 +166,26 @@ allsubsetregression <- function(dep_var, data, nvars) {
   model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2), names_from = "variable", values_from = "value")
 
   # Compute cross-validation error
-  model_ids <- 1:nvars
+  model_ids <- 1:nrow(df)
   cv_errors <-
     map(model_ids, get_model_formula, models, dep_var) %>%
     map(get_cv_error, data = data, nvars = nvars) %>%
     unlist()
 
   # Select the model that minimize the CV error
-  best_model <- which.min(cv_errors)
+  cv_model_index <- which.min(cv_errors)
 
   # Produces lm object
-  best_model_coeffs <- coef(models, best_model)
+  cv_model_lm <- model.from.regobject(models, cv_model_index, data)[[2]]
 
   # stepwise search for best regression model
   fit <- lm(formula(paste0(dep_var, "~.")), data = data)
   step <- stepAIC(fit, direction = "both")
 
   resultslist <-
-    list(model_summaries_df, lm_return, res_sum, stats_measures, plot, best_model, step)
+    list(model_summaries_df, lm_return, res_sum, stats_measures, plot, cv_model_lm,step)
 
-  names(resultslist) <- c("model_summaries_df", "lm_return", "res_sum", "stats_measures", "plot", "best_model", "step")
+  names(resultslist) <- c("model_summaries_df", "lm_return", "res_sum", "stats_measures", "plot", "cv_model_lm", "step")
 
   return(resultslist)
 }

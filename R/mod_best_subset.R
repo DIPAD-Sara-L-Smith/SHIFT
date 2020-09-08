@@ -68,7 +68,18 @@ mod_best_subset_server <- function(input, output, session, r){
 
   observeEvent(r$allsubset, {
     req(r$allsubset$model_summaries_df)
-    output$summaries_table <- renderDT(r$allsubset$model_summaries_df)
+    output$summaries_table <- renderDT(r$allsubset$model_summaries_df,
+                                       rownames = FALSE,
+                                       options = list(
+                                         pageLength = 5,
+                                         lengthMenu = list(
+                                           c(5, 15, -1),
+                                           c("5", "15", "All")
+                                         ),
+                                         scrollX = TRUE,
+                                         searching = FALSE,
+                                         pagingType = "simple"
+                                       ))
   })
 
   # Delete for prod, or add to golem_dev function.
