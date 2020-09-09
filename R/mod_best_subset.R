@@ -15,7 +15,7 @@
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom plotly plotlyOutput renderPlotly
 #' @importFrom DT DTOutput renderDT
-mod_best_subset_ui <- function(id){
+mod_best_subset_ui <- function(id) {
   ns <- NS(id)
   tagList(
     actionButton(ns("browser_button"), label = "Browser()"),
@@ -32,16 +32,17 @@ mod_best_subset_ui <- function(id){
 #' @rdname mod_best_subset
 #' @export
 #' @keywords internal
+#' @importFrom dplyr select
 #'
-mod_best_subset_server <- function(input, output, session, r){
+mod_best_subset_server <- function(input, output, session, r) {
   ns <- session$ns
 
   # Selector for dependent variable
   output$dep_var_selector <- renderUI({
     req(r$data)
     selectInput(ns("dep_var_selector"),
-                label = "Select your Dependent Variable:",
-                choices = names(r$data)
+      label = "Select your Dependent Variable:",
+      choices = names(select(r$data, -c("Year", "Quarter")))
     )
   })
 
@@ -49,16 +50,16 @@ mod_best_subset_server <- function(input, output, session, r){
   output$ind_var_selector <- renderUI({
     req(r$data, input$dep_var_selector)
     selectInput(ns("ind_var_selector"),
-                label = "Select your Independent Variables: (*) Multiple Allowed",
-                # drop the current dep_var from the options
-                choices = setdiff(names(r$data), input$dep_var_selector),
-                multiple = TRUE
+      label = "Select your Independent Variables: (*) Multiple Allowed",
+      # drop the current dep_var from the options
+      choices = setdiff(names(select(r$data, -c("Year", "Quarter"))), input$dep_var_selector),
+      multiple = TRUE
     )
   })
 
   observeEvent(input$run_subset_button, {
-    req(r$data,input$dep_var_selector,input$ind_var_selector)
-    r$allsubset <- allsubsetregression(input$dep_var_selector,r$data,length(input$ind_var_selector))
+    req(r$data, input$dep_var_selector, input$ind_var_selector)
+    r$allsubset <- allsubsetregression(input$dep_var_selector, r$data, length(input$ind_var_selector))
   })
 
   observeEvent(r$allsubset, {
@@ -69,17 +70,18 @@ mod_best_subset_server <- function(input, output, session, r){
   observeEvent(r$allsubset, {
     req(r$allsubset$model_summaries_df)
     output$summaries_table <- renderDT(r$allsubset$model_summaries_df,
-                                       rownames = FALSE,
-                                       options = list(
-                                         pageLength = 5,
-                                         lengthMenu = list(
-                                           c(5, 15, -1),
-                                           c("5", "15", "All")
-                                         ),
-                                         scrollX = TRUE,
-                                         searching = FALSE,
-                                         pagingType = "simple"
-                                       ))
+      rownames = FALSE,
+      options = list(
+        pageLength = 5,
+        lengthMenu = list(
+          c(5, 15, -1),
+          c("5", "15", "All")
+        ),
+        scrollX = TRUE,
+        searching = FALSE,
+        pagingType = "simple"
+      )
+    )
   })
 
   # Delete for prod, or add to golem_dev function.
@@ -93,4 +95,3 @@ mod_best_subset_server <- function(input, output, session, r){
 
 ## To be copied in the server
 # callModule(mod_best_subset_server, "best_subset_ui_1")
-
