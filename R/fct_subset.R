@@ -165,6 +165,9 @@ allsubsetregression <- function(dep_var, data, nvars) {
   # Generates the results dataframe
   model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2), names_from = "variable", values_from = "value")
 
+  # Sorts by rsq
+  model_summaries_df <- model_summaries_df[order(model_summaries_df$rsq, decreasing = TRUE),]
+
   # Compute cross-validation error
   model_ids <- 1:nrow(df)
   cv_errors <-
