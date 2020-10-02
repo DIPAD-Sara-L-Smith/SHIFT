@@ -19,7 +19,9 @@ model.from.regobject <- function(regobject, modelindex, modeldata) {
   for (i in 2:ncol(arraywhich)) {
     if ((includevar[i]) == TRUE) {
       str <-
-        paste(str, colnames(arraywhich)[i], sep = ifelse(str == "", "", " + "))
+        paste(str, colnames(arraywhich)[i],
+          sep = ifelse(str == "", "", " + ")
+        )
     }
   }
 
@@ -27,12 +29,9 @@ model.from.regobject <- function(regobject, modelindex, modeldata) {
   str <- reformulate(str, response = colnames(modeldata)[1])
 
   # Gets string representation of formula
-  formula <- deparse(str)
+  formula <- paste(deparse(str), collapse = " ")
 
-  # return linear regression model
-  model <- lm(str, data = modeldata)
-
-  output <- list(formula, model)
+  output <- list(formula)
 
   return(output)
 }
@@ -101,7 +100,6 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' @import ggplot2
 #' @import lattice
 allsubsetregression <- function(dep_var, data, nvars) {
-
   data <- select(data, -c("Year", "Quarter"))
 
   models <-
@@ -114,15 +112,6 @@ allsubsetregression <- function(dep_var, data, nvars) {
     )
   res_sum <- summary(models)
 
-  # Returns the statistical measures for determining best subset
-  stats_measures <- data.frame(
-    R2 = which.max(res_sum$rsq),
-    Adj_R2 = which.max(res_sum$adjr2),
-    CP = which.min(res_sum$cp),
-    BIC = which.min(res_sum$bic),
-    RSS = which.min(res_sum$rss)
-  )
-
   # Extracts required statistical measures from summary object
   res_df <- as.data.frame(res_sum[2:6])
 
@@ -130,12 +119,10 @@ allsubsetregression <- function(dep_var, data, nvars) {
   res_df$`Model Number` <- as.numeric(rownames(res_df))
 
   formula_return <- list()
-  lm_return <- list()
 
   # Extracts lm and formula string from regsubset object for each model
   for (i in 1:nrow(res_df)) {
     formula_return[[i]] <- model.from.regobject(models, i, data)[[1]]
-    lm_return[[i]] <- model.from.regobject(models, i, data)[[2]]
   }
 
   # Gets dataframe ready for plotting
@@ -151,11 +138,17 @@ allsubsetregression <- function(dep_var, data, nvars) {
   res_df <- merge(res_df, df, by = "Model Number")
 
   # reorders variables ready for plots
-  res_df$variable <- factor(res_df$variable, levels = c("cp", "rss", "bic", "rsq", "adjr2"))
+  res_df$variable <- factor(res_df$variable,
+    levels = c("cp", "rss", "bic", "rsq", "adjr2")
+  )
 
   # Generates plot of best subset
   plot <-
-    ggplot(data = res_df, aes(x = `Model Number`, y = value, `Model formula` = `Model formula`, group = 1)) +
+    ggplot(data = res_df, aes(
+      x = `Model Number`,
+      y = value,
+      `Model formula` = `Model formula`, group = 1
+    )) +
     geom_line(color = "steelblue", size = 1) +
     geom_point(color = "steelblue") +
     facet_wrap(~variable, scales = "free")
@@ -163,10 +156,15 @@ allsubsetregression <- function(dep_var, data, nvars) {
   plot <- ggplotly(plot)
 
   # Generates the results dataframe
-  model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2), names_from = "variable", values_from = "value")
+  model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2),
+    names_from = "variable",
+    values_from = "value"
+  )
 
   # Sorts by rsq
-  model_summaries_df <- model_summaries_df[order(model_summaries_df$rsq, decreasing = TRUE),]
+  model_summaries_df <- model_summaries_df[order(model_summaries_df$rsq,
+    decreasing = TRUE
+  ), ]
 
   # Compute cross-validation error
   model_ids <- 1:nrow(df)
@@ -178,17 +176,31 @@ allsubsetregression <- function(dep_var, data, nvars) {
   # Select the model that minimize the CV error
   cv_model_index <- which.min(cv_errors)
 
-  # Produces lm object
-  cv_model_lm <- model.from.regobject(models, cv_model_index, data)[[2]]
-
   # stepwise search for best regression model
   fit <- lm(formula(paste0(dep_var, "~.")), data = data)
   step <- stepAIC(fit, direction = "both")
 
-  resultslist <-
-    list(model_summaries_df, lm_return, res_sum, stats_measures, plot, cv_model_lm,step)
+  # Pulls formula from lm object
+  step <- paste(paste(step$terms[[2]]),
+    substring(paste(step$terms[[3]], collapse = " + "), 5),
+    sep = " ~ "
+  )
 
-  names(resultslist) <- c("model_summaries_df", "lm_return", "res_sum", "stats_measures", "plot", "cv_model_lm", "step")
+  # Gets the final best models from analysis
+  formula_results <- unique(c(
+    formula_return[[which.max(res_sum$rsq)]],
+    formula_return[[which.max(res_sum$adjr2)]],
+    formula_return[[which.min(res_sum$cp)]],
+    formula_return[[which.min(res_sum$bic)]],
+    formula_return[[which.min(res_sum$rss)]],
+    formula_return[[cv_model_index]],
+    step
+  ))
+
+  resultslist <-
+    list(model_summaries_df, plot, formula_results)
+
+  names(resultslist) <- c("model_summaries_df", "plot", "formula_results")
 
   return(resultslist)
 }
