@@ -89,39 +89,3 @@ mod_best_subset_server <- function(input, output, session, r) {
     browser()
   })
 }
-
-## To be copied in the UI
-# mod_best_subset_ui("best_subset_ui_1")
-
-## To be copied in the server
-# callModule(mod_best_subset_server, "best_subset_ui_1")
-#' best_subset UI Function
-#'
-#' @description A shiny Module.
-#'
-#' @param id,input,output,session Internal parameters for {shiny}.
-#'
-#' @noRd 
-#'
-#' @importFrom shiny NS tagList 
-mod_best_subset_ui <- function(id){
-  ns <- NS(id)
-  tagList(
- 
-  )
-}
-    
-#' best_subset Server Function
-#'
-#' @noRd 
-mod_best_subset_server <- function(input, output, session){
-  ns <- session$ns
- 
-}
-    
-## To be copied in the UI
-# mod_best_subset_ui("best_subset_ui_1")
-    
-## To be copied in the server
-# callModule(mod_best_subset_server, "best_subset_ui_1")
- 
