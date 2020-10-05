@@ -8,11 +8,11 @@ Conducts exhaustive best subset, cross-validation and stepwise search}
 allsubsetregression(dep_var, data, nvars)
 }
 \arguments{
+\item{dep_var}{The dependent variable as a string}
+
 \item{data}{The dataframe containing the regression data}
 
 \item{nvars}{The number of variables to use in the best subset model}
-
-\item{dep.var}{The dependent variable as a string}
 }
 \value{
 

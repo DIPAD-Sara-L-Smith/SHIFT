@@ -1,13 +1,13 @@
 #' Extracts lm and model string from regsubsets object
 #'
-#' @param regobject regsubsets object
+#' @param models regsubsets object
 #' @param modelindex Index for model
-#' @param modeldata Data within model
+#' @param data The dataframe containing the regression data
 #'
 #' @export
 
-model.from.regobject <- function(regobject, modelindex, modeldata) {
-  arraywhich <- summary(regobject)$which
+model.from.regobject <- function(models, modelindex, data) {
+  arraywhich <- summary(models)$which
 
   # find a boolean array from which matrix, telling us which variables
   # are to be included in the model, e.g. [1, 0, 0, 1, 1].
@@ -26,10 +26,13 @@ model.from.regobject <- function(regobject, modelindex, modeldata) {
   }
 
   # formulate string for use as a formula in the model definition
-  str <- reformulate(str, response = colnames(modeldata)[1])
+  str <- reformulate(str, response = colnames(data)[1])
 
   # Gets string representation of formula
   formula <- paste(deparse(str), collapse = " ")
+
+  # Trims whitespace, leaving single spaces between formula args
+  formula <- trimws(gsub("\\s+", " ", formula))
 
   output <- list(formula)
 
@@ -38,26 +41,26 @@ model.from.regobject <- function(regobject, modelindex, modeldata) {
 
 #' Helper function for cross-validation; model generator
 #'
-#' @param model.formula A vector of length
-#' @param data The dataframe containing the regression data
-#' @param nvars The max number of variables to use in the best subset model
+#' @param id The id for the model
+#' @param models regsubsets object
+#' @param dep_var The dependent variable as a string
 #'
 #' @export
-get_model_formula <- function(id, object, outcome) {
+get_model_formula <- function(id, models, dep_var) {
   # get models data
-  models <- summary(object)$which[id, -1]
+  model <- summary(models)$which[id, -1]
   # Get model predictors
-  predictors <- names(which(models == TRUE))
+  predictors <- names(which(model == TRUE))
   predictors <- paste(predictors, collapse = "+")
   # Build model formula
-  formula <- as.formula(paste0(outcome, "~", predictors))
+  formula <- as.formula(paste0(dep_var, "~", predictors))
 
   return(formula)
 }
 
 #' Helper function for cross-validation; sampling part
 #'
-#' @param model.formula A vector of length
+#' @param model.formula The formula for the model
 #' @param data The dataframe containing the regression data
 #' @param nvars The max number of variables to use in the best subset model
 #'
@@ -83,7 +86,7 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' Conduct best subset regression
 #' Conducts exhaustive best subset, cross-validation and stepwise search
 #'
-#' @param dep.var The dependent variable as a string
+#' @param dep_var The dependent variable as a string
 #' @param data The dataframe containing the regression data
 #' @param nvars The number of variables to use in the best subset model
 #'
@@ -97,8 +100,10 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' @importFrom ggplot2 ggplot aes geom_line geom_point facet_wrap
 #' @importFrom plotly ggplotly
 #' @importFrom dplyr select
+#' @importFrom tidyr pivot_wider
 #' @import ggplot2
 #' @import lattice
+#' @import ggfortify
 allsubsetregression <- function(dep_var, data, nvars) {
   data <- select(data, -c("Year", "Quarter"))
 
@@ -118,19 +123,16 @@ allsubsetregression <- function(dep_var, data, nvars) {
   # Pulls dataframe index to use as model number
   res_df$`Model Number` <- as.numeric(rownames(res_df))
 
-  formula_return <- list()
-
   # Extracts lm and formula string from regsubset object for each model
-  for (i in 1:nrow(res_df)) {
-    formula_return[[i]] <- model.from.regobject(models, i, data)[[1]]
-  }
+  formula_return <- 1:nrow(res_df) %>%
+    map(function(x) model.from.regobject(models, x, data)) %>%
+    unlist()
 
   # Gets dataframe ready for plotting
   res_df <- melt(res_df, id = c("Model Number"))
 
   # Grabs model formula ready for joining onto res_df
-  df <- as.data.frame(do.call(rbind, formula_return)[, 1])
-  rownames(df) <- NULL
+  df <- as.data.frame(formula_return)
   names(df) <- "Model formula"
   df$`Model Number` <- as.numeric(rownames(df))
 
@@ -156,7 +158,7 @@ allsubsetregression <- function(dep_var, data, nvars) {
   plot <- ggplotly(plot)
 
   # Generates the results dataframe
-  model_summaries_df <- tidyr::pivot_wider(format(res_df, digits = 2),
+  model_summaries_df <- pivot_wider(format(res_df, digits = 2),
     names_from = "variable",
     values_from = "value"
   )
@@ -186,6 +188,9 @@ allsubsetregression <- function(dep_var, data, nvars) {
     sep = " ~ "
   )
 
+  # Trims whitespace, leaving single spaces between formula args
+  step <- trimws(gsub("\\s+", " ", step))
+
   # Gets the final best models from analysis
   formula_results <- unique(c(
     formula_return[[which.max(res_sum$rsq)]],
@@ -197,10 +202,17 @@ allsubsetregression <- function(dep_var, data, nvars) {
     step
   ))
 
-  resultslist <-
-    list(model_summaries_df, plot, formula_results)
+  # Generates lm objects on best models
+  lm_results <- map(formula_results, lm, data)
 
-  names(resultslist) <- c("model_summaries_df", "plot", "formula_results")
+  # lm object diagnostic plots
+  autoplots <- map(lm_results, autoplot, label.size = 3)
+  names(autoplots) <- formula_results
+
+  resultslist <-
+    list(model_summaries_df, plot, formula_results, lm_results, autoplots)
+
+  names(resultslist) <- c("model_summaries_df", "plot", "formula_results", "lm_results", "autoplots")
 
   return(resultslist)
 }
