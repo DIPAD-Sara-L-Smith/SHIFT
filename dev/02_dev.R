@@ -24,6 +24,8 @@ usethis::use_package( "DT" )
 usethis::use_package( "shinyWidgets" )
 usethis::use_package( "dygraphs" )
 usethis::use_package( "leaps" )
+usethis::use_package( "ggplot2" )
+usethis::use_package( "lattice" )
 usethis::use_pipe()
 
 ## 2.3 Add tests

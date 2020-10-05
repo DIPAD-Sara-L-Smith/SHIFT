@@ -20,5 +20,7 @@ Imports:
     htmltools,
     shinyWidgets,
     dygraphs,
-    leaps
+    leaps,
+    ggplot2,
+    lattice
 RoxygenNote: 7.1.1
