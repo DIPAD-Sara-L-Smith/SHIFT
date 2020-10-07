@@ -18,12 +18,40 @@
 mod_best_subset_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    actionButton(ns("browser_button"), label = "Browser()"),
-    uiOutput(ns("dep_var_selector")),
-    uiOutput(ns("ind_var_selector")),
-    plotlyOutput(ns("plot_best_subset_stats")),
-    DTOutput(ns("summaries_table")),
-    actionButton(ns("run_subset_button"), label = "Do regression")
+    fluidRow(
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Select inputs.",
+        status = "primary",
+        solidHeader = TRUE,
+        uiOutput(ns("dep_var_selector")),
+        uiOutput(ns("ind_var_selector")),
+        actionButton(ns("run_subset_button"), label = "Do regression")
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Results from best subsets regression.",
+        status = "primary",
+        solidHeader = TRUE,
+        plotlyOutput(ns("plot_best_subset_stats")),
+        DTOutput(ns("summaries_table"))
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        title = "Analyse quality of best subset output.",
+        status = "primary",
+        solidHeader = TRUE,
+        uiOutput(ns("analyse_model_selector")),
+        actionButton(ns("run_diagnostics"), label = "Show diagnostics"),
+        plotOutput(ns("plot_best_subset_diagnostics"))
+      )
+    )
   )
 }
 
@@ -57,16 +85,19 @@ mod_best_subset_server <- function(input, output, session, r) {
     )
   })
 
+  # Runs the all subsets calculations
   observeEvent(input$run_subset_button, {
     req(r$data, input$dep_var_selector, input$ind_var_selector)
     r$allsubset <- allsubsetregression(input$dep_var_selector, r$data, length(input$ind_var_selector))
   })
 
+  # Renders the plot object generated from all subsets calculation
   observeEvent(r$allsubset, {
     req(r$allsubset$plot)
     output$plot_best_subset_stats <- renderPlotly(r$allsubset$plot)
   })
 
+  # Renders the datatable containing the model summary data
   observeEvent(r$allsubset, {
     req(r$allsubset$model_summaries_df)
     output$summaries_table <- renderDT(r$allsubset$model_summaries_df,
@@ -84,8 +115,20 @@ mod_best_subset_server <- function(input, output, session, r) {
     )
   })
 
-  # Delete for prod, or add to golem_dev function.
-  observeEvent(input$browser_button, {
-    browser()
+  # Selector for choosing model for displaying diagnostics
+  output$analyse_model_selector <- renderUI({
+    req(r$allsubset$formula_results)
+    selectInput(ns("analyse_model_selector"),
+                label = "Select model to check quality of fit",
+                choices = r$allsubset$formula_results,
+                multiple = FALSE
+    )
+  })
+
+  # Renders the plot for the diagnostics
+  observeEvent(input$run_diagnostics, {
+    req(r$data, input$analyse_model_selector)
+    modelindex <- which(r$allsubset$formula_results==input$analyse_model_selector)
+    output$plot_best_subset_diagnostics <- renderPlot(plot(r$allsubset$autoplots[[modelindex]]))
   })
 }

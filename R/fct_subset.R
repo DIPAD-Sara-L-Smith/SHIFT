@@ -93,7 +93,7 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' @return
 #' @export
 #' @importFrom leaps regsubsets
-#' @importFrom purrr map
+#' @importFrom purrr map map2
 #' @importFrom MASS stepAIC
 #' @importFrom magrittr %>%
 #' @importFrom reshape melt
@@ -101,6 +101,7 @@ get_cv_error <- function(model.formula, data, nvars) {
 #' @importFrom plotly ggplotly
 #' @importFrom dplyr select
 #' @importFrom tidyr pivot_wider
+#' @importFrom gridExtra grid.arrange
 #' @import ggplot2
 #' @import lattice
 #' @import ggfortify
@@ -207,7 +208,9 @@ allsubsetregression <- function(dep_var, data, nvars) {
 
   # lm object diagnostic plots
   autoplots <- map(lm_results, autoplot, label.size = 3)
-  names(autoplots) <- formula_results
+
+  # Adds a title to the autoplots
+  autoplots <- map2(autoplots, formula_results, ~ grid.arrange(grobs = .x@plots, top = .y))
 
   resultslist <-
     list(model_summaries_df, plot, formula_results, lm_results, autoplots)
