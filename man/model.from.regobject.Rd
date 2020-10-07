@@ -4,14 +4,14 @@
 \alias{model.from.regobject}
 \title{Extracts lm and model string from regsubsets object}
 \usage{
-model.from.regobject(regobject, modelindex, modeldata)
+model.from.regobject(models, modelindex, data)
 }
 \arguments{
-\item{regobject}{regsubsets object}
+\item{models}{regsubsets object}
 
 \item{modelindex}{Index for model}
 
-\item{modeldata}{Data within model}
+\item{data}{The dataframe containing the regression data}
 }
 \description{
 Extracts lm and model string from regsubsets object

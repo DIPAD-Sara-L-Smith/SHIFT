@@ -4,14 +4,14 @@
 \alias{get_model_formula}
 \title{Helper function for cross-validation; model generator}
 \usage{
-get_model_formula(id, object, outcome)
+get_model_formula(id, models, dep_var)
 }
 \arguments{
-\item{model.formula}{A vector of length}
+\item{id}{The id for the model}
 
-\item{data}{The dataframe containing the regression data}
+\item{models}{regsubsets object}
 
-\item{nvars}{The max number of variables to use in the best subset model}
+\item{dep_var}{The dependent variable as a string}
 }
 \description{
 Helper function for cross-validation; model generator

@@ -7,7 +7,7 @@
 get_cv_error(model.formula, data, nvars)
 }
 \arguments{
-\item{model.formula}{A vector of length}
+\item{model.formula}{The formula for the model}
 
 \item{data}{The dataframe containing the regression data}
 
