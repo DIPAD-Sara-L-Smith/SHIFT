@@ -83,6 +83,59 @@ get_cv_error <- function(model.formula, data, nvars) {
   return(results)
 }
 
+#' Extracts an equation from the lm object
+#'
+#' @param model The lm object for the model
+#'
+#' @return
+#' @export
+#' @importFrom dplyr case_when if_else
+model_equation <- function(model, ...) {
+  format_args <- list(...)
+
+  model_coeff <- model$coefficients
+  format_args$x <- abs(model$coefficients)
+  model_coeff_sign <- sign(model_coeff)
+  model_coeff_prefix <- case_when(
+    model_coeff_sign == -1 ~ " - ",
+    model_coeff_sign == 1 ~ " + ",
+    model_coeff_sign == 0 ~ " + "
+  )
+  model_eqn <- paste(
+    strsplit(as.character(model$call$formula), "~")[[2]], # 'y'
+    "=",
+    paste(if_else(model_coeff[1] < 0, "- ", ""),
+      do.call(format, format_args)[1],
+      paste(model_coeff_prefix[-1],
+        do.call(format, format_args)[-1],
+        " * ",
+        names(model_coeff[-1]),
+        sep = "", collapse = ""
+      ),
+      sep = ""
+    )
+  )
+  return(model_eqn)
+}
+
+#' Helper function for writing signif. codes for rows in lm_summaries
+#'
+#' @param x Generic variable for current column
+#'
+#' @return
+#' @export
+ifelsefun <- function(x) {
+  ifelse(x > 0 & x <= 0.001, "***",
+    ifelse(x > 0.001 & x <= 0.01, "**",
+      ifelse(x > 0.01 & x <= 0.05, "*",
+        ifelse(x > 0.05 & x <= 0.1, ".",
+          ifelse(x > 0.1 & x <= 1, " ", " ")
+        )
+      )
+    )
+  )
+}
+
 #' Conduct best subset regression
 #' Conducts exhaustive best subset, cross-validation and stepwise search
 #'
@@ -126,7 +179,7 @@ allsubsetregression <- function(dep_var, data, nvars) {
 
   # Extracts lm and formula string from regsubset object for each model
   formula_return <- 1:nrow(res_df) %>%
-    map(function(x) model.from.regobject(models, x, data)) %>%
+    map(~ model.from.regobject(models, .x, data)) %>%
     unlist()
 
   # Gets dataframe ready for plotting
@@ -192,8 +245,8 @@ allsubsetregression <- function(dep_var, data, nvars) {
   # Trims whitespace, leaving single spaces between formula args
   step <- trimws(gsub("\\s+", " ", step))
 
-  # Gets the final best models from analysis
-  formula_results <- unique(c(
+  # Table of all formulas
+  formulas <- c(
     formula_return[[which.max(res_sum$rsq)]],
     formula_return[[which.max(res_sum$adjr2)]],
     formula_return[[which.min(res_sum$cp)]],
@@ -201,21 +254,58 @@ allsubsetregression <- function(dep_var, data, nvars) {
     formula_return[[which.min(res_sum$rss)]],
     formula_return[[cv_model_index]],
     step
-  ))
+  )
+
+  # Title of measures employed
+  stat_measure <- c("rsq", "adjr2", "cp", "bic", "rss", "cross-validation", "stepwise search (both)")
+
+  # Model as per statistic
+  determined_models <- do.call(rbind, Map(data.frame, stat_measure = stat_measure, formulas = formulas))
+
+  # Renames columns
+  names(determined_models) <- c("Statistical Measure", "Best Model for Statistic")
+
+  # Resets row indices
+  rownames(determined_models) <- NULL
+
+  # Gets the final best models from analysis
+  formula_results <- unique(formulas)
 
   # Generates lm objects on best models
   lm_results <- map(formula_results, lm, data)
 
+  # Equations from the models
+  lm_equations <- map(lm_results, model_equation)
+
+  # Binds the equations onto the model formulas
+  formula_table <- do.call(rbind, Map(data.frame, formula_results = formula_results, lm_equations = lm_equations))
+
+  # Replaces .x argument with dependent variable name
+  formula_table$lm_equations <- gsub("^.{0,2}", dep_var, formula_table$lm_equations)
+
+  # Renames columns
+  names(formula_table) <- c("Model Formula", "Model Equation")
+
+  # Generates summary of coefficients for each lm model
+  lm_summaries <- lm_results %>%
+    map(~ as.data.frame(summary(.x)$coeff))
+
+  # Adds signif. codes column to lm_summaries tables
+  for (i in seq(lm_summaries))
+  {
+    lm_summaries[[i]]$Signif_codes <- ifelsefun(lm_summaries[[i]]$`Pr(>|t|)`)
+  }
+
   # lm object diagnostic plots
-  autoplots <- map(lm_results, autoplot, label.size = 3)
+  autoplots <- map(lm_results, autoplot, which = 1:6, label.size = 3, colour = "dodgerblue3", smooth.colour = "black")
 
   # Adds a title to the autoplots
   autoplots <- map2(autoplots, formula_results, ~ grid.arrange(grobs = .x@plots, top = .y))
 
   resultslist <-
-    list(model_summaries_df, plot, formula_results, lm_results, autoplots)
+    list(model_summaries_df, plot, formula_results, lm_summaries, autoplots, determined_models, formula_table, lm_results)
 
-  names(resultslist) <- c("model_summaries_df", "plot", "formula_results", "lm_results", "autoplots")
+  names(resultslist) <- c("model_summaries_df", "plot", "formula_results", "lm_summaries", "autoplots", "determined_models", "formula_table", "lm_results")
 
   return(resultslist)
 }
