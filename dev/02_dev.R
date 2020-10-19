@@ -10,6 +10,7 @@
 golem::add_module( name = "load_data" ) # Name of the module
 golem::add_module( name = "plot_data" ) # Name of the module
 golem::add_module( name = "review_forecasts" ) # Name of the module
+golem::add_module( name = "best_subset" ) # Name of the module
 
 ## 2.2 Add dependencies
 
@@ -22,6 +23,9 @@ usethis::use_package( "shinydashboard" )
 usethis::use_package( "DT" )
 usethis::use_package( "shinyWidgets" )
 usethis::use_package( "dygraphs" )
+usethis::use_package( "leaps" )
+usethis::use_package( "ggplot2" )
+usethis::use_package( "lattice" )
 usethis::use_pipe()
 
 ## 2.3 Add tests

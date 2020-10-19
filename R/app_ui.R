@@ -63,18 +63,16 @@ app_ui <- function() {
           # Compare forecasts -----
           tabItem(
             tabName = "forecasts",
-                mod_review_forecasts_ui("review_forecasts_ui_1")
+            mod_review_forecasts_ui("review_forecasts_ui_1")
           ), # tabItem end
 
 
           # Review regression models -----
           tabItem(
             tabName = "review-regression",
-            fluidRow(
-              p("To be added...")
-            )
-          ) # tabItem end
-        )
+            mod_best_subset_ui("best_subset_ui_1")
+          )
+        ) # tabItem end
       )
     )
   )

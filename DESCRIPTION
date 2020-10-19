@@ -19,5 +19,8 @@ Imports:
     DT,
     htmltools,
     shinyWidgets,
-    dygraphs
-RoxygenNote: 7.1.0
+    dygraphs,
+    leaps,
+    ggplot2,
+    lattice
+RoxygenNote: 7.1.1
