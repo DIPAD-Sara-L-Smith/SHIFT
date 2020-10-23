@@ -212,7 +212,7 @@ allsubsetregression <- function(dep_var, data, nvars) {
   plot <- ggplotly(plot)
 
   # Generates the results dataframe
-  model_summaries_df <- pivot_wider(format(res_df, digits = 2),
+  model_summaries_df <- pivot_wider(format(res_df, digits = 5),
     names_from = "variable",
     values_from = "value"
   )
