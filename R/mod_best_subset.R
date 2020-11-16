@@ -462,7 +462,6 @@ mod_best_subset_server <- function(input, output, session, r) {
   observeEvent(input$final_model_button, {
     req(input$final_model_selector)
     r$best_model <- lm(input$final_model_selector, r$data)
-    print(r$best_model)
   })
 
   # Renders the datatable containing the best models from all analyses
