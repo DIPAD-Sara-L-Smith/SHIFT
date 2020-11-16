@@ -26,6 +26,14 @@ usethis::use_package( "dygraphs" )
 usethis::use_package( "leaps" )
 usethis::use_package( "ggplot2" )
 usethis::use_package( "lattice" )
+usethis::use_package( "MASS" )
+usethis::use_package( "magrittr" )
+usethis::use_package( "reshape" )
+usethis::use_package( "plotly" )
+usethis::use_package( "tidyr" )
+usethis::use_package( "gridExtra" )
+usethis::use_package( "ggfortify" )
+
 usethis::use_pipe()
 
 ## 2.3 Add tests
