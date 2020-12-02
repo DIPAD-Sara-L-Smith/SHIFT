@@ -30,7 +30,7 @@ file.remove(temp_file)
 
 # Split Quarter-Year Column into seperate columns, then drop the regional indices.
 nwhi <- nwhi %>%
-  separate(1, into = c("Quarter", "Year"), sep = " Q", convert = TRUE) %>%
+  separate(1, into = c("Quarter", "Year"), sep = " ", convert = TRUE) %>%
   select(Year, Quarter, National = "UK...15") %>%
   mutate(Projection = FALSE)
 
