@@ -1,36 +1,36 @@
 
 /* logo */
 .skin-blue .main-header .logo {
-    background-color: #006c56;
+    background-color: #243673;
 }
 
 /* logo when hovered */
 .skin-blue .main-header .logo:hover {
-    background-color: #006c56;
+    background-color: #243673;
 }
 
 /* navbar (rest of the header) */
 .skin-blue .main-header .navbar {
-    background-color: #006c56;
+    background-color: #243673;
 }
 
 /* other links in the sidebarmenu when hovered */
 .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
-    background-color: #006c56;
+    background-color: #243673;
 }
 /* toggle button when hovered  */
 .skin-blue .main-header .navbar .sidebar-toggle:hover{
-    background-color: #006c56;
+    background-color: #243673;
 }
 /* primary status box */
 .box.box-solid.box-primary>.box-header {
     color:#fff;
-    background:#006c56
+    background:#243673
 }
 
 .box.box-solid.box-primary {
-    border-bottom-color:#006c56;
-    border-left-color:#006c56;
-    border-right-color:#006c56;
-    border-top-color:#006c56;
+    border-bottom-color:#243673;
+    border-left-color:#243673;
+    border-right-color:#243673;
+    border-top-color:#243673;
 }
