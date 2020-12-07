@@ -63,7 +63,7 @@ predict_models <- function(model_fits, proj_data = NULL,
     if (any(attr(fit, "class") %in% c("HoltWinters",
                                   "forecast",
                                   "stl"))) {
-      return(forecast::forecast(fit, h = n_periods_to_forecast))
+      return(forecast(fit, h = n_periods_to_forecast))
     } else if (all(attr(fit, "class") == c("tslm", "lm"))) {
       # linear regression model -
       # different predict call to consider projected independent variable data
@@ -74,7 +74,7 @@ predict_models <- function(model_fits, proj_data = NULL,
                                                                 "season"))]
 
       if (all(ind_var_names %in% names(proj_data))) {
-        fcast <- forecast::forecast(
+        fcast <- forecast(
           object = fit,
           newdata = as.data.frame(proj_data),
           level = c(80, 95),
@@ -174,9 +174,9 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   }
 
   # put data together into a single data frame
-  y <- stats::ts.union(ts_actuals, ts_forecast,
+  y <- ts.union(ts_actuals, ts_forecast,
                        ts_lower_95, ts_upper_95)
-  x_labels <- zoo::as.yearqtr(time(y))
+  x_labels <- as.yearqtr(time(y))
   data <- as.data.frame(cbind(x_labels, y))
 
   return(data)
@@ -207,6 +207,11 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #'
 #' @importFrom plotly plot_ly add_trace layout
 #' @importFrom zoo as.yearqtr
+#' @importFrom stats diffinv
+#' @importFrom dplyr slice
+#' @importFrom purrr map map2
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom tools toTitleCase
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL,
                           diff_inv = FALSE, diff_starting_values = NULL){
@@ -258,7 +263,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
         # replace NAs with zeroes to avoid errors when running diffinv()
         y[is.na(y)] <- 0
 
-        y <- stats::diffinv(
+        y <- diffinv(
           x = as.matrix(y),
           xi = as.matrix(start_value)
         )
@@ -275,8 +280,8 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       # pick-up x_labels and actuals, then inverse difference the actuals
       actuals <- data[, 1:2] # differenced data
       actuals[1:(last_row_with_actuals + 1), 2] <- data[2] %>%
-        dplyr::slice(1:last_row_with_actuals) %>%
-        purrr::map(~undifference(., diff_starting_values)) %>%
+        slice(1:last_row_with_actuals) %>%
+        map(~undifference(., diff_starting_values)) %>%
         as.data.frame()
 
       # forecasts
@@ -292,7 +297,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       # for projected data, take the last historical data point and add on the
       # projected differences
       calculated_projections <-
-        as.data.frame(purrr::map2(.x = forecast[(last_row_with_actuals + 1):nrow(forecast), ],
+        as.data.frame(map2(.x = forecast[(last_row_with_actuals + 1):nrow(forecast), ],
                            .y = undiff_forecast[(last_row_with_actuals), ],
                            .f = ~undifference(.x, .y))
         )
@@ -310,52 +315,52 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
     }
 
     # get colours
-    line_colour <- RColorBrewer::brewer.pal(5, "Dark2")[i]
+    line_colour <- brewer.pal(5, "Dark2")[i]
     interval_colour <- paste0(substring(line_colour, 1, 7), "FF")
 
     # if i == 1, produce starting plot with historical data
     if (i == 1) {
-      plot <- plotly::plot_ly(data = data,
+      plot <- plot_ly(data = data,
                               x = ~x_labels)
     }
 
     # add forecast to plot
     plot <- plot %>%
-      plotly::add_trace(y = data$y.ts_upper_95,
+      add_trace(y = data$y.ts_upper_95,
                         mode = "lines",
-                        name = paste0(tools::toTitleCase(forecast_type_i), " - Upper 95% CI"),
+                        name = paste0(toTitleCase(forecast_type_i), " - Upper 95% CI"),
                         color = I(interval_colour),
                         showlegend = FALSE,
                         line = list(color = 'transparent'),
                         type = "scatter",
                         opacity = 0.1) %>%
-      plotly::add_trace(y = data$y.ts_lower_95,
+      add_trace(y = data$y.ts_lower_95,
                         mode = "lines",
-                        name = paste0(tools::toTitleCase(forecast_type_i), " - Lower 95% CI"),
+                        name = paste0(toTitleCase(forecast_type_i), " - Lower 95% CI"),
                         color = I(interval_colour),
                         fill = "tonexty",
                         type = "scatter",
                         showlegend = FALSE,
                         line = list(color = 'transparent'),
                         opacity = 0.1) %>%
-      plotly::add_trace(y = data$y.ts_forecast,
+      add_trace(y = data$y.ts_forecast,
                         type = "scatter",
                         mode = "lines",
-                        name = paste0(tools::toTitleCase(forecast_type_i), " forecast"),
+                        name = paste0(toTitleCase(forecast_type_i), " forecast"),
                         color = I(line_colour),
-                        text = paste0(zoo::as.yearqtr(data$x_labels),
+                        text = paste0(as.yearqtr(data$x_labels),
                                       ": ",
                                       round(data$y.ts_forecast)))
   }
 
   # finalise plot with layout, etc.
   plot <- plot %>%
-    plotly::add_trace(y = ~y.ts_actuals,
+    add_trace(y = ~y.ts_actuals,
                       mode = "lines",
                       type = "scatter",
                       name = "Actuals",
                       color = I("black")) %>%
-    plotly::layout(title = paste0("Forecast of ",
+    layout(title = paste0("Forecast of ",
                                   tools::toTitleCase(dep_var),
                                   " (with 95% CI)"),
                    paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
