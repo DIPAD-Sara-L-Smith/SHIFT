@@ -85,7 +85,7 @@ mod_load_data_ui <- function(id) {
 #' @keywords internal
 #' @importFrom lubridate yq year quarter
 #' @importFrom zoo na.trim as.yearqtr
-#' @importFrom dplyr select
+#' @importFrom dplyr select relocate
 #' @importFrom shinyWidgets sliderTextInput
 
 mod_load_data_server <- function(input, output, session, r) {
@@ -97,11 +97,15 @@ mod_load_data_server <- function(input, output, session, r) {
     if (input$overwrite) {
       r$data_old <- r$data
       r$data <- load_user_data(input$file)
+      r$data <- r$data %>%
+        relocate(Year, Quarter)
       r$data_undiff <- r$data
       r$flg_diff <- FALSE
     } else {
       r$data_old <- r$data
       r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
+      r$data <- r$data %>%
+        relocate(Year, Quarter)
       r$data_undiff <- r$data
       r$flg_diff <- FALSE
     }
