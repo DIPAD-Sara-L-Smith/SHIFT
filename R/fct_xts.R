@@ -44,8 +44,9 @@ df_to_xts <- function(df, selected_vars = NULL, start = NULL,
   # TODO Check start/end valid quarters?
   if (!is.null(start) && !is.null(end)) {
     df_xts <- stats::window(df_xts,
-                            start = zoo::as.yearqtr(start),
-                            end = zoo::as.yearqtr(end))
+      start = zoo::as.yearqtr(start),
+      end = zoo::as.yearqtr(end)
+    )
   } else {
     df_xts <- df_xts
   }
@@ -64,7 +65,7 @@ df_to_xts <- function(df, selected_vars = NULL, start = NULL,
 #' @importFrom stats ts
 #' @importFrom dplyr select
 df_to_ts <- function(df, selected_vars = NULL, start = NULL,
-                      end = NULL) {
+                     end = NULL) {
   # get list of selected variables
   # (if none specified in arguments, include all variables)
   if (is.null(selected_vars)) {
@@ -88,17 +89,18 @@ df_to_ts <- function(df, selected_vars = NULL, start = NULL,
   # This works for Year-Quarters only, it needs a re-think if we need to add
   # additional periodicities. Maybe add a switch case for Months/Weeks
   df_ts <- stats::ts(
-      df_selected %>% select(-c(Year, Quarter)),
-      frequency = 4,
-      start = c(df_selected[1, "Year"], df_selected[1, "Quarter"])
+    df_selected %>% select(-c(Year, Quarter)),
+    frequency = 4,
+    start = c(df_selected[1, "Year"], df_selected[1, "Quarter"])
   )
 
   # subset to the selected time period
   # TODO Check start/end valid quarters?
   if (!is.null(start) && !is.null(end)) {
     df_ts <- stats::window(df_ts,
-                            start = start,
-                            end = end)
+      start = start,
+      end = end
+    )
   } else {
     df_ts <- df_ts
   }
@@ -137,7 +139,7 @@ xts_to_df <- function(x) {
 #' @param df data frame to be differencd
 #'
 #' @return a dataframe
-diff_df <- function(df){
+diff_df <- function(df) {
   # check if data frame is valid
   if (is_valid_df(df)) {
     # separate out 'Year' and 'Quarter' (we don't want to difference these)
@@ -150,11 +152,13 @@ diff_df <- function(df){
     # calculate differences
     differenced_data <- sapply(data_variables, function(my_column) {
       diff(as.numeric(my_column))
-      })
+    })
 
     # recombine columns
-    return(dplyr::bind_cols(head(time_variables, -1),
-                            as.data.frame(differenced_data)))
+    return(dplyr::bind_cols(
+      head(time_variables, -1),
+      as.data.frame(differenced_data)
+    ))
   } else {
     warning("Data frame being differenced is not valid.")
   }
@@ -172,8 +176,8 @@ diff_df <- function(df){
 #'
 #' @importFrom stats diffinv
 #' @importFrom dplyr bind_cols select one_of
-diff_inv_df <- function(df, starting_values){
-  #browser()
+diff_inv_df <- function(df, starting_values) {
+  # browser()
   # check if data frame is valid
   if (is_valid_df(df)) {
     # separate out 'Year' and 'Quarter' (we don't want to change these)
@@ -190,7 +194,8 @@ diff_inv_df <- function(df, starting_values){
 
       # calculate differences
       output <- diffinv(as.matrix(data_variables),
-                             xi = as.matrix(starting_values))
+        xi = as.matrix(starting_values)
+      )
     } else {
       warning("diff_inv_df: At least one of the variables in this dataset
               do not have a starting value.")
@@ -198,8 +203,10 @@ diff_inv_df <- function(df, starting_values){
     }
 
     # recombine columns
-    output <- dplyr::bind_cols(time_variables,
-                            as.data.frame(head(output, -1)))
+    output <- dplyr::bind_cols(
+      time_variables,
+      as.data.frame(head(output, -1))
+    )
     names(output) <- c("Year", "Quarter", names(data_variables))
     return(output)
   } else {

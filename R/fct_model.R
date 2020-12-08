@@ -13,23 +13,24 @@
 #' @return list of model fit objects
 #' @importFrom forecast forecast
 #' @export
-fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
+fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include) {
   # check all lower case
   forecasts_to_include <- tolower(forecasts_to_include)
 
   # Run through the list of forecasts and get fit for each relevant model
-  fits <- lapply(forecasts_to_include, function(model_type){
+  fits <- lapply(forecasts_to_include, function(model_type) {
     model_fit <- switch(model_type,
-           'holtwinters' = fit_holtwinters(df, dep_var, start, end),
-           'decomposition' = fit_decomp(df, dep_var, start, end),
-           'naive' = fit_naive(df, dep_var, start, end),
-           'linear' = fit_linear(df, dep_var, ind_var, start, end),
+      "holtwinters" = fit_holtwinters(df, dep_var, start, end),
+      "decomposition" = fit_decomp(df, dep_var, start, end),
+      "naive" = fit_naive(df, dep_var, start, end),
+      "linear" = fit_linear(df, dep_var, ind_var, start, end),
 
-           # Default case
-           {warning(paste0('Forecast type - ', model_type, ' - not recognised.'))
-             return(NULL)
-             }
-           )
+      # Default case
+      {
+        warning(paste0("Forecast type - ", model_type, " - not recognised."))
+        return(NULL)
+      }
+    )
     return(model_fit)
   })
 
@@ -53,25 +54,29 @@ fit_models <- function(df, dep_var, ind_var, start, end, forecasts_to_include){
 #' @importFrom forecast forecast
 #' @export
 predict_models <- function(model_fits, proj_data = NULL,
-                           n_periods_to_forecast = 4){
+                           n_periods_to_forecast = 4) {
   # run through all model fits and produce predictions
-  predictions <- lapply(model_fits, function(fit){
+  predictions <- lapply(model_fits, function(fit) {
     # TODO improve this check if fit is valid
 
     # Holt-Winters, Time Series Decomposition, Naive forecast -
     # don't need to consider projected independent variable data
-    if (any(attr(fit, "class") %in% c("HoltWinters",
-                                  "forecast",
-                                  "stl"))) {
+    if (any(attr(fit, "class") %in% c(
+      "HoltWinters",
+      "forecast",
+      "stl"
+    ))) {
       return(forecast(fit, h = n_periods_to_forecast))
     } else if (all(attr(fit, "class") == c("tslm", "lm"))) {
       # linear regression model -
       # different predict call to consider projected independent variable data
       # First, check if we have all the data we need to forecast
       ind_var_names <- names(fit$data)
-      ind_var_names <- ind_var_names[which(ind_var_names %not_in% c("data",
-                                                                "trend",
-                                                                "season"))]
+      ind_var_names <- ind_var_names[which(ind_var_names %not_in% c(
+        "data",
+        "trend",
+        "season"
+      ))]
 
       if (all(ind_var_names %in% names(proj_data))) {
         fcast <- forecast(
@@ -90,9 +95,11 @@ predict_models <- function(model_fits, proj_data = NULL,
         return(NULL)
       }
     } else {
-      warning(paste0("Error in predict_models(): fit object - ",
+      warning(paste0(
+        "Error in predict_models(): fit object - ",
         attr(fit, "class"),
-        "not valid."))
+        "not valid."
+      ))
       return(NULL)
     }
   })
@@ -130,43 +137,56 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   }
 
   # calculate forecasts
-  fcast <- predict_models(model_fits = list(fit),
-                          proj_data = proj_data,
-                          n_periods_to_forecast = 8)
+  fcast <- predict_models(
+    model_fits = list(fit),
+    proj_data = proj_data,
+    n_periods_to_forecast = 8
+  )
   fcast <- unlist(fcast, recursive = FALSE)
 
   # find model type
   model_type <- switch(substring(fcast$method, 1, 3),
-                       "STL" = "decomposition",
-                       "Nai" = "naive",
-                       "Hol" = "holtwinters",
-                       "Lin" = "linear",
-
-                       { warning(paste0("get_forecast_plotdata:
+    "STL" = "decomposition",
+    "Nai" = "naive",
+    "Hol" = "holtwinters",
+    "Lin" = "linear",
+    {
+      warning(paste0(
+        "get_forecast_plotdata:
                                         Forecast type ", fcast$method,
-                                        " not recognised.")) }
+        " not recognised."
+      ))
+    }
   )
 
   # gather data from forecast list
   if (model_type %in% c("decomposition", "naive", "linear", "holtwinters")) {
-
     ts_actuals <- fcast$x
     start_actuals <- start(ts_actuals)
     start_forecast <- start(fcast$fitted)
     freq_actuals <- frequency(ts_actuals)
 
-    ts_forecast <- ts(c(fcast$fitted,
-                        fcast$mean),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_lower_95 <- ts(c(fcast$fitted,
-                        fcast$lower[, 2]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
-    ts_upper_95 <- ts(c(fcast$fitted,
-                        fcast$upper[, 2]),
-                      start = start_forecast,
-                      frequency = freq_actuals)
+    ts_forecast <- ts(c(
+      fcast$fitted,
+      fcast$mean
+    ),
+    start = start_forecast,
+    frequency = freq_actuals
+    )
+    ts_lower_95 <- ts(c(
+      fcast$fitted,
+      fcast$lower[, 2]
+    ),
+    start = start_forecast,
+    frequency = freq_actuals
+    )
+    ts_upper_95 <- ts(c(
+      fcast$fitted,
+      fcast$upper[, 2]
+    ),
+    start = start_forecast,
+    frequency = freq_actuals
+    )
   } else {
     # Warning message already generated in initial swtich call - just return
     # null here
@@ -174,8 +194,10 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   }
 
   # put data together into a single data frame
-  y <- ts.union(ts_actuals, ts_forecast,
-                       ts_lower_95, ts_upper_95)
+  y <- ts.union(
+    ts_actuals, ts_forecast,
+    ts_lower_95, ts_upper_95
+  )
   x_labels <- as.yearqtr(time(y))
   data <- as.data.frame(cbind(x_labels, y))
 
@@ -214,7 +236,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom tools toTitleCase
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL,
-                          diff_inv = FALSE, diff_starting_values = NULL){
+                          diff_inv = FALSE, diff_starting_values = NULL) {
 
   # if ("linear" %in% forecast_type) {
   #   browser()
@@ -237,11 +259,11 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
   for (forecast_type_i in forecast_type) {
     i <- i + 1
     fit <- switch(forecast_type_i,
-                  "holtwinters" = fit_holtwinters(df, dep_var, start, end),
-                  "naive" = fit_naive(df, dep_var, start, end),
-                  "decomposition" = fit_decomp(df, dep_var, start, end),
-                  "linear" = fit_linear(df, dep_var, ind_var, start, end),
-                  warning("plot_forecast: forecast_type not recognised.")
+      "holtwinters" = fit_holtwinters(df, dep_var, start, end),
+      "naive" = fit_naive(df, dep_var, start, end),
+      "decomposition" = fit_decomp(df, dep_var, start, end),
+      "linear" = fit_linear(df, dep_var, ind_var, start, end),
+      warning("plot_forecast: forecast_type not recognised.")
     )
 
     # get projection data (if not included)
@@ -274,14 +296,15 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       # find last x_label with actuals data
       last_row_with_actuals <- min(which(is.na(data$y.ts_actuals))) - 1
       first_row_with_forecast <- ifelse((is.na(data$y.ts_forecast[1])),
-                                        max(which(is.na(data$y.ts_forecast))) + 1,
-                                        1)
+        max(which(is.na(data$y.ts_forecast))) + 1,
+        1
+      )
 
       # pick-up x_labels and actuals, then inverse difference the actuals
       actuals <- data[, 1:2] # differenced data
       actuals[1:(last_row_with_actuals + 1), 2] <- data[2] %>%
         slice(1:last_row_with_actuals) %>%
-        map(~undifference(., diff_starting_values)) %>%
+        map(~ undifference(., diff_starting_values)) %>%
         as.data.frame()
 
       # forecasts
@@ -297,10 +320,11 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       # for projected data, take the last historical data point and add on the
       # projected differences
       calculated_projections <-
-        as.data.frame(map2(.x = forecast[(last_row_with_actuals + 1):nrow(forecast), ],
-                           .y = undiff_forecast[(last_row_with_actuals), ],
-                           .f = ~undifference(.x, .y))
-        )
+        as.data.frame(map2(
+          .x = forecast[(last_row_with_actuals + 1):nrow(forecast), ],
+          .y = undiff_forecast[(last_row_with_actuals), ],
+          .f = ~ undifference(.x, .y)
+        ))
 
       undiff_forecast[(last_row_with_actuals + 1):nrow(forecast), ] <-
         calculated_projections[-1, ]
@@ -320,66 +344,86 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 
     # if i == 1, produce starting plot with historical data
     if (i == 1) {
-      plot <- plot_ly(data = data,
-                              x = ~x_labels)
+      plot <- plot_ly(
+        data = data,
+        x = ~x_labels
+      )
     }
 
     # add forecast to plot
     plot <- plot %>%
-      add_trace(y = data$y.ts_upper_95,
-                        mode = "lines",
-                        name = paste0(toTitleCase(forecast_type_i), " - Upper 95% CI"),
-                        color = I(interval_colour),
-                        showlegend = FALSE,
-                        line = list(color = 'transparent'),
-                        type = "scatter",
-                        opacity = 0.1) %>%
-      add_trace(y = data$y.ts_lower_95,
-                        mode = "lines",
-                        name = paste0(toTitleCase(forecast_type_i), " - Lower 95% CI"),
-                        color = I(interval_colour),
-                        fill = "tonexty",
-                        type = "scatter",
-                        showlegend = FALSE,
-                        line = list(color = 'transparent'),
-                        opacity = 0.1) %>%
-      add_trace(y = data$y.ts_forecast,
-                        type = "scatter",
-                        mode = "lines",
-                        name = paste0(toTitleCase(forecast_type_i), " forecast"),
-                        color = I(line_colour),
-                        text = paste0(as.yearqtr(data$x_labels),
-                                      ": ",
-                                      round(data$y.ts_forecast)))
+      add_trace(
+        y = data$y.ts_upper_95,
+        mode = "lines",
+        name = paste0(toTitleCase(forecast_type_i), " - Upper 95% CI"),
+        color = I(interval_colour),
+        showlegend = FALSE,
+        line = list(color = "transparent"),
+        type = "scatter",
+        opacity = 0.1
+      ) %>%
+      add_trace(
+        y = data$y.ts_lower_95,
+        mode = "lines",
+        name = paste0(toTitleCase(forecast_type_i), " - Lower 95% CI"),
+        color = I(interval_colour),
+        fill = "tonexty",
+        type = "scatter",
+        showlegend = FALSE,
+        line = list(color = "transparent"),
+        opacity = 0.1
+      ) %>%
+      add_trace(
+        y = data$y.ts_forecast,
+        type = "scatter",
+        mode = "lines",
+        name = paste0(toTitleCase(forecast_type_i), " forecast"),
+        color = I(line_colour),
+        text = paste0(
+          as.yearqtr(data$x_labels),
+          ": ",
+          round(data$y.ts_forecast)
+        )
+      )
   }
 
   # finalise plot with layout, etc.
   plot <- plot %>%
-    add_trace(y = ~y.ts_actuals,
-                      mode = "lines",
-                      type = "scatter",
-                      name = "Actuals",
-                      color = I("black")) %>%
-    layout(title = paste0("Forecast of ",
-                                  tools::toTitleCase(dep_var),
-                                  " (with 95% CI)"),
-                   paper_bgcolor='rgb(255,255,255)', plot_bgcolor='rgb(229,229,229)',
-                   xaxis = list(title = "",
-                                gridcolor = 'rgb(255,255,255)',
-                                showgrid = TRUE,
-                                showline = FALSE,
-                                showticklabels = TRUE,
-                                tickcolor = 'rgb(127,127,127)',
-                                ticks = 'outside',
-                                zeroline = FALSE),
-                   yaxis = list(title = "",
-                                gridcolor = 'rgb(255,255,255)',
-                                showgrid = TRUE,
-                                showline = FALSE,
-                                showticklabels = TRUE,
-                                tickcolor = 'rgb(127,127,127)',
-                                ticks = 'outside',
-                                zeroline = FALSE))
+    add_trace(
+      y = ~y.ts_actuals,
+      mode = "lines",
+      type = "scatter",
+      name = "Actuals",
+      color = I("black")
+    ) %>%
+    layout(
+      title = paste0(
+        "Forecast of ",
+        tools::toTitleCase(dep_var),
+        " (with 95% CI)"
+      ),
+      paper_bgcolor = "rgb(255,255,255)", plot_bgcolor = "rgb(229,229,229)",
+      xaxis = list(
+        title = "",
+        gridcolor = "rgb(255,255,255)",
+        showgrid = TRUE,
+        showline = FALSE,
+        showticklabels = TRUE,
+        tickcolor = "rgb(127,127,127)",
+        ticks = "outside",
+        zeroline = FALSE
+      ),
+      yaxis = list(
+        title = "",
+        gridcolor = "rgb(255,255,255)",
+        showgrid = TRUE,
+        showline = FALSE,
+        showticklabels = TRUE,
+        tickcolor = "rgb(127,127,127)",
+        ticks = "outside",
+        zeroline = FALSE
+      )
+    )
 
   return(plot)
 }
@@ -401,7 +445,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
 #'
 #' @importFrom stats HoltWinters
 #' @importFrom stats window
-fit_holtwinters <- function(df, dep_var, start, end){
+fit_holtwinters <- function(df, dep_var, start, end) {
   # subset to the selected variablef
   df_ts <- df_to_ts(df, dep_var, start, end)
 
@@ -426,7 +470,7 @@ fit_holtwinters <- function(df, dep_var, start, end){
 #'
 #' @importFrom stats stl
 #' @importFrom stats window
-fit_decomp <- function(df, dep_var, start = NULL, end = NULL){
+fit_decomp <- function(df, dep_var, start = NULL, end = NULL) {
   # subset to the selected variable
   df_ts <- df_to_ts(df, dep_var, start, end)
 
@@ -475,7 +519,7 @@ fit_naive <- function(df, dep_var, start, end) {
 #' @export
 #'
 #' @importFrom forecast tslm
-fit_linear <- function(df, dep_var, ind_var, start, end){
+fit_linear <- function(df, dep_var, ind_var, start, end) {
   # get time series object containing only the relevant variables
   vars <- append(dep_var, ind_var)
   df_ts <- df_to_ts(df, vars, start, end)
@@ -483,7 +527,7 @@ fit_linear <- function(df, dep_var, ind_var, start, end){
   # build and return lm model object
   fit <- forecast::tslm(formula = as.formula(
     paste0(dep_var, " ~ ", paste(ind_var, " + "), "season")
-    ), data = df_ts)
+  ), data = df_ts)
   return(fit)
 }
 
@@ -502,7 +546,7 @@ fit_linear <- function(df, dep_var, ind_var, start, end){
 #'
 #' @importFrom dplyr select arrange filter n
 #' @importFrom tibble rownames_to_column
-get_proj_data <- function(df, end){
+get_proj_data <- function(df, end) {
   # check if df is valid
   if (is_valid_df(df)) {
     # sort data
@@ -520,7 +564,7 @@ get_proj_data <- function(df, end){
       # end date isn't in data
       warning("get_proj_data: end date isn't in data in df.")
       return(NULL)
-    } else if (nrow(df_row_number) > 1 ) {
+    } else if (nrow(df_row_number) > 1) {
       # multiple rows of data returned - raise error with user
       warning("get_proj_data: multiple rows of data in df match end date.")
       return(NULL)
@@ -566,4 +610,3 @@ get_starting_values <- function(flg_diff, dep_var, starting_values = NULL) {
     return(NULL)
   }
 }
-

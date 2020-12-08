@@ -467,7 +467,6 @@ mod_best_subset_server <- function(input, output, session, r) {
         gsub("OneDrive - ", "", gsub(".{10}$", "", Sys.getenv("HOME"))),
         "\\DVSA Dashboards & Reports - Driver & Rider\\SHIFT\\Outputs\\"
       )
-
   })
 
   # Renders the datatable containing the best models from all analyses

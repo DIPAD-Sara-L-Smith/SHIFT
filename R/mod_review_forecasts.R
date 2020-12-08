@@ -19,7 +19,7 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd
-mod_review_forecasts_ui <- function(id){
+mod_review_forecasts_ui <- function(id) {
   ns <- NS(id)
   tagList(
     # actionButton(ns("browser_button"), label = "Browser()"),
@@ -88,7 +88,7 @@ mod_review_forecasts_ui <- function(id){
 #' review_forecasts Server Function
 #'
 #' @noRd
-mod_review_forecasts_server <- function(input, output, session, r){
+mod_review_forecasts_server <- function(input, output, session, r) {
   ns <- session$ns
 
   # Each time we see a change to r$data we should regenerate the times series
@@ -109,16 +109,21 @@ mod_review_forecasts_server <- function(input, output, session, r){
         dep_var = r$dep_var,
         # start,
         end = r$date_end,
-        forecast_type = c("naive",
-                          "holtwinters",
-                          "decomposition"),
+        forecast_type = c(
+          "naive",
+          "holtwinters",
+          "decomposition"
+        ),
         proj_data = NULL,
         diff_inv = ifelse(is.null(r$flg_diff),
-                          FALSE,
-                          r$flg_diff),
-        diff_starting_values = get_starting_values(r$flg_diff,
-                                                   r$dep_var,
-                                                   r$starting_values)
+          FALSE,
+          r$flg_diff
+        ),
+        diff_starting_values = get_starting_values(
+          r$flg_diff,
+          r$dep_var,
+          r$starting_values
+        )
       )
     )
 
@@ -143,9 +148,11 @@ mod_review_forecasts_server <- function(input, output, session, r){
           dep_var = r$dep_var,
           # start,
           end = r$date_end,
-          forecast_type = c("naive",
-                            "holtwinters",
-                            "decomposition"),
+          forecast_type = c(
+            "naive",
+            "holtwinters",
+            "decomposition"
+          ),
           proj_data = NULL,
           diff_inv = FALSE,
           diff_starting_values = NULL
@@ -199,7 +206,6 @@ mod_review_forecasts_server <- function(input, output, session, r){
         diff_inv = FALSE
       )
     })
-
   })
 
   observeEvent(r$ind_var, { # graph comparing long-term forecasts with CIs
@@ -214,13 +220,15 @@ mod_review_forecasts_server <- function(input, output, session, r){
         forecast_type = c("linear"),
         proj_data = NULL,
         diff_inv = ifelse(is.null(r$flg_diff),
-                          FALSE,
-                          r$flg_diff),
-        diff_starting_values = get_starting_values(r$flg_diff,
-                                                   r$dep_var,
-                                                   r$starting_values)
+          FALSE,
+          r$flg_diff
+        ),
+        diff_starting_values = get_starting_values(
+          r$flg_diff,
+          r$dep_var,
+          r$starting_values
+        )
       )
     })
   })
-
 }

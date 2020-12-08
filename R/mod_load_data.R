@@ -182,7 +182,6 @@ mod_load_data_server <- function(input, output, session, r) {
   observeEvent(input$keep_col, {
     req(r$data, input$user_DT_columns_selected)
 
-    #TODO - this assumes Year and Quarter are in cols 1:2.
     cols_to_keep <- input$user_DT_columns_selected
     if (any(c(1, 2) %not_in% cols_to_keep)) {
       warning("Dropping Year or Quarter is a bad idea so let's not.")
@@ -217,13 +216,18 @@ mod_load_data_server <- function(input, output, session, r) {
     df <- r$data
 
     # create the sequence of Date objects
-    dateList <- seq(yq(paste0(df[1, "Year"],
-                                         ": Q",
-                                         df[1, "Quarter"])),
-                    to = yq(paste0(df[nrow(df), "Year"],
-                                              ": Q",
-                                              df[nrow(df), "Quarter"])),
-                    by = "quarter")
+    dateList <- seq(yq(paste0(
+      df[1, "Year"],
+      ": Q",
+      df[1, "Quarter"]
+    )),
+    to = yq(paste0(
+      df[nrow(df), "Year"],
+      ": Q",
+      df[nrow(df), "Quarter"]
+    )),
+    by = "quarter"
+    )
 
     # format vector
     dateListFormatted <- as.yearqtr(dateList)
@@ -239,8 +243,10 @@ mod_load_data_server <- function(input, output, session, r) {
       lastDepVarDataPoint <- na.trim(lastDepVarDataPoint)
       lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
 
-      defaultEnd <- c(as.numeric(lastDepVarDataPoint[, "Year"]),
-                      as.numeric(lastDepVarDataPoint[, "Quarter"]))
+      defaultEnd <- c(
+        as.numeric(lastDepVarDataPoint[, "Year"]),
+        as.numeric(lastDepVarDataPoint[, "Quarter"])
+      )
     }
 
     # put together widget
@@ -250,8 +256,10 @@ mod_load_data_server <- function(input, output, session, r) {
       grid = TRUE,
       force_edges = TRUE,
       choices = dateListFormatted,
-      selected = c(dateListFormatted[1],
-                   defaultEnd)
+      selected = c(
+        dateListFormatted[1],
+        defaultEnd
+      )
     )
   })
 
@@ -264,5 +272,3 @@ mod_load_data_server <- function(input, output, session, r) {
     }
   )
 }
-
-
