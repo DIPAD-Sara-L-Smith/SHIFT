@@ -86,6 +86,7 @@ mod_load_data_ui <- function(id) {
 #' @importFrom lubridate yq year quarter
 #' @importFrom zoo na.trim as.yearqtr
 #' @importFrom dplyr select
+#' @importFrom shinyWidgets sliderTextInput
 
 mod_load_data_server <- function(input, output, session, r) {
   ns <- session$ns
@@ -239,7 +240,7 @@ mod_load_data_server <- function(input, output, session, r) {
     }
 
     # put together widget
-    shinyWidgets::sliderTextInput(
+    sliderTextInput(
       inputId = ns("RangeHistorical"),
       label = "Select the start and end points for the historical data",
       grid = TRUE,
