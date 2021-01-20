@@ -15,6 +15,7 @@
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom plotly plotlyOutput renderPlotly
 #' @importFrom DT DTOutput renderDT
+#' @importFrom shinycssloaders withSpinner
 mod_best_subset_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -37,7 +38,7 @@ mod_best_subset_ui <- function(id) {
         solidHeader = TRUE,
         uiOutput(ns("dep_var_selector")),
         uiOutput(ns("ind_var_selector")),
-        actionButton(ns("run_subset_button"), label = "Do regression")
+        actionButton(ns("run_subset_button"), label = "Do regression")  %>% withSpinner(color="#0dc5c1")
       ),
       box(
         width = 12,
