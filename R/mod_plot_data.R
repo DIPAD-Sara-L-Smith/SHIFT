@@ -84,7 +84,7 @@ mod_plot_data_server <- function(input, output, session, r) {
       # drop the current dep_var from the options
       choices = setdiff(names(r$xts), input$dep_var_selector),
       multiple = TRUE
-      )
+    )
   })
 
   # Delete for prod, or add to golem_dev function.

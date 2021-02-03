@@ -83,6 +83,10 @@ mod_load_data_ui <- function(id) {
 #' @rdname mod_load_data
 #' @export
 #' @keywords internal
+#' @importFrom lubridate yq year quarter
+#' @importFrom zoo na.trim as.yearqtr
+#' @importFrom dplyr select relocate
+#' @importFrom shinyWidgets sliderTextInput
 
 mod_load_data_server <- function(input, output, session, r) {
   ns <- session$ns
@@ -93,11 +97,15 @@ mod_load_data_server <- function(input, output, session, r) {
     if (input$overwrite) {
       r$data_old <- r$data
       r$data <- load_user_data(input$file)
+      r$data <- r$data %>%
+        relocate(Year, Quarter)
       r$data_undiff <- r$data
       r$flg_diff <- FALSE
     } else {
       r$data_old <- r$data
       r$data <- merge_user_data(list(r$data_undiff, load_user_data(input$file)))
+      r$data <- r$data %>%
+        relocate(Year, Quarter)
       r$data_undiff <- r$data
       r$flg_diff <- FALSE
     }
@@ -165,16 +173,15 @@ mod_load_data_server <- function(input, output, session, r) {
     }
 
     r$data_old <- r$data
-    r$data <- r$data %>% dplyr::select(-cols_to_drop)
+    r$data <- r$data %>% select(-cols_to_drop)
 
-    r$data_undiff <- r$data_undiff %>% dplyr::select(-cols_to_drop)
+    r$data_undiff <- r$data_undiff %>% select(-cols_to_drop)
   })
 
   # Keep columns
   observeEvent(input$keep_col, {
     req(r$data, input$user_DT_columns_selected)
 
-    #TODO - this assumes Year and Quarter are in cols 1:2.
     cols_to_keep <- input$user_DT_columns_selected
     if (any(c(1, 2) %not_in% cols_to_keep)) {
       warning("Dropping Year or Quarter is a bad idea so let's not.")
@@ -185,7 +192,7 @@ mod_load_data_server <- function(input, output, session, r) {
     r$data_old <- r$data
 
     # keep selected columns only
-    r$data <- r$data %>% dplyr::select(Year, Quarter, cols_to_keep)
+    r$data <- r$data %>% select(Year, Quarter, cols_to_keep)
 
     # update undifferenced copy for reference
     r$data_undiff <- r$data_undiff[, cols_to_keep]
@@ -197,10 +204,10 @@ mod_load_data_server <- function(input, output, session, r) {
     req(r$data, r$dep_var)
 
     # read in the bounds for historical data (from user input)
-    r$date_start <- lubridate::yq(input$RangeHistorical[1])
-    r$date_start <- c(lubridate::year(r$date_start), lubridate::quarter(r$date_start))
-    r$date_end <- lubridate::yq(input$RangeHistorical[2])
-    r$date_end <- c(lubridate::year(r$date_end), lubridate::quarter(r$date_end))
+    r$date_start <- yq(input$RangeHistorical[1])
+    r$date_start <- c(year(r$date_start), quarter(r$date_start))
+    r$date_end <- yq(input$RangeHistorical[2])
+    r$date_end <- c(year(r$date_end), quarter(r$date_end))
   })
 
   # slider input - Historical data -----
@@ -209,16 +216,21 @@ mod_load_data_server <- function(input, output, session, r) {
     df <- r$data
 
     # create the sequence of Date objects
-    dateList <- seq(lubridate::yq(paste0(df[1, "Year"],
-                                         ": Q",
-                                         df[1, "Quarter"])),
-                    to = lubridate::yq(paste0(df[nrow(df), "Year"],
-                                              ": Q",
-                                              df[nrow(df), "Quarter"])),
-                    by = "quarter")
+    dateList <- seq(yq(paste0(
+      df[1, "Year"],
+      ": Q",
+      df[1, "Quarter"]
+    )),
+    to = yq(paste0(
+      df[nrow(df), "Year"],
+      ": Q",
+      df[nrow(df), "Quarter"]
+    )),
+    by = "quarter"
+    )
 
     # format vector
-    dateListFormatted <- zoo::as.yearqtr(dateList)
+    dateListFormatted <- as.yearqtr(dateList)
 
     # find default end for historical data
     # (based on when dependent variable ends)
@@ -228,22 +240,26 @@ mod_load_data_server <- function(input, output, session, r) {
       # find the last data point for the selected dependent variable
       lastDepVarDataPoint <- df %>%
         select("Year", "Quarter", r$dep_var)
-      lastDepVarDataPoint <- zoo::na.trim(lastDepVarDataPoint)
+      lastDepVarDataPoint <- na.trim(lastDepVarDataPoint)
       lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
 
-      defaultEnd <- c(as.numeric(lastDepVarDataPoint[, "Year"]),
-                      as.numeric(lastDepVarDataPoint[, "Quarter"]))
+      defaultEnd <- c(
+        as.numeric(lastDepVarDataPoint[, "Year"]),
+        as.numeric(lastDepVarDataPoint[, "Quarter"])
+      )
     }
 
     # put together widget
-    shinyWidgets::sliderTextInput(
+    sliderTextInput(
       inputId = ns("RangeHistorical"),
       label = "Select the start and end points for the historical data",
       grid = TRUE,
       force_edges = TRUE,
       choices = dateListFormatted,
-      selected = c(dateListFormatted[1],
-                   defaultEnd)
+      selected = c(
+        dateListFormatted[1],
+        defaultEnd
+      )
     )
   })
 
@@ -256,5 +272,3 @@ mod_load_data_server <- function(input, output, session, r) {
     }
   )
 }
-
-

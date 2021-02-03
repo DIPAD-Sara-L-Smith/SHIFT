@@ -15,6 +15,7 @@
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom plotly plotlyOutput renderPlotly
 #' @importFrom DT DTOutput renderDT
+#' @importFrom shinycssloaders withSpinner
 mod_best_subset_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -37,7 +38,7 @@ mod_best_subset_ui <- function(id) {
         solidHeader = TRUE,
         uiOutput(ns("dep_var_selector")),
         uiOutput(ns("ind_var_selector")),
-        actionButton(ns("run_subset_button"), label = "Do regression")
+        actionButton(ns("run_subset_button"), label = "Do regression")  %>% withSpinner(color="#0dc5c1")
       ),
       box(
         width = 12,
@@ -139,7 +140,7 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Explainer text to describe the process here.
   observeEvent(r$data, {
     output$overview_text <- renderText({
-      HTML("<b><p style='font-size:18px;color:blue'>
+      HTML("<b><p style='font-size:18px'>
            This is the best subset model, which takes a series of inputs then
            determines, statistically, which models are best.
            <br><br>
@@ -213,7 +214,7 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Explainer text for best subsets regression results
   observeEvent(r$allsubset, {
     output$bestsubset_explainer_text <- renderText({
-      HTML("<b><p style='font-size:16px;color:blue'>
+      HTML("<b><p style='font-size:16px'>
            If there is more than one row,
            then the models are statistically very similar
            but one must be selected. Conduct ANOVA testing
@@ -225,7 +226,7 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Explainer text for conducting ANOVA
   observeEvent(r$allsubset, {
     output$anova_explainer_text <- renderText({
-      HTML("<b><p style='font-size:16px;color:blue'>ANOVA compares two models against
+      HTML("<b><p style='font-size:16px'>ANOVA compares two models against
            each other to find whether adding/removing parameter(s) improves
            a model output.
            <br><br>
@@ -285,9 +286,9 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Significance codes from output models
   observeEvent(r$anova, {
     output$multipleanova_signifcodes <- renderText({
-      HTML("<b><p style='color:blue'>
+      HTML("<b>
       Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-      </b></p>")
+      </b>")
     })
   })
 
@@ -327,7 +328,7 @@ mod_best_subset_server <- function(input, output, session, r) {
   observeEvent(input$run_diagnostics, {
     req(r$allsubset, input$analyse_model_selector)
     output$diagnostic_plots_explainer_text <- renderText({
-      HTML("<p style='font-size:14px;color:blue'><b>
+      HTML("<p style='font-size:14px'><b>
 
       This is used to check the quality of fit (additionally,
       it also checks the ANOVA assumptions).
@@ -379,9 +380,9 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Significance codes from output models
   observeEvent(input$run_diagnostics, {
     output$lm_ttest_signifcodes <- renderText({
-      HTML("<b><p style='color:blue'>
+      HTML("<b>
       Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-      </b></p>")
+      </b>")
     })
   })
 
@@ -418,9 +419,9 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Significance codes from output models
   observeEvent(input$run_diagnostics, {
     output$anova_signifcodes <- renderText({
-      HTML("<b><p style='color:blue'>
+      HTML("<b>
       Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-      </b></p>")
+      </b>")
     })
   })
 
@@ -462,7 +463,11 @@ mod_best_subset_server <- function(input, output, session, r) {
   observeEvent(input$final_model_button, {
     req(input$final_model_selector)
     r$best_model <- lm(input$final_model_selector, r$data)
-    print(r$best_model)
+    InitPath <-
+      paste0(
+        gsub("OneDrive - ", "", gsub(".{10}$", "", Sys.getenv("HOME"))),
+        "\\DVSA Dashboards & Reports - Driver & Rider\\SHIFT\\Outputs\\"
+      )
   })
 
   # Renders the datatable containing the best models from all analyses

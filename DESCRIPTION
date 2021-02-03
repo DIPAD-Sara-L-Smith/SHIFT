@@ -22,5 +22,11 @@ Imports:
     dygraphs,
     leaps,
     ggplot2,
-    lattice
+    lattice,
+    MASS,
+    reshape,
+    plotly,
+    tidyr,
+    gridExtra,
+    ggfortify
 RoxygenNote: 7.1.1
