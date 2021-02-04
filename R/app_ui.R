@@ -34,30 +34,8 @@ app_ui <- function() {
           ## Explore data tab -----
           tabItem(
             tabName = "explore",
-            # TODO discuss with Sara whether this layout belongs in here or in
-            # the modules. I'm leaning towards modules, but not certain why.
-            fluidRow(
-              box(
-                width = 12,
-                status = "primary",
-                solidHeader = TRUE,
-                collapsible = TRUE,
-                collapsed = FALSE,
-                title = "Load your data here.",
-                mod_load_data_ui("load_data_ui_1")
-              )
-            ),
-            fluidRow(
-              box(
-                width = 12,
-                collapsible = TRUE,
-                collapsed = FALSE,
-                title = "Look at it here.",
-                status = "primary",
-                solidHeader = TRUE,
-                mod_plot_data_ui("plot_data_ui_1")
-              )
-            )
+            mod_load_data_ui("load_data_ui_1"),
+            mod_plot_data_ui("plot_data_ui_1")
           ), # tabItem end
 
           # Compare forecasts -----
@@ -71,8 +49,8 @@ app_ui <- function() {
           tabItem(
             tabName = "review-regression",
             mod_best_subset_ui("best_subset_ui_1")
-          )
-        ) # tabItem end
+          ) # tabItem end
+        ) # tabItems end
       )
     )
   )

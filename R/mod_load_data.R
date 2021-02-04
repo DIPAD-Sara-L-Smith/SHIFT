@@ -18,63 +18,74 @@
 mod_load_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    fileInput(
-      ns("file"),
-      "Choose a file or files",
-      accept = c(
-        ".csv",
-        ".xlxs",
-        ".R",
-        ".rds"
-      ),
-      multiple = TRUE
-    ),
+    fluidRow(
+      box(
+        width = 12,
+        status = "primary",
+        solidHeader = TRUE,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Load your data here.",
 
-    switchInput(
-      ns("overwrite"),
-      onLabel = "Overwrite",
-      offLabel = "Append",
-      value = TRUE,
-      inline = TRUE,
-      size = "small"
-    ),
+        fileInput(
+          ns("file"),
+          "Choose a file or files",
+          accept = c(
+            ".csv",
+            ".xlxs",
+            ".R",
+            ".rds"
+          ),
+          multiple = TRUE
+        ),
 
-    DTOutput(ns("user_DT")),
+        switchInput(
+          ns("overwrite"),
+          onLabel = "Overwrite",
+          offLabel = "Append",
+          value = TRUE,
+          inline = TRUE,
+          size = "small"
+        ),
 
-    actionButton(
-      ns("undo"),
-      label = "Undo Last",
-      icon = icon("undo")
-    ),
+        DTOutput(ns("user_DT")),
 
-    actionButton(
-      ns("keep_col"),
-      label = "Keep Selected"
-    ),
+        actionButton(
+          ns("undo"),
+          label = "Undo Last",
+          icon = icon("undo")
+        ),
 
-    actionButton(
-      ns("drop_col"),
-      label = "Drop Selected"
-    ),
+        actionButton(
+          ns("keep_col"),
+          label = "Keep Selected"
+        ),
 
-    downloadButton(
-      ns("download_data"),
-      label = "Download"
-    ),
+        actionButton(
+          ns("drop_col"),
+          label = "Drop Selected"
+        ),
 
-    switchInput(
-      ns("diff"),
-      onLabel = "Differenced",
-      offLabel = "Not Differenced",
-      value = FALSE,
-      inline = TRUE,
-      size = "normal"
-    ),
+        downloadButton(
+          ns("download_data"),
+          label = "Download"
+        ),
+
+        switchInput(
+          ns("diff"),
+          onLabel = "Differenced",
+          offLabel = "Not Differenced",
+          value = FALSE,
+          inline = TRUE,
+          size = "normal"
+        ),
 
 
-    tags$br(),
-    uiOutput(ns("RangeHistorical"))
-    # uiOutput(ns("RangeProjections"))
+        tags$br(),
+        uiOutput(ns("RangeHistorical"))
+        # uiOutput(ns("RangeProjections"))
+      )
+    )
   )
 }
 
