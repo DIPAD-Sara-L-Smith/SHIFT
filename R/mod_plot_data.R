@@ -18,11 +18,21 @@
 mod_plot_data_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    actionButton(ns("browser_button"), label = "Browser()"),
-    dygraphOutput(ns("dep_var_dygraph")),
-    uiOutput(ns("dep_var_selector")),
-    uiOutput(ns("ind_var_selector"))
-    # plotlyOutput(ns("plot_holtwinters"))
+    fluidRow(
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Look at it here.",
+        status = "primary",
+        solidHeader = TRUE,
+        actionButton(ns("browser_button"), label = "Browser()"),
+        dygraphOutput(ns("dep_var_dygraph")),
+        uiOutput(ns("dep_var_selector")),
+        uiOutput(ns("ind_var_selector"))
+        # plotlyOutput(ns("plot_holtwinters"))
+      )
+    )
   )
 }
 
