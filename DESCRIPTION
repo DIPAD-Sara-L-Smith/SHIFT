@@ -28,5 +28,8 @@ Imports:
     plotly,
     tidyr,
     gridExtra,
-    ggfortify
+    ggfortify,
+    caret,
+    openxlsx,
+    shinycssloaders
 RoxygenNote: 7.1.1
