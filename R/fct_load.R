@@ -115,7 +115,6 @@ load_excel <- function(filename) {
     filename,
     check.names = TRUE
   )
-  df <- NULL
   return(df)
 }
 
