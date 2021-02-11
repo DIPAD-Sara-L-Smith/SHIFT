@@ -199,7 +199,7 @@ mod_best_subset_server <- function(input, output, session, r) {
     }
   })
 
-  # spinner for when doing subset
+  # spinner for when doing subset regression
   r$spinner_spinning <- 0
 
   output$spinner_placeholder <- renderUI({
