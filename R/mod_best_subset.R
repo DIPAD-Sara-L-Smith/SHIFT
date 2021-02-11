@@ -38,7 +38,8 @@ mod_best_subset_ui <- function(id) {
         solidHeader = TRUE,
         uiOutput(ns("dep_var_selector")),
         uiOutput(ns("ind_var_selector")),
-        actionButton(ns("run_subset_button"), label = "Do regression")  %>% withSpinner(color="#0dc5c1")
+        uiOutput(ns("spinner_placeholder")) %>% withSpinner(color="#0dc5c1", proxy.height = 35),
+        actionButton(ns("run_subset_button"), label = "Do regression")
       ),
       box(
         width = 12,
@@ -192,8 +193,20 @@ mod_best_subset_server <- function(input, output, session, r) {
   observeEvent(input$run_subset_button, {
     req(r$data, input$dep_var_selector, input$ind_var_selector)
     if (length(input$ind_var_selector) > 1) {
+      r$spinner_spinning <- r$spinner_spinning + 1
       r$subsetdata <- select(r$data, c(input$dep_var_selector, input$ind_var_selector, "Year", "Quarter"))
       r$allsubset <- allsubsetregression(input$dep_var_selector, r$subsetdata, length(input$ind_var_selector))
+    }
+  })
+
+  # spinner for when doing subset
+  r$spinner_spinning <- 0
+
+  output$spinner_placeholder <- renderUI({
+    if(r$spinner_spinning){
+      tagList(h2("done!"))
+    } else {
+      NULL
     }
   })
 
