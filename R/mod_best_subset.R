@@ -196,18 +196,14 @@ mod_best_subset_server <- function(input, output, session, r) {
       r$spinner_spinning <- r$spinner_spinning + 1
       r$subsetdata <- select(r$data, c(input$dep_var_selector, input$ind_var_selector, "Year", "Quarter"))
       r$allsubset <- allsubsetregression(input$dep_var_selector, r$subsetdata, length(input$ind_var_selector))
+      #showNotification("Best Subset Regression completed")
     }
   })
 
   # spinner for when doing subset regression
   r$spinner_spinning <- 0
-
   output$spinner_placeholder <- renderUI({
-    if(r$spinner_spinning){
-      tagList(h2("done!"))
-    } else {
-      NULL
-    }
+     if(r$spinner_spinning){ NULL } else { NULL }
   })
 
   # Renders the datatable containing the best models from all analyses
@@ -518,5 +514,6 @@ mod_best_subset_server <- function(input, output, session, r) {
         selection = "none"
       )
     )
+    showNotification("Best Subset Regression completed")
   })
 }
