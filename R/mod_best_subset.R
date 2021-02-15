@@ -514,6 +514,6 @@ mod_best_subset_server <- function(input, output, session, r) {
         selection = "none"
       )
     )
-    showNotification("Best Subset Regression completed")
+    showNotification("Best Subset Regression completed", type = "message")
   })
 }
