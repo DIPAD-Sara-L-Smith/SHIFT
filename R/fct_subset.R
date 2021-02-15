@@ -62,16 +62,15 @@ get_model_formula <- function(id, models, dep_var) {
 #'
 #' @param model.formula The formula for the model
 #' @param data The dataframe containing the regression data
-#' @param nvars The max number of variables to use in the best subset model
 #'
 #' @return
 #' @export
 #' @importFrom caret trainControl train
-get_cv_error <- function(model.formula, data, nvars) {
+get_cv_error <- function(model.formula, data) {
   set.seed(1)
   # Creates sample of the data
   train.control <-
-    trainControl(method = "cv", number = nvars)
+    trainControl(method = "cv", number = 10)
   # Conducts the training on the data
   cv <- train(
     model.formula,
@@ -226,7 +225,7 @@ allsubsetregression <- function(dep_var, data, nvars) {
   model_ids <- 1:nrow(df)
   cv_errors <-
     map(model_ids, get_model_formula, models, dep_var) %>%
-    map(get_cv_error, data = data, nvars = nvars) %>%
+    map(get_cv_error, data = data) %>%
     unlist()
 
   # Select the model that minimize the CV error

@@ -4,14 +4,12 @@
 \alias{get_cv_error}
 \title{Helper function for cross-validation; sampling part}
 \usage{
-get_cv_error(model.formula, data, nvars)
+get_cv_error(model.formula, data)
 }
 \arguments{
 \item{model.formula}{The formula for the model}
 
 \item{data}{The dataframe containing the regression data}
-
-\item{nvars}{The max number of variables to use in the best subset model}
 }
 \value{
 
