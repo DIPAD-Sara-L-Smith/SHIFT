@@ -567,7 +567,8 @@ mod_best_subset_server <- function(input, output, session, r) {
                                    title.hjust = 0.5))
 
     output$coll_mat <- renderPlot({
-      my_plot
+      plot_cormat(r$data, input$ind_var_selector)
+      #my_plot
     })
   })
 
