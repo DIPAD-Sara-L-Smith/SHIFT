@@ -31,5 +31,6 @@ Imports:
     ggfortify,
     caret,
     openxlsx,
-    shinycssloaders
+    shinycssloaders,
+    reshape2
 RoxygenNote: 7.1.1
