@@ -7,12 +7,12 @@
 plot_cormat(data, ind_vars)
 }
 \arguments{
-\item{data}{dataframe containing the data}
+\item{data}{dataframe containing the data (r$data)}
 
-\item{ind_vars}{character vector contain the names of indepenant variables}
+\item{ind_vars}{character vector of the names of indepenant variables}
 }
 \value{
-ggploy object containing the collinearity matrix
+ggplot object for the collinearity matrix
 }
 \description{
 Generate the Collinearity Matrix plot for best_subset
