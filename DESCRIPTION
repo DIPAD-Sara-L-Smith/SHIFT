@@ -33,7 +33,9 @@ Imports:
     openxlsx,
     shinycssloaders,
     reshape2,
-    processx
+    processx,
+    shinytest,
+    pkgload
 RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 3.0.0)
