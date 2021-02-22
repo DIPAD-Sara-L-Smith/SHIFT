@@ -45,6 +45,15 @@ mod_best_subset_ui <- function(id) {
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
+        title = "Collinearity Matrix",
+        status = "primary",
+        solidHeader = TRUE,
+        plotOutput(ns("coll_mat"))
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
         title = "Candidate best models from calculations.",
         status = "primary",
         solidHeader = TRUE,
@@ -123,15 +132,6 @@ mod_best_subset_ui <- function(id) {
         solidHeader = TRUE,
         plotlyOutput(ns("plot_best_subset_stats")),
         DTOutput(ns("summaries_table"))
-      ),
-      box(
-        width = 12,
-        collapsible = TRUE,
-        collapsed = TRUE,
-        title = "Collinearity Matrix",
-        status = "primary",
-        solidHeader = TRUE,
-        plotOutput(ns("coll_mat"))
       )
     )
   )
