@@ -37,6 +37,11 @@ bad_df_2 <- data.frame(Year     = c(2010, 2010, 2010, 2010),
                        Quarter  = c(1, 2, 1, 1),
                        Value    = c(4, 3, 2, 1))
 
+# df values are string
+bad_df_3 <- data.frame(Year    = c(2010, 2010, 2010, 2010),
+                       Quarter = c(1, 2, 3, 4),
+                       Val2    = c("str1", "str2", "str3", "str4"))
+
 # load_user_data
 test_that("load_user_data works", {
   # test with 1 of each type known working
@@ -105,6 +110,8 @@ test_that("is_valid_df works",{
   # checks names are valid with are_df_names_valid - DONE BELOW
   # it accepts valid dataframe
   expect_true(is_valid_df(good_df_1))
+  # rejects df with non numeric values
+  expect_error(is_valid_df(bad_df_3))
 })
 
 # is_df_continuous
@@ -130,7 +137,7 @@ test_that("are_df_names_valid works", {
 })
 
 # is_row_index_unique
-test_that("is_row_index_unique function works",{
+test_that("is_row_index_unique works",{
   # test with known good df
   expect_true(is_row_index_unique(good_df_1))
   # test with known bad df
