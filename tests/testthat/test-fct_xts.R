@@ -45,8 +45,12 @@ test_that("diff_df works",{
   expect_warning(diff_df(bad_df_1), regexp = "not valid")
 
   # test with string values - currently result in col of NA
-  expect_error(diff_df(bad_df_3))
 
+
+})
+
+test_that("diff_df throws error for str values", {
+  expect_error(diff_df(bad_df_3))
 })
 
 
