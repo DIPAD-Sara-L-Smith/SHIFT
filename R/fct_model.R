@@ -526,8 +526,11 @@ fit_linear <- function(df, dep_var, ind_var, start, end) {
 
   # build and return lm model object
   fit <- forecast::tslm(formula = as.formula(
-    paste0(dep_var, " ~ ", paste(ind_var, " + "), "season")
+    paste0(dep_var,
+           " ~ ", paste(ind_var, collapse = " + "),
+           " + trend + season", collapse = " ")
   ), data = df_ts)
+  print(fit)
   return(fit)
 }
 
