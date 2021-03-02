@@ -176,44 +176,44 @@ diff_df <- function(df) {
 #'
 #' @importFrom stats diffinv
 #' @importFrom dplyr bind_cols select one_of
-diff_inv_df <- function(df, starting_values) {
-  # browser()
-  # check if data frame is valid
-  if (is_valid_df(df)) {
-    # separate out 'Year' and 'Quarter' (we don't want to change these)
-    time_variables <- df %>%
-      select(one_of(c("Year", "Quarter")))
-
-    data_variables <- df %>%
-      select(-one_of(c("Year", "Quarter")))
-
-    # check all variables have a starting value
-    if (all(names(data_variables) %in% names(starting_values))) {
-      starting_values <- starting_values %>%
-        select(one_of(names(data_variables)))
-
-      # calculate differences
-      output <- diffinv(as.matrix(data_variables),
-        xi = as.matrix(starting_values)
-      )
-    } else {
-      warning("diff_inv_df: At least one of the variables in this dataset
-              do not have a starting value.")
-      return(NULL)
-    }
-
-    # recombine columns
-    output <- dplyr::bind_cols(
-      time_variables,
-      as.data.frame(head(output, -1))
-    )
-    names(output) <- c("Year", "Quarter", names(data_variables))
-    return(output)
-  } else {
-    warning("Data frame being differenced is not valid.")
-    return(NULL)
-  }
-}
+# diff_inv_df <- function(df, starting_values) {
+#   # browser()
+#   # check if data frame is valid
+#   if (is_valid_df(df)) {
+#     # separate out 'Year' and 'Quarter' (we don't want to change these)
+#     time_variables <- df %>%
+#       select(one_of(c("Year", "Quarter")))
+#
+#     data_variables <- df %>%
+#       select(-one_of(c("Year", "Quarter")))
+#
+#     # check all variables have a starting value
+#     if (all(names(data_variables) %in% names(starting_values))) {
+#       starting_values <- starting_values %>%
+#         select(one_of(names(data_variables)))
+#
+#       # calculate differences
+#       output <- diffinv(as.matrix(data_variables),
+#         xi = as.matrix(starting_values)
+#       )
+#     } else {
+#       warning("diff_inv_df: At least one of the variables in this dataset
+#               do not have a starting value.")
+#       return(NULL)
+#     }
+#
+#     # recombine columns
+#     output <- dplyr::bind_cols(
+#       time_variables,
+#       as.data.frame(head(output, -1))
+#     )
+#     names(output) <- c("Year", "Quarter", names(data_variables))
+#     return(output)
+#   } else {
+#     warning("Data frame being differenced is not valid.")
+#     return(NULL)
+#   }
+# }
 
 
 
