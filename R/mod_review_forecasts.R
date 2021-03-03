@@ -208,8 +208,8 @@ mod_review_forecasts_server <- function(input, output, session, r) {
     })
   })
 
-  observeEvent(r$ind_var, { # graph comparing long-term forecasts with CIs
-    req(r$ind_var)
+  observeEvent(r$best_model, { # graph comparing long-term forecasts with CIs
+    req(r$best_model)
     output$plot_longterm <- plotly::renderPlotly({
       p <- plot_forecast(
         df = r$data,
@@ -227,7 +227,8 @@ mod_review_forecasts_server <- function(input, output, session, r) {
           r$flg_diff,
           r$dep_var,
           r$starting_values
-        )
+        ),
+        lin_model = r$best_model
       )
     })
   })

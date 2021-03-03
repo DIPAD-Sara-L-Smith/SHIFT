@@ -223,6 +223,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' to undo this to compare to the original dataset set to TRUE
 #' @param diff_starting_values numeric (default NULL) - if data is differenced,
 #' where to start adding differences.
+#' @param lin_model string - the linear model formula
 #'
 #' @return plotly line graph of forecast
 #' @export
@@ -236,7 +237,8 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
 #' @importFrom tools toTitleCase
 plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
                           forecast_type, proj_data = NULL,
-                          diff_inv = FALSE, diff_starting_values = NULL) {
+                          diff_inv = FALSE, diff_starting_values = NULL,
+                          lin_model = NULL) {
 
   # if ("linear" %in% forecast_type) {
   #   browser()
@@ -262,7 +264,7 @@ plot_forecast <- function(df, dep_var, ind_var = NULL, start, end,
       "holtwinters" = fit_holtwinters(df, dep_var, start, end),
       "naive" = fit_naive(df, dep_var, start, end),
       "decomposition" = fit_decomp(df, dep_var, start, end),
-      "linear" = fit_linear(df, dep_var, ind_var, start, end),
+      "linear" = fit_linear(df, dep_var, ind_var, start, end, lin_model),
       warning("plot_forecast: forecast_type not recognised.")
     )
 
@@ -514,20 +516,21 @@ fit_naive <- function(df, dep_var, start, end) {
 #' @param ind_var string - vector of names of independent variables to fit
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
+#' @param model string - the linear model e.g. "dep_var ~ invd1 + ind2 + ..."
 #'
 #' @return fit object for a linear regression forecast on the data in df
 #' @export
 #'
 #' @importFrom forecast tslm
-fit_linear <- function(df, dep_var, ind_var, start, end) {
+fit_linear <- function(df, dep_var, ind_var, start, end, model) {
   # get time series object containing only the relevant variables
   vars <- append(dep_var, ind_var)
   df_ts <- df_to_ts(df, vars, start, end)
 
   # build and return lm model object
   fit <- forecast::tslm(formula = as.formula(
-    paste0(dep_var,
-           " ~ ", paste(ind_var, collapse = " + "),
+    #paste0(dep_var, " ~ ", paste(ind_var, collapse = " + "),
+    paste0(model,
            " + trend + season", collapse = " ")
   ), data = df_ts)
   print(fit)

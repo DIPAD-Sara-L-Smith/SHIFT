@@ -13,7 +13,8 @@ plot_forecast(
   forecast_type,
   proj_data = NULL,
   diff_inv = FALSE,
-  diff_starting_values = NULL
+  diff_starting_values = NULL,
+  lin_model = NULL
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ to undo this to compare to the original dataset set to TRUE}
 
 \item{diff_starting_values}{numeric (default NULL) - if data is differenced,
 where to start adding differences.}
+
+\item{lin_model}{string - the linear model formula}
 
 \item{forecast_types}{- vector of string values giving forecast types to use.
 One of: "holtwinters", "naive", "decomposition", "linear".}

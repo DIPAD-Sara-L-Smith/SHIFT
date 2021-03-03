@@ -5,7 +5,7 @@
 \title{fit_linear - takes a data frame and returns the fit object for a linear
 regression forecast on the data.}
 \usage{
-fit_linear(df, dep_var, ind_var, start, end)
+fit_linear(df, dep_var, ind_var, start, end, model)
 }
 \arguments{
 \item{df}{data frame of data}
@@ -17,6 +17,8 @@ fit_linear(df, dep_var, ind_var, start, end)
 \item{start}{vector - start year and quarter in format c(YYYY, Q)}
 
 \item{end}{vector - end year and quarter in format c(YYYY, Q)}
+
+\item{model}{string - the linear model e.g. "dep_var ~ invd1 + ind2 + ..."}
 }
 \value{
 fit object for a linear regression forecast on the data in df

@@ -478,7 +478,10 @@ mod_best_subset_server <- function(input, output, session, r) {
   # Stores the selected model in the r object
   observeEvent(input$final_model_button, {
     req(input$final_model_selector)
-    r$best_model <- lm(input$final_model_selector, r$data)
+    #r$best_model <- lm(input$final_model_selector, r$data)
+    r$best_model <- input$final_model_selector
+    r$dep_var <- input$dep_var_selector
+    r$ind_var <- input$ind_var_selector
     InitPath <-
       paste0(
         gsub("OneDrive - ", "", gsub(".{10}$", "", Sys.getenv("HOME"))),
