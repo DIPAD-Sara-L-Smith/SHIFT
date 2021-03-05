@@ -18,7 +18,7 @@ fit_linear(df, dep_var, ind_var, start, end, model)
 
 \item{end}{vector - end year and quarter in format c(YYYY, Q)}
 
-\item{model}{string - the linear model e.g. "dep_var ~ invd1 + ind2 + ..."}
+\item{model}{string - the linear model e.g. "dep_var ~ ind1 + ind2 + ..."}
 }
 \value{
 fit object for a linear regression forecast on the data in df
