@@ -79,7 +79,9 @@ mod_review_forecasts_ui <- function(id) {
         p("This box currently only shows the selected linear regression model,
           but could be developed in the future to show multiple and compare
           them and related statistics."),
-        plotlyOutput(ns("plot_longterm"))
+        plotlyOutput(ns("plot_longterm")),
+        #new bits
+        DTOutput(ns("forecast_table"))
       )
     )
   )
@@ -231,5 +233,17 @@ mod_review_forecasts_server <- function(input, output, session, r) {
         lin_model = r$best_model
       )
     })
+    # new bits for forecast tabe
+    output$forecast_table <- renderDT(data.frame(col1 = c(1, 2, 3, 4),
+                                                 col2 = c(1, 2, 3, 4)),
+      rownames = TRUE,
+      options = list(
+        lengthMenu = FALSE,
+        scrollX = FALSE,
+        searching = FALSE,
+        pagingType = "simple",
+        selection = "none"
+      )
+    )
   })
 }
