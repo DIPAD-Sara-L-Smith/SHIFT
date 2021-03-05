@@ -2,10 +2,10 @@
 #
 # list of functions
 #
-# df_to_ts
-# xts_to_df
-# diff_df
-# diff_inv_df
+# df_to_ts - DONE
+# xts_to_df - DONE
+# diff_df - DONE
+# diff_inv_df - UNUSED
 #
 # notes from file
 #

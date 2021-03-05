@@ -273,7 +273,8 @@ allsubsetregression <- function(dep_var, data, nvars) {
   # Generates lm objects on best models
   lm_results <- map(formula_results, lm, data)
 
-  # Equations from the models
+  # Equations from the models -
+  # TODO not needed any more
   lm_equations <- map(lm_results, model_equation)
 
   # Binds the equations onto the model formulas

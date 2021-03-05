@@ -516,7 +516,7 @@ fit_naive <- function(df, dep_var, start, end) {
 #' @param ind_var string - vector of names of independent variables to fit
 #' @param start vector - start year and quarter in format c(YYYY, Q)
 #' @param end vector - end year and quarter in format c(YYYY, Q)
-#' @param model string - the linear model e.g. "dep_var ~ invd1 + ind2 + ..."
+#' @param model string - the linear model e.g. "dep_var ~ ind1 + ind2 + ..."
 #'
 #' @return fit object for a linear regression forecast on the data in df
 #' @export
