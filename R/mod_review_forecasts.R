@@ -81,7 +81,7 @@ mod_review_forecasts_ui <- function(id) {
           them and related statistics."),
         plotlyOutput(ns("plot_longterm")),
         #new bits
-        DTOutput(ns("forecast_table"))
+        dataTableOutput(ns("forecast_table"))
       )
     )
   )
@@ -233,12 +233,33 @@ mod_review_forecasts_server <- function(input, output, session, r) {
         lin_model = r$best_model
       )
     })
-    # new bits for forecast tabe
-    output$forecast_table <- renderDT(data.frame(col1 = c(1, 2, 3, 4),
-                                                 col2 = c(1, 2, 3, 4)),
-      rownames = TRUE,
+    # new bits for forecast table
+    start <- c(r$data$Year[1], r$data$Quarter[1])
+    proj_data <- get_proj_data(
+      df = r$data,
+      end = r$date_end
+    )
+    fit <- fit_linear(
+      df = r$data,
+      dep_var = r$dep_var,
+      ind_var = r$ind_var,
+      start = start,
+      end = r$date_end,
+      model = r$best_model
+    )
+    forecast_obj <- forecast(fit, proj_data)
+    r$fc_data <- data.frame(
+      Year = proj_data$Year,
+      Quarter = proj_data$Quarter,
+      Forecast = round(forecast_obj$mean),
+      Hi_95 = round(forecast_obj$upper[,2]),
+      Lo_95 = round(forecast_obj$lower[,2])
+    )
+    output$forecast_table <- renderDataTable(r$fc_data,
+      #rownames = TRUE,
       options = list(
-        lengthMenu = FALSE,
+        #pageLength = 8,
+        #lengthMenu = FALSE,
         scrollX = FALSE,
         searching = FALSE,
         pagingType = "simple",
