@@ -81,7 +81,8 @@ mod_review_forecasts_ui <- function(id) {
           them and related statistics."),
         plotlyOutput(ns("plot_longterm")),
         #new bits
-        dataTableOutput(ns("forecast_table"))
+        dataTableOutput(ns("forecast_table")),
+        downloadButton(ns("download_forecast"), "Download forecast (csv)")
       )
     )
   )
@@ -256,15 +257,18 @@ mod_review_forecasts_server <- function(input, output, session, r) {
       Lo_95 = round(forecast_obj$lower[,2])
     )
     output$forecast_table <- renderDataTable(r$fc_data,
-      #rownames = TRUE,
       options = list(
-        #pageLength = 8,
-        #lengthMenu = FALSE,
         scrollX = FALSE,
         searching = FALSE,
         pagingType = "simple",
         selection = "none"
       )
+    )
+    output$download_forecast <- downloadHandler(
+      filename = "forecast_data.csv",
+      content = function(file) {
+        write.csv(r$fc_data, file, row.names = FALSE)
+      }
     )
   })
 }
