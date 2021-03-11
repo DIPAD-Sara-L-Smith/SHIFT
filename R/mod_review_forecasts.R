@@ -91,184 +91,189 @@ mod_review_forecasts_ui <- function(id) {
 #' review_forecasts Server Function
 #'
 #' @noRd
-mod_review_forecasts_server <- function(input, output, session, r) {
-  ns <- session$ns
+mod_review_forecasts_server <- function(id, r) {
+  moduleServer(
+    id,
+    function(input, output, session, r) {
+      ns <- session$ns
 
-  # Each time we see a change to r$data we should regenerate the times series
-  # object. This is quite quick at the moment, but may need to be triggered by
-  # something else if it starts to hold things up.
-  observeEvent(r$data, {
-    req(r$data)
-    r$xts <- df_to_xts(r$data)
-  })
+      # Each time we see a change to r$data we should regenerate the times series
+      # object. This is quite quick at the moment, but may need to be triggered by
+      # something else if it starts to hold things up.
+      observeEvent(r$data, {
+        req(r$data)
+        r$xts <- df_to_xts(r$data)
+      })
 
-  # graph comparing multiple short-term forecasts with CIs
-  observeEvent(r$data, {
-    req(r$dep_var)
+      # graph comparing multiple short-term forecasts with CIs
+      observeEvent(r$data, {
+        req(r$dep_var)
 
-    output$plot_shortterm <- plotly::renderPlotly(
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        # start,
-        end = r$date_end,
-        forecast_type = c(
-          "naive",
-          "holtwinters",
-          "decomposition"
-        ),
-        proj_data = NULL,
-        diff_inv = ifelse(is.null(r$flg_diff),
-          FALSE,
-          r$flg_diff
-        ),
-        diff_starting_values = get_starting_values(
-          r$flg_diff,
-          r$dep_var,
-          r$starting_values
+        output$plot_shortterm <- plotly::renderPlotly(
+          p <- plot_forecast(
+            df = r$data,
+            dep_var = r$dep_var,
+            # start,
+            end = r$date_end,
+            forecast_type = c(
+              "naive",
+              "holtwinters",
+              "decomposition"
+            ),
+            proj_data = NULL,
+            diff_inv = ifelse(is.null(r$flg_diff),
+                              FALSE,
+                              r$flg_diff
+            ),
+            diff_starting_values = get_starting_values(
+              r$flg_diff,
+              r$dep_var,
+              r$starting_values
+            )
+          )
         )
-      )
-    )
 
-    # graph comparing multiple short-term forecasts with CIs
-    output$text_shortterm2 <- shiny::renderUI(
-      if (r$flg_diff) {
-        tags$br()
-        tags$h3("Differenced data")
-        tags$br()
-        tags$p("You have selected to model the differences between your data
+        # graph comparing multiple short-term forecasts with CIs
+        output$text_shortterm2 <- shiny::renderUI(
+          if (r$flg_diff) {
+            tags$br()
+            tags$h3("Differenced data")
+            tags$br()
+            tags$p("You have selected to model the differences between your data
                 points. The graph above shows the inverse differenced forecasts,
                 whilst the graph below shows the differenced ones.")
-      } else {
-        tags$p("")
-      }
-    )
+          } else {
+            tags$p("")
+          }
+        )
 
-    output$plot_shortterm2 <- plotly::renderPlotly({
-      if (r$flg_diff) {
-        plot_forecast(
+        output$plot_shortterm2 <- plotly::renderPlotly({
+          if (r$flg_diff) {
+            plot_forecast(
+              df = r$data,
+              dep_var = r$dep_var,
+              # start,
+              end = r$date_end,
+              forecast_type = c(
+                "naive",
+                "holtwinters",
+                "decomposition"
+              ),
+              proj_data = NULL,
+              diff_inv = FALSE,
+              diff_starting_values = NULL
+            )
+          } else {
+            return(NULL)
+          }
+        })
+
+        # Graph of Holt-Winters forecast
+        output$plot_holtwinters <- plotly::renderPlotly({
+          # function to convert from df to dygraph
+          p <- plot_forecast(
+            df = r$data,
+            dep_var = r$dep_var,
+            ind_var = NULL,
+            # start,
+            # end,
+            forecast_type = "holtwinters",
+            proj_data = NULL,
+            diff_inv = FALSE
+          )
+        })
+
+        # Naive forecast
+        output$plot_naive <- plotly::renderPlotly({
+          # function to convert from df to dygraph
+          p <- plot_forecast(
+            df = r$data,
+            dep_var = r$dep_var,
+            ind_var = NULL,
+            # start,
+            end = r$date_end,
+            forecast_type = "naive",
+            proj_data = NULL,
+            diff_inv = FALSE
+          )
+        })
+
+        # Decomp forecast
+        output$plot_decomposition <- plotly::renderPlotly({
+          # function to convert from df to dygraph
+          p <- plot_forecast(
+            df = r$data,
+            dep_var = r$dep_var,
+            ind_var = NULL,
+            # start,
+            end = r$date_end,
+            forecast_type = "decomposition",
+            proj_data = NULL,
+            diff_inv = FALSE
+          )
+        })
+      })
+
+      observeEvent(r$best_model, { # graph comparing long-term forecasts with CIs
+        req(r$best_model)
+        output$plot_longterm <- plotly::renderPlotly({
+          p <- plot_forecast(
+            df = r$data,
+            dep_var = r$dep_var,
+            ind_var = r$ind_var,
+            # start,
+            end = r$date_end,
+            forecast_type = c("linear"),
+            proj_data = NULL,
+            diff_inv = ifelse(is.null(r$flg_diff),
+                              FALSE,
+                              r$flg_diff
+            ),
+            diff_starting_values = get_starting_values(
+              r$flg_diff,
+              r$dep_var,
+              r$starting_values
+            ),
+            lin_model = r$best_model
+          )
+        })
+        # new bits for forecast table
+        start <- c(r$data$Year[1], r$data$Quarter[1])
+        proj_data <- get_proj_data(
+          df = r$data,
+          end = r$date_end
+        )
+        fit <- fit_linear(
           df = r$data,
           dep_var = r$dep_var,
-          # start,
+          ind_var = r$ind_var,
+          start = start,
           end = r$date_end,
-          forecast_type = c(
-            "naive",
-            "holtwinters",
-            "decomposition"
-          ),
-          proj_data = NULL,
-          diff_inv = FALSE,
-          diff_starting_values = NULL
+          model = r$best_model
         )
-      } else {
-        return(NULL)
-      }
-    })
-
-    # Graph of Holt-Winters forecast
-    output$plot_holtwinters <- plotly::renderPlotly({
-      # function to convert from df to dygraph
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        ind_var = NULL,
-        # start,
-        # end,
-        forecast_type = "holtwinters",
-        proj_data = NULL,
-        diff_inv = FALSE
-      )
-    })
-
-    # Naive forecast
-    output$plot_naive <- plotly::renderPlotly({
-      # function to convert from df to dygraph
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        ind_var = NULL,
-        # start,
-        end = r$date_end,
-        forecast_type = "naive",
-        proj_data = NULL,
-        diff_inv = FALSE
-      )
-    })
-
-    # Decomp forecast
-    output$plot_decomposition <- plotly::renderPlotly({
-      # function to convert from df to dygraph
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        ind_var = NULL,
-        # start,
-        end = r$date_end,
-        forecast_type = "decomposition",
-        proj_data = NULL,
-        diff_inv = FALSE
-      )
-    })
-  })
-
-  observeEvent(r$best_model, { # graph comparing long-term forecasts with CIs
-    req(r$best_model)
-    output$plot_longterm <- plotly::renderPlotly({
-      p <- plot_forecast(
-        df = r$data,
-        dep_var = r$dep_var,
-        ind_var = r$ind_var,
-        # start,
-        end = r$date_end,
-        forecast_type = c("linear"),
-        proj_data = NULL,
-        diff_inv = ifelse(is.null(r$flg_diff),
-          FALSE,
-          r$flg_diff
-        ),
-        diff_starting_values = get_starting_values(
-          r$flg_diff,
-          r$dep_var,
-          r$starting_values
-        ),
-        lin_model = r$best_model
-      )
-    })
-    # new bits for forecast table
-    start <- c(r$data$Year[1], r$data$Quarter[1])
-    proj_data <- get_proj_data(
-      df = r$data,
-      end = r$date_end
-    )
-    fit <- fit_linear(
-      df = r$data,
-      dep_var = r$dep_var,
-      ind_var = r$ind_var,
-      start = start,
-      end = r$date_end,
-      model = r$best_model
-    )
-    forecast_obj <- forecast(fit, proj_data)
-    r$fc_data <- data.frame(
-      Year = proj_data$Year,
-      Quarter = proj_data$Quarter,
-      Forecast = round(forecast_obj$mean),
-      Hi_95 = round(forecast_obj$upper[,2]),
-      Lo_95 = round(forecast_obj$lower[,2])
-    )
-    output$forecast_table <- renderDataTable(r$fc_data,
-      options = list(
-        scrollX = FALSE,
-        searching = FALSE,
-        pagingType = "simple",
-        selection = "none"
-      )
-    )
-    output$download_forecast <- downloadHandler(
-      filename = "forecast_data.csv",
-      content = function(file) {
-        write.csv(r$fc_data, file, row.names = FALSE)
-      }
-    )
-  })
+        forecast_obj <- forecast(fit, proj_data)
+        r$fc_data <- data.frame(
+          Year = proj_data$Year,
+          Quarter = proj_data$Quarter,
+          Forecast = round(forecast_obj$mean),
+          Hi_95 = round(forecast_obj$upper[,2]),
+          Lo_95 = round(forecast_obj$lower[,2])
+        )
+        output$forecast_table <- renderDataTable(r$fc_data,
+                                                 options = list(
+                                                   scrollX = FALSE,
+                                                   searching = FALSE,
+                                                   pagingType = "simple",
+                                                   selection = "none"
+                                                 )
+        )
+        output$download_forecast <- downloadHandler(
+          filename = "forecast_data.csv",
+          content = function(file) {
+            write.csv(r$fc_data, file, row.names = FALSE)
+          }
+        )
+      })
+    }
+  )
 }

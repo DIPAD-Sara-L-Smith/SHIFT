@@ -7,7 +7,7 @@
 \usage{
 mod_best_subset_ui(id)
 
-mod_best_subset_server(input, output, session, r)
+mod_best_subset_server(id, r)
 }
 \arguments{
 \item{id}{shiny id}

@@ -7,7 +7,7 @@
 \usage{
 mod_load_data_ui(id)
 
-mod_load_data_server(input, output, session, r)
+mod_load_data_server(id, r)
 }
 \arguments{
 \item{id}{shiny id}

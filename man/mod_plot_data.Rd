@@ -7,7 +7,7 @@
 \usage{
 mod_plot_data_ui(id)
 
-mod_plot_data_server(input, output, session, r)
+mod_plot_data_server(id, r)
 }
 \arguments{
 \item{id}{shiny id}
