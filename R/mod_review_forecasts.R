@@ -195,7 +195,7 @@ mod_review_forecasts_server <- function(input, output, session, r) {
       )
     })
 
-    # Naive forecast
+    # Decomp forecast
     output$plot_decomposition <- plotly::renderPlotly({
       # function to convert from df to dygraph
       p <- plot_forecast(

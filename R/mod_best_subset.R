@@ -202,8 +202,17 @@ mod_best_subset_server <- function(input, output, session, r) {
     req(r$data, input$dep_var_selector, input$ind_var_selector)
     if (length(input$ind_var_selector) > 1) {
       r$spinner_spinning <- r$spinner_spinning + 1
-      r$subsetdata <- select(r$data, c(input$dep_var_selector, input$ind_var_selector, "Year", "Quarter"))
-      r$allsubset <- allsubsetregression(input$dep_var_selector, r$subsetdata, length(input$ind_var_selector))
+      r$subsetdata <- select(
+                             r$data,
+                             #change to filter NAs out of dep_var column
+                             #r$data[!is.na(r$data[[input$dep_var_selector]]),],
+                             c(input$dep_var_selector,
+                               input$ind_var_selector,
+                               "Year",
+                               "Quarter"))
+      r$allsubset <- allsubsetregression(input$dep_var_selector,
+                                         r$subsetdata,
+                                         length(input$ind_var_selector))
     }
   })
 
