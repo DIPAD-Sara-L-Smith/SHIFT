@@ -82,7 +82,7 @@ mod_load_data_ui <- function(id) {
 
 
         tags$br(),
-        uiOutput(ns("RangeHistorical"))
+        # uiOutput(ns("RangeHistorical"))
         # uiOutput(ns("RangeProjections"))
       )
     )
@@ -211,71 +211,71 @@ mod_load_data_server <- function(id, r) {
         r$data_undiff <- r$data_undiff[, cols_to_keep]
       })
 
-      # when user updates last period of historical data, setup end period for
-      # models
-      observeEvent(input$RangeHistorical, {
-        req(r$data, r$dep_var)
-
-        # read in the bounds for historical data (from user input)
-        r$date_start <- yq(input$RangeHistorical[1])
-        r$date_start <- c(year(r$date_start), quarter(r$date_start))
-        r$date_end <- yq(input$RangeHistorical[2])
-        r$date_end <- c(year(r$date_end), quarter(r$date_end))
-      })
-
-      # slider input - Historical data -----
-      output$RangeHistorical <- renderUI({
-        #req(r$data, r$dep_var)
-        req(r$data)
-        df <- r$data
-
-        # create the sequence of Date objects
-        dateList <- seq(yq(paste0(
-          df[1, "Year"],
-          ": Q",
-          df[1, "Quarter"]
-        )),
-        to = yq(paste0(
-          df[nrow(df), "Year"],
-          ": Q",
-          df[nrow(df), "Quarter"]
-        )),
-        by = "quarter"
-        )
-
-        # format vector
-        dateListFormatted <- as.yearqtr(dateList)
-
-        # find default end for historical data
-        # (based on when dependent variable ends)
-        if (is.null(r$dep_var)) {
-          defaultEnd <- dateListFormatted[length(dateListFormatted)]
-        } else {
-          # find the last data point for the selected dependent variable
-          lastDepVarDataPoint <- df %>%
-            select("Year", "Quarter", r$dep_var)
-          lastDepVarDataPoint <- na.trim(lastDepVarDataPoint)
-          lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
-
-          defaultEnd <- c(
-            as.numeric(lastDepVarDataPoint[, "Year"]),
-            as.numeric(lastDepVarDataPoint[, "Quarter"])
-          )
-        }
-
-        # put together widget
-        sliderTextInput(
-          inputId = ns("RangeHistorical"),
-          label = "Select the start and end points for the historical data",
-          grid = TRUE,
-          force_edges = TRUE,
-          choices = dateListFormatted,
-          selected = c(
-            dateListFormatted[1],
-            defaultEnd
-          )
-        )
-      })
+      # # when user updates last period of historical data, setup end period for
+      # # models
+      # observeEvent(input$RangeHistorical, {
+      #   req(r$data, r$dep_var)
+      #
+      #   # read in the bounds for historical data (from user input)
+      #   r$date_start <- yq(input$RangeHistorical[1])
+      #   r$date_start <- c(year(r$date_start), quarter(r$date_start))
+      #   r$date_end <- yq(input$RangeHistorical[2])
+      #   r$date_end <- c(year(r$date_end), quarter(r$date_end))
+      # })
+      #
+      # # slider input - Historical data -----
+      # output$RangeHistorical <- renderUI({
+      #   #req(r$data, r$dep_var)
+      #   req(r$data)
+      #   df <- r$data
+      #
+      #   # create the sequence of Date objects
+      #   dateList <- seq(yq(paste0(
+      #     df[1, "Year"],
+      #     ": Q",
+      #     df[1, "Quarter"]
+      #   )),
+      #   to = yq(paste0(
+      #     df[nrow(df), "Year"],
+      #     ": Q",
+      #     df[nrow(df), "Quarter"]
+      #   )),
+      #   by = "quarter"
+      #   )
+      #
+      #   # format vector
+      #   dateListFormatted <- as.yearqtr(dateList)
+      #
+      #   # find default end for historical data
+      #   # (based on when dependent variable ends)
+      #   if (is.null(r$dep_var)) {
+      #     defaultEnd <- dateListFormatted[length(dateListFormatted)]
+      #   } else {
+      #     # find the last data point for the selected dependent variable
+      #     lastDepVarDataPoint <- df %>%
+      #       select("Year", "Quarter", r$dep_var)
+      #     lastDepVarDataPoint <- na.trim(lastDepVarDataPoint)
+      #     lastDepVarDataPoint <- lastDepVarDataPoint[nrow(lastDepVarDataPoint), ]
+      #
+      #     defaultEnd <- c(
+      #       as.numeric(lastDepVarDataPoint[, "Year"]),
+      #       as.numeric(lastDepVarDataPoint[, "Quarter"])
+      #     )
+      #   }
+      #
+      #   # put together widget
+      #   sliderTextInput(
+      #     inputId = ns("RangeHistorical"),
+      #     label = "Select the start and end points for the historical data",
+      #     grid = TRUE,
+      #     force_edges = TRUE,
+      #     choices = dateListFormatted,
+      #     selected = c(
+      #       dateListFormatted[1],
+      #       defaultEnd
+      #     )
+      #   )
+      # })
 
       # Download the dataframe as rds
       # TODO maybe add a csv option or swap to csv.
