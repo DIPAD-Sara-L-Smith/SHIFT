@@ -26,10 +26,10 @@ mod_plot_data_ui <- function(id) {
         title = "Look at it here.",
         status = "primary",
         solidHeader = TRUE,
-        actionButton(ns("browser_button"), label = "Browser()"),
-        dygraphOutput(ns("dep_var_dygraph")),
         uiOutput(ns("dep_var_selector")),
-        uiOutput(ns("ind_var_selector"))
+        uiOutput(ns("ind_var_selector")),
+        dygraphOutput(ns("dep_var_dygraph")),
+        actionButton(ns("browser_button"), label = "Debug Browser()")
         # plotlyOutput(ns("plot_holtwinters"))
       )
     )
