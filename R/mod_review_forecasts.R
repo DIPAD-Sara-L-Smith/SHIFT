@@ -94,7 +94,7 @@ mod_review_forecasts_ui <- function(id) {
 mod_review_forecasts_server <- function(id, r) {
   moduleServer(
     id,
-    function(input, output, session, r) {
+    function(input, output, session) {
       ns <- session$ns
 
       # Each time we see a change to r$data we should regenerate the times series

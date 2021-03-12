@@ -13,17 +13,25 @@ app_ui <- function() {
       # Sidebar with a slider input for number of bins
       dashboardSidebar(
         sidebarMenu(id="sidebar",
-          menuItem("Read in data",
-            tabName = "explore",
+
+          menuItem("Load data",
+            tabName = "load-data",
             icon = icon("table")
           ),
-          menuItem("Compare forecasts",
+          # TODO sub menus for select/process
+          menuItem("Select & process variables",
+            tabName = "variables",
+            icon = icon("table")
+          ),
+          # TODO sub menus for each step... ()
+          menuItem("Best subset analysis",
+                   tabName = "best-subsets",
+                   icon = icon("list-ol")
+          ),
+
+          menuItem("View forecasts",
             tabName = "forecasts",
             icon = icon("line-chart")
-          ),
-          menuItem("Review regression models",
-            tabName = "review-regression",
-            icon = icon("list-ol")
           )
         )
       ),
@@ -31,24 +39,28 @@ app_ui <- function() {
       dashboardBody(
         tabItems(
 
-          ## Explore data tab -----
+          # Load data tab -----
           tabItem(
-            tabName = "explore",
-            mod_load_data_ui("load_data_ui_1"),
+            tabName = "load-data",
+            mod_load_data_ui("load_data_ui_1")
+          ), # tabItem end
+
+          # Process variables tab -----
+          tabItem(
+            tabName = "variables",
             mod_plot_data_ui("plot_data_ui_1")
+          ), # tabItem end
+
+          # Review regression models -----
+          tabItem(
+            tabName = "best-subsets",
+            mod_best_subset_ui("best_subset_ui_1")
           ), # tabItem end
 
           # Compare forecasts -----
           tabItem(
             tabName = "forecasts",
             mod_review_forecasts_ui("review_forecasts_ui_1")
-          ), # tabItem end
-
-
-          # Review regression models -----
-          tabItem(
-            tabName = "review-regression",
-            mod_best_subset_ui("best_subset_ui_1")
           ) # tabItem end
         ) # tabItems end
       )
