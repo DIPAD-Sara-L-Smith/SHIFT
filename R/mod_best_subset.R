@@ -173,14 +173,14 @@ mod_best_subset_server <- function(id, r) {
       # Selector for dependent variable
       output$dep_var_selector <- renderUI({
         req(r$dep_var)
-        p(paste("Dependant variable: ", r$dep_var))
+        p(paste("Dependent variable: ", r$dep_var))
       })
 
       # Selector for independent variables
       output$ind_var_selector <- renderUI({
 
         req(r$ind_var)
-        p(paste("Independant variables: ",paste(r$ind_var, collapse = ", ")))
+        p(paste("Independent variables: ",paste(r$ind_var, collapse = ", ")))
       })
 
       # Runs the all subsets calculations

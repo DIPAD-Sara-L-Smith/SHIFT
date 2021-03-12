@@ -21,7 +21,7 @@ app_ui <- function() {
           # TODO sub menus for select/process
           menuItem("Select & process variables",
             tabName = "variables",
-            icon = icon("table")
+            icon = icon("wrench")
           ),
           # TODO sub menus for each step... ()
           menuItem("Best subset analysis",

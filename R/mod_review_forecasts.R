@@ -113,7 +113,8 @@ mod_review_forecasts_server <- function(id, r) {
       })
 
       # graph comparing multiple short-term forecasts with CIs
-      observeEvent(r$data, {
+      #observeEvent(r$data, {
+      observeEvent(r$best_model, {
         req(r$dep_var)
 
         output$plot_shortterm <- plotly::renderPlotly(
