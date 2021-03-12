@@ -25,8 +25,8 @@ app_ui <- function() {
           ),
           # TODO sub menus for each step... ()
           menuItem("Best subset analysis",
-                   tabName = "best-subsets",
-                   icon = icon("list-ol")
+            tabName = "best-subsets",
+            icon = icon("list-ol")
           ),
 
           menuItem("View forecasts",
