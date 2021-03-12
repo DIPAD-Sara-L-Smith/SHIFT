@@ -23,16 +23,23 @@ mod_plot_data_ui <- function(id) {
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
-        title = "Look at it here.",
+        title = "Select Variables",
         status = "primary",
         solidHeader = TRUE,
         uiOutput(ns("dep_var_selector")),
         uiOutput(ns("ind_var_selector")),
-        dygraphOutput(ns("dep_var_dygraph")),
         uiOutput(ns("RangeHistorical")),
         br(),
         actionButton(ns("browser_button"), label = "Debug Browser()")
-        # plotlyOutput(ns("plot_holtwinters"))
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        title = "Time series plot of data",
+        status = "primary",
+        solidHeader = TRUE,
+        dygraphOutput(ns("dep_var_dygraph"))
       ),
       box(
         width = 12,
@@ -42,7 +49,7 @@ mod_plot_data_ui <- function(id) {
         status = "primary",
         solidHeader = TRUE,
         plotOutput(ns("coll_mat"))
-      )
+      ),
     )
   )
 }
