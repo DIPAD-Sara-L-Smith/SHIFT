@@ -172,40 +172,30 @@ mod_best_subset_server <- function(id, r) {
 
       # Selector for dependent variable
       output$dep_var_selector <- renderUI({
-        req(r$data)
-        selectInput(ns("dep_var_selector"),
-                    label = "Select your Dependent Variable:",
-                    choices = names(select(r$data, -c("Year", "Quarter")))
-        )
+        req(r$dep_var)
+        p(paste("Dependant variable: ", r$dep_var))
       })
 
       # Selector for independent variables
       output$ind_var_selector <- renderUI({
-        req(r$data, input$dep_var_selector)
-        selectInput(ns("ind_var_selector"),
-                    label = "Select your Independent Variables: (*) Multiple Allowed",
-                    # drop the current dep_var from the options
-                    choices = setdiff(names(select(r$data, -c("Year", "Quarter"))), input$dep_var_selector),
-                    multiple = TRUE
-        )
+
+        req(r$ind_var)
+        p(paste("Independant variables: ",paste(r$ind_var, collapse = ", ")))
       })
 
       # Runs the all subsets calculations
       observeEvent(input$run_subset_button, {
-        req(r$data, input$dep_var_selector, input$ind_var_selector)
-        if (length(input$ind_var_selector) > 1) {
+        req(r$data, r$dep_var, r$ind_var)
+        if (length(r$ind_var) > 1) {
           r$spinner_spinning <- r$spinner_spinning + 1
           r$subsetdata <- select(
             r$data,
             #change to filter NAs out of dep_var column
             #r$data[!is.na(r$data[[input$dep_var_selector]]),],
-            c(input$dep_var_selector,
-              input$ind_var_selector,
-              "Year",
-              "Quarter"))
-          r$allsubset <- allsubsetregression(input$dep_var_selector,
+            c(r$dep_var, r$ind_var, "Year", "Quarter"))
+          r$allsubset <- allsubsetregression(r$dep_var,
                                              r$subsetdata,
-                                             length(input$ind_var_selector))
+                                             length(r$ind_var))
         }
       })
 
@@ -482,8 +472,6 @@ mod_best_subset_server <- function(id, r) {
         req(input$final_model_selector)
         #r$best_model <- lm(input$final_model_selector, r$data)
         r$best_model <- input$final_model_selector
-        r$dep_var <- input$dep_var_selector
-        r$ind_var <- input$ind_var_selector
         InitPath <-
           paste0(
             gsub("OneDrive - ", "", gsub(".{10}$", "", Sys.getenv("HOME"))),
