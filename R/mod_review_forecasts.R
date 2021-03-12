@@ -28,6 +28,28 @@ mod_review_forecasts_ui <- function(id) {
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
+        title = "Best Subset Forecasts",
+        status = "primary",
+        solidHeader = TRUE,
+        plotlyOutput(ns("plot_longterm")),
+      ),
+
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Forecast Table",
+        status = "primary",
+        solidHeader = TRUE,
+        #new bits
+        dataTableOutput(ns("forecast_table")),
+        downloadButton(ns("download_forecast"), "Download forecast (csv)")
+      ),
+
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
         title = "Compare short-term forecasts",
         status = "primary",
         solidHeader = TRUE,
@@ -68,22 +90,7 @@ mod_review_forecasts_ui <- function(id) {
         plotlyOutput(ns("plot_decomposition"))
       ),
 
-      box(
-        width = 12,
-        collapsible = TRUE,
-        collapsed = FALSE,
-        title = "Compare long-term forecasts",
-        status = "primary",
-        solidHeader = TRUE,
-        h3("Long-term forecasts"),
-        p("This box currently only shows the selected linear regression model,
-          but could be developed in the future to show multiple and compare
-          them and related statistics."),
-        plotlyOutput(ns("plot_longterm")),
-        #new bits
-        dataTableOutput(ns("forecast_table")),
-        downloadButton(ns("download_forecast"), "Download forecast (csv)")
-      )
+
     )
   )
 }
