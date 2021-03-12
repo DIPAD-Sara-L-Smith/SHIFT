@@ -214,7 +214,8 @@ mod_review_forecasts_server <- function(id, r) {
         })
       })
 
-      observeEvent(r$best_model, { # graph comparing long-term forecasts with CIs
+      # graph comparing long-term forecasts with CIs
+      observeEvent(r$best_model, {
         req(r$best_model)
         output$plot_longterm <- plotly::renderPlotly({
           p <- plot_forecast(
