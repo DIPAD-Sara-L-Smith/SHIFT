@@ -45,15 +45,6 @@ mod_best_subset_ui <- function(id) {
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
-        title = "Collinearity Matrix",
-        status = "primary",
-        solidHeader = TRUE,
-        plotOutput(ns("coll_mat"))
-      ),
-      box(
-        width = 12,
-        collapsible = TRUE,
-        collapsed = FALSE,
         title = "Candidate best models from calculations.",
         status = "primary",
         solidHeader = TRUE,
@@ -537,16 +528,6 @@ mod_best_subset_server <- function(id, r) {
         )
         showNotification("Best Subset Regression completed", type = "message")
       })
-
-      # Render Collinearity Matrix
-      observeEvent(r$allsubset, {
-        req(r$data, input$ind_var_selector)
-
-        output$coll_mat <- renderPlot({
-          plot_cormat(r$data, input$ind_var_selector)
-        })
-      })
-
     }
   )
 }

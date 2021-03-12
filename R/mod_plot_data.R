@@ -33,6 +33,15 @@ mod_plot_data_ui <- function(id) {
         br(),
         actionButton(ns("browser_button"), label = "Debug Browser()")
         # plotlyOutput(ns("plot_holtwinters"))
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Collinearity Matrix",
+        status = "primary",
+        solidHeader = TRUE,
+        plotOutput(ns("coll_mat"))
       )
     )
   )
@@ -165,6 +174,16 @@ mod_plot_data_server <- function(id, r) {
             defaultEnd
           )
         )
+      })
+
+      # Render Collinearity Matrix
+      observeEvent(input$ind_var_selector, {
+        req(r$data, input$ind_var_selector)
+        if (length(input$ind_var_selector) > 1) {
+          output$coll_mat <- renderPlot({
+            plot_cormat(r$data, input$ind_var_selector)
+          })
+        }
       })
 
       # Delete for prod, or add to golem_dev function.
