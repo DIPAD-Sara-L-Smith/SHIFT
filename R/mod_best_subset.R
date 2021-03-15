@@ -134,6 +134,7 @@ mod_best_subset_ui <- function(id) {
 #' @export
 #' @keywords internal
 #' @importFrom dplyr select
+#' @importFrom tidyr drop_na
 mod_best_subset_server <- function(id, r) {
   moduleServer(
     id,
@@ -188,11 +189,9 @@ mod_best_subset_server <- function(id, r) {
         req(r$data, r$dep_var, r$ind_var)
         if (length(r$ind_var) > 1) {
           r$spinner_spinning <- r$spinner_spinning + 1
-          r$subsetdata <- select(
-            r$data,
-            #change to filter NAs out of dep_var column
-            #r$data[!is.na(r$data[[input$dep_var_selector]]),],
-            c(r$dep_var, r$ind_var, "Year", "Quarter"))
+          r$subsetdata <- r$data %>%
+            select(c(r$dep_var, r$ind_var, "Year", "Quarter")) %>%
+            drop_na()
           r$allsubset <- allsubsetregression(r$dep_var,
                                              r$subsetdata,
                                              length(r$ind_var))
