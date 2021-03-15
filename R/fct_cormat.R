@@ -8,7 +8,9 @@
 #' @export
 
 plot_cormat <- function(data, ind_vars) {
-  dataplot <- select(data, ind_vars)
+  dataplot <- data %>%
+    tidyr::drop_na() %>%
+    dplyr::select(ind_vars)
   cormat <- round(cor(dataplot),2)
   melted_cormat <- reshape2::melt(cormat)
   lower_tri <- cormat
