@@ -184,7 +184,7 @@ mod_review_forecasts_server <- function(id, r) {
             dep_var = r$dep_var,
             ind_var = NULL,
             # start,
-            # end,
+            end = r$date_end,
             forecast_type = "holtwinters",
             proj_data = NULL,
             diff_inv = FALSE
