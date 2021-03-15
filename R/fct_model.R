@@ -128,13 +128,13 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
   req(fit)
 
   # check if proj_data valid
-  if (!is.null(proj_data)) {
-    if (!is_valid_df(proj_data)) {
-      warning("get_forecast_plotdata: specified proj_data is not valid. No
-              forecast has been produced.")
-      proj_data <- NULL
-    }
-  }
+  # if (!is.null(proj_data)) {
+  #   if (!is_valid_df(proj_data)) {
+  #     warning("get_forecast_plotdata: specified proj_data is not valid. No
+  #             forecast has been produced.")
+  #     proj_data <- NULL
+  #   }
+  # }
 
   # calculate forecasts
   fcast <- predict_models(
@@ -152,8 +152,7 @@ get_forecast_plotdata <- function(fit, proj_data = NULL) {
     "Lin" = "linear",
     {
       warning(paste0(
-        "get_forecast_plotdata:
-                                        Forecast type ", fcast$method,
+        "get_forecast_plotdata: Forecast type ", fcast$method,
         " not recognised."
       ))
     }
