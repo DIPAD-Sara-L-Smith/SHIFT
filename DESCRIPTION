@@ -35,7 +35,8 @@ Imports:
     reshape2,
     processx,
     shinytest,
-    pkgload
+    pkgload,
+    recipes
 RoxygenNote: 7.1.1
 Suggests: 
     testthat (>= 3.0.0)
