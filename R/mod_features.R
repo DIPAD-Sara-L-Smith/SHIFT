@@ -1,6 +1,6 @@
 # Module UI
 
-#' @title   mod_plot_data_ui and mod_plot_data_server
+#' @title   mod_features_ui
 #' @description  A shiny Module.
 #'
 #' @param id shiny id
@@ -8,7 +8,7 @@
 #' @param output internal
 #' @param session internal
 #'
-#' @rdname mod_plot_data
+#' @rdname mod_features_ui
 #'
 #' @keywords internal
 #' @export
@@ -78,7 +78,9 @@ mod_features_ui <- function(id) {
 
 # Module Server
 
-#' @rdname mod_plot_data
+#' @title   mod_features_server
+#'
+#' @rdname mod_features_server
 #' @export
 #' @keywords internal
 mod_features_server <- function(id, r) {
