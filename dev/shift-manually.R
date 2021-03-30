@@ -1,5 +1,5 @@
 # make upload data frame
-upload = data.frame(name = "validation-data.csv", datapath = "./example-data/validation-data.csv")
+upload <-  data.frame(name = "validation-data.csv", datapath = "./example-data/validation-data.csv")
 
 #load data
 user_data <- load_user_data(upload)
