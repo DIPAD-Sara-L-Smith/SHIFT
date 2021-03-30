@@ -12,10 +12,11 @@
 #'
 #' @keywords internal
 #' @export
+#' @import recipes
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom dygraphs renderDygraph dygraphOutput dygraph dyRangeSelector dyLegend
 #' @importFrom plotly plotlyOutput
-mod_plot_data_ui <- function(id) {
+mod_features_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidRow(
@@ -35,6 +36,17 @@ mod_plot_data_ui <- function(id) {
       box(
         width = 12,
         collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Collinearity Matrix",
+        status = "primary",
+        solidHeader = TRUE,
+        plotOutput(ns("coll_mat"))
+      ),
+    ),
+    fluidRow(
+      box(
+        width = 12,
+        collapsible = TRUE,
         collapsed = TRUE,
         title = "Time series plot of data",
         status = "primary",
@@ -45,10 +57,20 @@ mod_plot_data_ui <- function(id) {
         width = 12,
         collapsible = TRUE,
         collapsed = FALSE,
-        title = "Collinearity Matrix",
+        title = "Feature Engineering",
         status = "primary",
         solidHeader = TRUE,
-        plotOutput(ns("coll_mat"))
+        uiOutput(ns("select_feature")),
+        plotOutput(ns("dep_feat_xyplot"))
+      ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Transforms",
+        status = "primary",
+        solidHeader = TRUE,
+        uiOutput(ns("box_cox_selector"))
       ),
     )
   )
@@ -59,7 +81,7 @@ mod_plot_data_ui <- function(id) {
 #' @rdname mod_plot_data
 #' @export
 #' @keywords internal
-mod_plot_data_server <- function(id, r) {
+mod_features_server <- function(id, r) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -191,6 +213,44 @@ mod_plot_data_server <- function(id, r) {
             plot_cormat(r$data, input$ind_var_selector)
           })
         }
+      })
+
+
+      # Selector for feature engineering
+      output$select_feature <- renderUI({
+        req(r$data, input$dep_var_selector, r$ind_var)
+        selectInput(ns("selected_feature"),
+                    label = "Select the feature to engineer",
+                    # drop the current dep_var from the options
+                    # use names(r$xts) as that removes year and quarter
+                    #choices = setdiff(names(r$xts), input$dep_var_selector),
+                    choices = r$ind_var,
+                    multiple = FALSE
+                    )
+      })
+
+      observeEvent(input$selected_feature, {
+        req(input$selected_feature)
+        output$dep_feat_xyplot <- renderPlot({
+          plot_data <- r$data %>%
+            drop_na() %>%
+            select(r$dep_var, input$selected_feature)
+          ggplot(plot_data, aes(x = .data[[input$selected_feature]], y = .data[[r$dep_var]])) +
+            geom_point() +
+            geom_smooth(method = lm, se = FALSE)
+
+        })
+      })
+
+      observeEvent(input$selected_feature, {
+        req(input$selected_feature)
+        output$box_cox_selector <- renderUI({
+          selectInput(ns("box_cox_selected"),
+                      label = "Select Features for Box Cox transformation",
+                      choices = r$ind_var,
+                      multiple = TRUE
+                      )
+        })
       })
 
       # Delete for prod, or add to golem_dev function.
