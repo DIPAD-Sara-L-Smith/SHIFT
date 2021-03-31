@@ -12,7 +12,6 @@
 #'
 #' @keywords internal
 #' @export
-#' @import recipes
 #' @importFrom shiny NS tagList uiOutput renderUI selectInput
 #' @importFrom dygraphs renderDygraph dygraphOutput dygraph dyRangeSelector dyLegend
 #' @importFrom plotly plotlyOutput
@@ -70,7 +69,8 @@ mod_features_ui <- function(id) {
         title = "Transforms",
         status = "primary",
         solidHeader = TRUE,
-        uiOutput(ns("box_cox_selector"))
+        uiOutput(ns("center_selector")),
+        uiOutput(ns("do_bake_button"))
       ),
     )
   )
@@ -246,13 +246,28 @@ mod_features_server <- function(id, r) {
 
       observeEvent(input$selected_feature, {
         req(input$selected_feature)
-        output$box_cox_selector <- renderUI({
-          selectInput(ns("box_cox_selected"),
-                      label = "Select Features for Box Cox transformation",
+        output$center_selector <- renderUI({
+          selectInput(ns("center_selected"),
+                      label = "Select Features for Center transformation",
                       choices = r$ind_var,
                       multiple = TRUE
                       )
         })
+      })
+
+      observeEvent(input$center_selected, {
+        req(input$center_selected)
+        output$do_bake_button <- renderUI({
+          actionButton(ns("do_bake"), label = "Bake Recipe")
+        })
+      })
+
+      observeEvent(input$do_bake, {
+        r$baked_data <- bake_recipe(data = r$data,
+                                  dep_var = r$dep_var,
+                                  ind_vars = r$ind_var,
+                                  vars_center = input$center_selected)
+        print(r$baked_data)
       })
 
       # Delete for prod, or add to golem_dev function.
