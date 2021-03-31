@@ -162,7 +162,7 @@ mod_features_server <- function(id, r) {
         r$date_end <- c(year(r$date_end), quarter(r$date_end))
       })
 
-      # slider input - Historical data -----
+      # slider input - Historical data
       output$RangeHistorical <- renderUI({
         #req(r$data, r$dep_var)
         req(r$data)
@@ -243,12 +243,20 @@ mod_features_server <- function(id, r) {
       observeEvent(input$selected_feature, {
         req(r$dep_var, input$selected_feature)
         output$dep_feat_xyplot <- renderPlot({
-          plot_data <- r$data %>%
+          xy_plot <- r$data %>%
             drop_na() %>%
-            select(r$dep_var, input$selected_feature)
-          ggplot(plot_data, aes(x = .data[[input$selected_feature]], y = .data[[r$dep_var]])) +
+            select(r$dep_var, input$selected_feature) %>%
+            ggplot(aes(x = .data[[input$selected_feature]], y = .data[[r$dep_var]])) +
             geom_point() +
             geom_smooth(method = lm, se = FALSE)
+
+          hist_plot <- r$data %>%
+            drop_na() %>%
+            ggplot(aes(x = .data[[input$selected_feature]])) +
+            geom_histogram(bins = 10, col = "wheat", fill = "wheat")
+
+
+          gridExtra::grid.arrange(xy_plot, hist_plot, nrow = 1, ncol = 2)
 
         })
       })
@@ -282,12 +290,20 @@ mod_features_server <- function(id, r) {
       observeEvent(r$baked_data, {
         req(r$baked_data, r$dep_var, input$selected_feature)
         output$post_trans_plot <- renderPlot({
-          r$baked_data %>%
+          xy_plot <- r$baked_data %>%
             drop_na() %>%
             select(r$dep_var, input$selected_feature) %>%
             ggplot(aes(x = .data[[input$selected_feature]], y = .data[[r$dep_var]])) +
             geom_point() +
             geom_smooth(method = lm, se = FALSE)
+
+          hist_plot <- r$baked_data %>%
+            drop_na() %>%
+            ggplot(aes(x = .data[[input$selected_feature]])) +
+            geom_histogram(bins = 10, col = "wheat", fill = "wheat")
+
+          gridExtra::grid.arrange(xy_plot, hist_plot, nrow = 1, ncol = 2)
+
         })
       })
 

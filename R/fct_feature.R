@@ -15,7 +15,7 @@ bake_recipe <- function(data, dep_var, ind_vars, vars_center) {
   # get subset of data based on dep_var and ind_vars
   pre_bake_data <-
     data %>%
-    #tidyr::drop_na() %>%
+    tidyr::drop_na() %>%
     dplyr::select(dep_var, ind_vars)
 
   # model string from vars
@@ -45,3 +45,7 @@ bake_recipe <- function(data, dep_var, ind_vars, vars_center) {
   return(baked_data)
 
 }
+
+# TODO add the graphing stuff here
+
+# function to produce graphs or the grid.arrange

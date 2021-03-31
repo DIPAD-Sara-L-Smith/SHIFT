@@ -2,7 +2,7 @@ library(shiny)
 library(shinydashboard)
 
 source("../R/mod_features.R")
-#source("../R/fct_feature.R")
+source("../R/fct_feature.R")
 
 
 ui <-  dashboardPage(
