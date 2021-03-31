@@ -72,6 +72,15 @@ mod_features_ui <- function(id) {
         uiOutput(ns("center_selector")),
         uiOutput(ns("do_bake_button"))
       ),
+      box(
+        width = 12,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        title = "Post transform",
+        status = "primary",
+        solidHeader = TRUE,
+        plotOutput(ns("post_trans_plot"))
+      ),
     )
   )
 }
@@ -232,7 +241,7 @@ mod_features_server <- function(id, r) {
       })
 
       observeEvent(input$selected_feature, {
-        req(input$selected_feature)
+        req(r$dep_var, input$selected_feature)
         output$dep_feat_xyplot <- renderPlot({
           plot_data <- r$data %>%
             drop_na() %>%
@@ -268,6 +277,18 @@ mod_features_server <- function(id, r) {
                                   ind_vars = r$ind_var,
                                   vars_center = input$center_selected)
         print(r$baked_data)
+      })
+
+      observeEvent(r$baked_data, {
+        req(r$baked_data, r$dep_var, input$selected_feature)
+        output$post_trans_plot <- renderPlot({
+          r$baked_data %>%
+            drop_na() %>%
+            select(r$dep_var, input$selected_feature) %>%
+            ggplot(aes(x = .data[[input$selected_feature]], y = .data[[r$dep_var]])) +
+            geom_point() +
+            geom_smooth(method = lm, se = FALSE)
+        })
       })
 
       # Delete for prod, or add to golem_dev function.
