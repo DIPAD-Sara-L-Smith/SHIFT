@@ -3,6 +3,7 @@
 export("%>%")
 export(allsubsetregression)
 export(are_df_names_valid)
+export(bake_recipe)
 export(df_to_ts)
 export(df_to_xts)
 export(fit_decomp)

@@ -25,7 +25,7 @@ bake_recipe <- function(data, dep_var, ind_vars, vars_center) {
   recipe <- recipe(as.formula(model), data = pre_bake_data)
 
   # add all the step to the recipe
-  # box cox
+  # center
   if(!is.null(vars_center)){
     recipe <-
       recipe %>%
