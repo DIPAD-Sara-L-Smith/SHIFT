@@ -1,0 +1,50 @@
+---
+title: "Shift Documentation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# SHIFT Documentation
+
+## Overview
+
+SHIFT stands for Shiny Improved Forecasting Tool. It is built on R,  https://www.r-project.org/ an open source language and environment for statistical computing and graphics. It is widely supported with many open source packages available via the Comprehensive R Archive Network https://cran.r-project.org/
+
+Shiny https://shiny.rstudio.com/ Shiny is an R package that makes it easy to build interactive web apps straight from R.
+
+The Aim of SHIFT is to make the robust open source forecasting provided by R available in a web application that can improve all of DVSA forecasting activities.  
+
+SHIFT code is hosted on github in a private repository https://github.com/DIPAD-Sara-Smith/SHIFT
+
+## Data Considerations
+
+Initially Shift is intended to forecast demand data for all categories of Practical and Theory Test. These data are provided as time-series data with quarterly frequency. It is hoped once Shift is up and running it can be expanded to forecast data for other area of DVSA business.
+
+Shift uses time series forecasting R packages by written and maintained by Prof Rob J Hyndeman,  co-author of the book: "Forecasting: Principles and Practice" from which many techniques used in Shift are taken.
+
+[Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.]
+
+Time-series, as the name suggest, are data on a time scale, they can also have trend and/or seasonal components. 
+
+###### example decomp graph perhaps?
+
+Various prediction models are available to forecast time series data, and these models can be obtained from various packages. These models are best at short term forecast of data (source needed)
+
+Shift can be used to produce forecasts from a variety of single variable time-series models, such as Time Series Decomposition and  Exponential Smoothing.
+
+###### example forecast graph?
+
+These forecasts can them be used as a baseline to assess other forecasting methods suited to producing longer term forecasts.
+
+
+## Robust Long Term Forecasts
+
+The aim of Shift is to provide DVSA with robust long term forecasts using a Linear Regression Model. Users can upload time-series data with multiple variables, then choose which variable to forecast. Shift will analyse all of the other variables and produce one or two Linear Regression Models which a user can view the difference and choose one to use for forecasting.  
+
+
+
+
+
