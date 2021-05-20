@@ -1,48 +1,413 @@
 ---
-title: "Shift Documentation"
-output: html_document
+title: "SHIFT Documentation"
+output:
+  html_document:
+    toc: yes
+link-citations: yes
+references:
+- id: fpp3
+  title: Forecasting Principles and Practice 3rd Edition
+  author:
+  - family: Hyndeman
+    given: Rob J.
+  - family: Anthanasopoulos
+    given: George
+  URL: https://otexts.com/fpp3
+  issued:
+    year: 2021
+    month: 2
+- id: holt1
+  title: Forecasting seasonals and trends by exponentially weighted moving averages
+  author:
+    family: Holt
+    given: Charles C.
+  URL: https://doi.org/10.1016/j.ijforecast.2003.09.015
+  issued: 1957
+- id: winters1
+  author:
+    family: Winters
+    given: Peter R.
+  title: Forecasting Sales by Exponentially Weighted Moving Averages
+  URL: https://doi.org/10.1287/mnsc.6.3.324
+  issued: 1960
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# SHIFT Documentation
+# Overview
 
-## Overview
+SHIFT stands for Shiny Improved Forecasting Tool. It is built on R,  [R-Project](https://www.r-project.org/), an open source language and environment for statistical computing and graphics. It is widely supported with many open source packages available via the [Comprehensive R Archive Network](https://cran.r-project.org/).
 
-SHIFT stands for Shiny Improved Forecasting Tool. It is built on R,  https://www.r-project.org/ an open source language and environment for statistical computing and graphics. It is widely supported with many open source packages available via the Comprehensive R Archive Network https://cran.r-project.org/
-
-Shiny https://shiny.rstudio.com/ Shiny is an R package that makes it easy to build interactive web apps straight from R.
+[Shiny](https://shiny.rstudio.com/) is an R package that makes it easy to build interactive web apps straight from R.
 
 The Aim of SHIFT is to make the robust open source forecasting provided by R available in a web application that can improve all of DVSA forecasting activities.  
 
-SHIFT code is hosted on github in a private repository https://github.com/DIPAD-Sara-Smith/SHIFT
+SHIFT code is hosted on Github in the [DIPAD-Sara-Smith/SHIFT](https://github.com/DIPAD-Sara-Smith/SHIFT) repository.
+
+SHIFT is intended to be an ongoing project, with regular updates and improvements delivered to help improve the forecasts. 
+
+## Why R
+
+Demand forecasting is currently performed in Micorsoft Excel. While Excel is recognized as a widely used data analysis tool for many applications it does not include, as standard, any tools specifically designed for forecasting. DVSA demand forecasting is performed by custom Visual Basic for Application (VBA) macros provided by (source needed) the DfT's In House Analytical Consultancy. 
+
+There are disadvantages to using VBA. It does not have any unit testing to give reassurance that functions are working as intended. It does not have the level of scrutiny that open source software can provide through wide use and feedback from many contributors and thousands or millions of users.
+
+In contrast, R software is widely used and specifically designed to do statistical computing, including forecasting. R and its packages are subject to constant scrutiny due to being open source and packages are regularly updated to fix bugs or add new features.
 
 ## Data Considerations
 
-Initially Shift is intended to forecast demand data for all categories of Practical and Theory Test. These data are provided as time-series data with quarterly frequency. It is hoped once Shift is up and running it can be expanded to forecast data for other area of DVSA business.
-
-Shift uses time series forecasting R packages by written and maintained by Prof Rob J Hyndeman,  co-author of the book: "Forecasting: Principles and Practice" from which many techniques used in Shift are taken.
-
-[Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting: principles and practice, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.]
+Initially SHIFT is intended to forecast demand data for all categories of Practical and Theory Test. These data are provided as time-series data with quarterly frequency. It is hoped once SHIFT is up and running it can be expanded to forecast data for other area of DVSA business.
 
 Time-series, as the name suggest, are data on a time scale, they can also have trend and/or seasonal components. 
 
 ###### example decomp graph perhaps?
 
-Various prediction models are available to forecast time series data, and these models can be obtained from various packages. These models are best at short term forecast of data (source needed)
+Different prediction models are available to forecast time series data, and these models can be obtained from various R packages. These models are best at short term forecast of data (source needed)
 
-Shift can be used to produce forecasts from a variety of single variable time-series models, such as Time Series Decomposition and  Exponential Smoothing.
+SHIFT can be used to produce forecasts from a variety of single variable time-series models, such as Time Series Decomposition or Exponential Smoothing.
 
 ###### example forecast graph?
 
-These forecasts can them be used as a baseline to assess other forecasting methods suited to producing longer term forecasts.
+These forecasts can then be used as a baseline to assess other forecasting methods suited to producing longer term forecasts.
 
 
 ## Robust Long Term Forecasts
 
-The aim of Shift is to provide DVSA with robust long term forecasts using a Linear Regression Model. Users can upload time-series data with multiple variables, then choose which variable to forecast. Shift will analyse all of the other variables and produce one or two Linear Regression Models which a user can view the difference and choose one to use for forecasting.  
+The aim of SHIFT is to provide DVSA with robust long term forecasts using a Linear Regression Model. Users can upload time-series data with multiple variables, then choose which variable to forecast. SHIFT will attempt to find the best subset of variables and produce up to two Linear Regression Models a user can view the difference and choose one to use for forecasting. Before best subset analysis data time-series data must have the trend and seasonality removed.
+
+# Code structure
+
+## Application design
+
+SHIFT uses the [Golem framework](https://thinkr-open.github.io/golem/index.html) for shiny which determines file structure and naming conventions, setting up SHIFT as an R package. As a result all of the main code files are in the `R` folder. When loading SHIFT all files in the `R` folder are sourced.
+
+The required shiny files in the `R` folder are:  
+`app_ui.R` - code for generating the UI  
+`server_ui.R` - back end server control  
+`run_app.R` - used for creating the app  
+
+Files with the `mod_` prefix are shiny modules, each module contains UI and Server code. Files with the `fct_` prefix store the back-end functions used in a module, convention is to use the same name for both, such as: `mod_features.R` paired with `fct_features.R`.  
+
+Any files in this folder prefixed with `utils_`, `app_` or `golem_` are automatically generated and generally do not need to be modified.  
+
+The `dev` folder contains files necessary for development. The files with the numbered prefixes are only used in the initial setup of Golem and should not be sourced.  
+
+Important files in the `dev` folder:  
+
+`run_dev.R` is used to run a development version of SHIFT, source this file then enter `shift::run_app()` to the console.  
+
+`run_module.R` can be sourced to run a module in isolation from the main app.
+
+`shift_manually.R` after loading SHIFT (that is, sourcing `run_dev.R`) code in this file can be used to simulate SHIFT and test functions in the console.  
+
+The `test` folder, as it's name suggests contains the test folders. Unit tests are in the `testthat` sub-folder, and use the testthat package. The `shinytest` folder contains code necessary for the shinytest package tests, these use a headless browser to interact with the app and compare a screenshot with a previous, known good screenshot and will fail on any changes.
+
+The `renv` folder is created by the renv package, which is used to maintain a reproducible environment of all the packages necessary for SHIFT.  
+
+The `man` folder contains Roxygen auto-generated help files, and no files should need to be altered manually, just ensure that inline documentation code is included with the function.  
+
+The `inst` folder and sub-folders contains any static files needed such as cascading style sheets or favourite icons.
+
+The `example-data` and `example-scripts` folders are SHIFT specific folders containing test data and scripts respectively. Although the functionality for users to upload and run R scripts has been disabled due to security concerns.
+
+## Folder and Files structure
+```
+/SHIFT/  
+|   .gitignore  
+|   .Rbuildignore  
+|   .Rhistory  
+|   .Rprofile  
+|   app.R (only used for testing)  
+|   CODE_OF_CONDUCT.md  
+|   DESCRIPTION  
+|   Documentation.Rmd  
+|   LICENSE  
+|   LICENSE.md  
+|   NAMESPACE  
+|   README.md  
+|   README.Rmd  
+|   renv.lock  
+|   SHIFT.Rproj  
+|     
++---dev  
+|       01_start.R   }  
+|       02_dev.R     }    only used in initial golem steup  
+|       03_deploy.R  }  
+|       run_dev.R         use to run dev version of SHIFT  
+|       run_module.R      use to run specific module in isolation  
+|       shift-manually.R  for running some shift functions in console  
+|         
++---example-data  
+|       licenced_vehicles.csv  
+|       licenced_vehicles.rds  
+|       new_vehicle_registrations.csv  
+|       swiss.csv  
+|       swiss.xls  
+|       traffic.csv  
+|       traffic.xlsx  
+|       validation-data-train.csv  
+|       validation-data.csv  
+|         
++---example-scripts  
+|       licenced_vehicles.R  
+|       new_vehicle_registrations.R  
+|       nwhi.R  
+|       readme.md  
+|       traffic.R  
+|         
++---inst  
+|   |   golem-config.yml  
+|   |     
+|   +---app  
+|       \---www  
+|               custom.css  
+|               favicon.ico  
+|                 
++---man (Autogenerated .man help files)  
+|         
++---R  
+|       app_config.R  
+|       app_server.R  
+|       app_ui.R  
+|       fct_cormat.R  
+|       fct_feature.R  
+|       fct_load.R  
+|       fct_model.R  
+|       fct_subset.R  
+|       fct_xts.R  
+|       golem_utils_server.R  
+|       golem_utils_ui.R  
+|       mod_best_subset.R  
+|       mod_features.R  
+|       mod_load_data.R  
+|       mod_plot_data.R  
+|       mod_review_forecasts.R  
+|       run_app.R  
+|       utils-pipe.R  
+|         
++---renv (Reproducible Environment files)  
+|  
++---tests  
+    |   shinytest.R  
+    |   testthat.R  
+    |     
+    +---shinytest  
+    |   |   test-loaddata-lv.R  
+    |   |     
+    |   \---test-loaddata-lv-expected  
+    |           001.json  
+    |           001.png  
+    |             
+    \---testthat  
+            test-fct_cormat.R  
+            test-fct_load.R  
+            test-fct_model.R  
+            test-fct_subset.R  
+            test-fct_xts.R  
+            test-golem-recommended.R  
+```
+## Functionality
+
+SHIFT makes use of the shiny modules, each are self-contained with the code needed to create the UI, and the code needed for the server side processing, each module has an associated fct_ file containing the functions that the server side code can use to produce interactive content. After SHIFT has been loaded you can view the automatically generated help file for any function by entering ? then the name of the function, without parenthesis, such as `?load_user_data` 
+
+Each module is listed with a brief description of what it does and a list of the functions it uses.
+
+### `mod_load_data.R`
+
+Provides the facility for a user to upload data, in comma separated value (.csv) format or Excel Workbook (.xlsx) format. Note: previous versions of the Excel format (.xls) are not supported. When uploading the user as some additional options. Append or Overwrite any old data, drop or remove columns, difference the data, undo the last change made, and download the data after having made any changes.  
+
+It uses these functions from `fct_load.R` 
+
+ * `load_user_data()` 
+ * `merge_user_data()` 
+ * `load_rds_file()` 
+ * `load_csv()` 
+ * `load_excel()` 
+ * `is_df_valid()` 
+ * `is_df_continuous()` 
+ * `are_df_names_valid()` 
+ * `is_row_index_unique()` 
+
+### `mod_plot_data.R`
+
+Allows a user to select the dependent and independent variables they with so use for any forecasting. After selecting the dependent variable a time range selector is shown, with start and end values defaulting to the start and end of the data, a user can then adjust the start and end dates to be used for the forecasts. After selecting the variables a basic time series plot and a collinearity matrix, are automatically updated.
+
+It uses this function from `fct_cormat.R`
+
+ * `plot_cormat()`
+
+### `mod_subset.R`
+
+Runs best subset analysis on the chosen independent variables and offers a choice or 1 or 2 candidate models for use in forecasting the dependent variable. This process requires time and a "working" animated icon is shown while running and a message appears at the bottom right of the screen when complete.
+
+Once the analysis is complete a user can compare the candidate models using ANOVA and view diagnostics of the models to help them decide which of the candidate models to take forward for forecasting.
+
+Finally a user must select a model from the drop down list and click the button to proceed to the forecasting stage. 
+
+It uses these function from `fct_subset.R`
+
+ * `model.from.regobject()`  
+ * `get_model_formula()`
+ * `get_cv_error()`  
+ * `model_equation()`   
+ * `ifelsefun()`
+ * `allsubsetregression()`  
+
+### `mod_review_forecasts.R`
+
+Plots forecast from the selected best subset model, displays a table of the forecast values and allows a user to download these values in a CSV file. Also plots Naive, HoltWinters and Decomposition forecasts, together and individually
+
+It uses these functions from `fct_model.R`
+
+ * `fit_models()`  
+ * `predict_models()`
+ * `get_forecast_plotdata()`
+ * `plot_forecast()`
+ * `fit_holtwinters()`
+ * `fit_decomp()`
+ * `fit_naive()`
+ * `fit_linear()`
+ * `get_proj_data()`
+ * `get_starting_values`
+ 
+### `mod_features.R` (not yet fully implimented)
+
+Work in progress to perform feature engineering on the dependent and independent variables. Help a user to understand a variable through graphics and get an idea of relationship between variables and show some before and after plot to help understand the effect transformations will have
+
+Transforms proposed
+
+ * De-trend and De-seasonalise
+ * Yeo-Johnson
+
+It uses this function from `fct_features.R`
+
+ * `bake_recipe()`
+
+
+## Useful resources
+
+### Books
+
+[Engineering Production-Grade Shiny Apps](https://engineering-shiny.org/)  
+[Mastering Shiny](https://mastering-shiny.org/)
+
+
+### Cheat Sheets
+
+[Shiny cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/shiny-cheatsheet.pdf)  
+[Golem cheatsheet](https://thinkr.fr/golem_cheatsheet_v0.1.pdf)
+
+# Theory
+
+## Forecasting
+
+Forecasting is the process of estimating a value $y$ at time $T$ some number of periods $h$ in the future, the forecast value can represented this with this formula
+
+$$\hat{y}_{T+h|T}$$
+
+The $\hat{}$ above the $y$ is called a hat and used to show that it is an estimated value. 
+
+Here are the definitions of some forecast methods taken from Forecasting Principles and Practice 3rd Edition [@fpp3].
+
+### Average Method 
+[@fpp3 ch. 5.2]
+
+Here, the forecasts of all future values are equal to the average (or “mean”) of the historical data. If we let the historical data be denoted by $y_1+...+ y_T$, then we can write the forecasts as
+
+$$\hat{y}_{T+h|T} = \bar{y} = (y_1+...+ y_T)/T$$  
+ 
+The notation $\hat{y}_{T+h|T}$ is a short-hand for the estimate of $y_{T+h|T}$ based on the data $y_1+...+ y_T$.  
+
+### Naïve method
+[@fpp3 ch. 5.2] 
+
+For Naïve forecasts, we simply set all forecasts to be the value of the last observation. That is,
+$$\hat{y}_{T+h|T}=y_T$$ 
+This method works remarkably well for many economic and financial time series. 
+
+### Time series regression model
+[@fpp3 ch. 7]
+
+The basic concept is that we forecast the time series of interest $y$ assuming that it has a linear relationship with other time series $x$.
+
+#### Simple linear regression
+
+In the simplest case, the regression model allows for a linear relationship between the forecast variable $y$ and a single predictor variable $x$: 
+$$y_t=\beta_0+\beta_1x_t+\varepsilon_t$$
+The coefficients $\beta_0$ and $\beta_1$ denote the intercept and the slope of the line respectively. The intercept $\beta_0$ represents the predicted value of $y$ when $x = 0$. The slope $\beta_1$ represents the average predicted change in $y$ resulting from a one unit increase in $x$.
+
+We can think of each observation $y_t$ as consisting of the systematic or explained part of the model, $\beta_0+\beta_1x_t$, and the random "error" $\varepsilon_t$. The "error" term does not imply a mistake but a deviation from the underlying straight line mode. It captures anything that may affect $y_t$ other than $x_t$.
+
+#### Multiple linear regression
+
+When there are two or more predictor variables, the model is called a **multiple regression model**. The general form of a multiple regression model is
+
+$y_t = \beta_0+\beta_1x_1+\beta_2x_2+...+\beta_kx_k+\varepsilon_t$
+
+where $y$ is the variable to be forecast and $x_1,...,x_k$ are the $k$ predictor variables. Each of the predictor variables must be numerical. The coefficients $\beta_0,...,\beta_k$ measure the effect of each predictor after taking into account the effects of all the other predictors in the model. Thus, the coefficients measure the *marginal effects* of the predictor variables. 
+
+### Exponential Smoothing Method (HoltWinters)
+
+#### Simple exponential smoothing
+[@fpp3 ch. 8.1]
+
+Forecasts are calculated using weighted averages, where the weights decrease exponentially as observations come from further in the past — the smallest weights are associated with the oldest observations:
+
+$$\hat{y}_{T+1|T}= \alpha y_T + \alpha(1-\alpha) y_{(T-1)} + \alpha(1 - \alpha)^2 y_{T-2} + ... , $$
+
+where $0 \le \alpha \le 1$ is the smoothing parameter. The one-step-ahead forecast for time $T + 1$ is a weighted average of all of the observations in the series $y_1,...,y_T$. The rate at which the weights decrease is controlled by the parameter $\alpha$.
+
+For any $\alpha$ between $0$ and $1$, the weights attached to the observations decrease exponentially as we go back in time, hence the name "exponential smoothing." If $\alpha$ is small (i.e., close to $0$), more weight is given to observations from the more distant past. If $\alpha$ is large (i.e., close to $1$), more weight is given to the more recent observations.
+
+#### Holt's linear trend method
+
+@holt1 extended simple exponential smoothing to allow the forecasting of data with a trend. This method involves a forecast equation and two smoothing equations (one for the level and one for the trend):
+
+Forecast equation $\hat{y}_{t+h|t}=\ell_t+hb_t$
+Level equation    $\ell_t = \alpha y_t + (1-\alpha)(\ell_{t-1}+b_{t-1})$
+Trend equation    $b_t = \beta^*(\ell_t-\ell_{t-1})+(1 - \beta^*)b_{t-1}$
+
+where $\ell_t$ denotes an estimate of the level of the series at time $t$, $b_t$ denotes an estimate of the trend (slope) of the series as time $t$, $\alpha$ is the smoothing parameter for the level, $0 \le \alpha \le 1$, and $\beta^*$ is the smoothing parameter for the trend, $0 \le \beta^* \le 1$.
+
+
+
+
+#### Holt-Winters additive model
+
+
+
+
+
+
+
+### ARIMA
+
+
+
+how best subsets works 
+
+## Quantifying performance of forecasts
+
+### ANOVA
+### RMSE
+### BIC(c)
+### AIC(c)
+
+### Auto correlation plots
+### Diagnostic plots
+
+
+
+# Future work
+
+1. import variables directly rather than upload csv
+2. expand to forecasts for other areas
+3. expand to other non-liner models
+
+
+# References
 
 
 
